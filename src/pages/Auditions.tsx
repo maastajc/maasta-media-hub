@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -32,26 +31,30 @@ const CATEGORIES = [
   { value: "other", label: "Other" }
 ];
 
-interface Audition {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  compensation: string | null;
-  requirements: string | null;
-  tags: string[] | null;
-  deadline: string | null;
-  cover_image_url: string | null;
-  category: string | null;
-  status: string;
+interface AuditionData {
+  audition_date: string;
+  compensation: string;
   created_at: string;
+  creator_id: string;
+  deadline: string;
+  description: string;
+  id: string;
+  location: string;
+  project_details: string;
+  requirements: string;
+  status: string;
+  title: string;
+  updated_at: string;
+  creator_profile: {
+    full_name: string;
+  };
+  // Optional fields that might not exist in database yet
+  tags?: string[] | null;
+  cover_image_url?: string | null;
+  category?: string | null;
   age_range?: string | null;
   gender?: string | null;
   experience_level?: string | null;
-  creator_profile?: {
-    full_name: string;
-    profile_picture_url: string | null;
-  }
 }
 
 const Auditions = () => {
