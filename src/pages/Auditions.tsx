@@ -13,6 +13,7 @@ import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // A more realistic placeholder image
 const DEFAULT_COVER = "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?q=80&w=320";
@@ -44,6 +45,9 @@ interface Audition {
   category: string | null;
   status: string;
   created_at: string;
+  age_range?: string | null;
+  gender?: string | null;
+  experience_level?: string | null;
   creator_profile?: {
     full_name: string;
     profile_picture_url: string | null;
@@ -61,7 +65,7 @@ const Auditions = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Fetch auditions from Supabase
   useEffect(() => {
@@ -78,29 +82,81 @@ const Auditions = () => {
           .order('created_at', { ascending: false });
         
         if (error) {
-          throw error;
+          // If we get an error about missing columns, we need to handle it gracefully
+          if (error.message?.includes("column 'tags' does not exist") || 
+              error.message?.includes("column 'cover_image_url' does not exist") ||
+              error.message?.includes("column 'category' does not exist")) {
+            
+            console.warn("Using fallback query for auditions due to missing columns:", error.message);
+            
+            // Fallback query without the new columns
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('auditions')
+              .select(`
+                id,
+                title,
+                description,
+                location,
+                compensation,
+                requirements,
+                deadline,
+                status,
+                created_at,
+                creator_id,
+                creator_profile:profiles(full_name, profile_picture_url)
+              `)
+              .eq('status', 'open')
+              .order('created_at', { ascending: false });
+              
+            if (fallbackError) throw fallbackError;
+            
+            // Transform the data to match our component's expected format
+            const processedAuditions = fallbackData.map(item => ({
+              ...item,
+              tags: [] as string[], // Empty array as fallback
+              cover_image_url: null, // Null as fallback
+              category: null, // Null as fallback
+            }));
+            
+            setAuditions(processedAuditions);
+            setUniqueTags([]);
+            setIsLoading(false);
+            return;
+          } else {
+            throw error;
+          }
         }
         
-        setAuditions(data || []);
-        
-        // Extract all tags to create a unique set
-        const allTags = data?.flatMap(audition => audition.tags || []) || [];
-        const uniqueTagsSet = Array.from(new Set(allTags)).sort();
-        setUniqueTags(uniqueTagsSet);
-      } catch (error) {
+        // Process the audition data
+        if (data && data.length > 0) {
+          // Add default values for potentially missing fields
+          const processedAuditions = data.map(item => ({
+            ...item,
+            tags: item.tags || [],
+            cover_image_url: item.cover_image_url || null,
+            category: item.category || null,
+          }));
+          
+          setAuditions(processedAuditions);
+          
+          // Extract all tags to create a unique set
+          const allTags = processedAuditions.flatMap(audition => audition.tags || []);
+          const uniqueTagsSet = Array.from(new Set(allTags)).sort();
+          setUniqueTags(uniqueTagsSet);
+        } else {
+          setAuditions([]);
+          setUniqueTags([]);
+        }
+      } catch (error: any) {
         console.error('Error fetching auditions:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load auditions. Please try again later.",
-          variant: "destructive",
-        });
+        toast.error("Failed to load auditions");
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchAuditions();
-  }, [toast]);
+  }, []);
   
   // Filter and sort auditions
   const filteredAuditions = auditions
@@ -140,7 +196,7 @@ const Auditions = () => {
 
   const handlePostAudition = () => {
     if (!user) {
-      toast({
+      uiToast({
         title: "Sign in required",
         description: "You need to sign in to post an audition",
         variant: "default",
@@ -153,7 +209,7 @@ const Auditions = () => {
 
   const handleApplyNow = (auditionId: string) => {
     if (!user) {
-      toast({
+      uiToast({
         title: "Sign in required",
         description: "You need to sign in to apply for auditions",
         variant: "default",

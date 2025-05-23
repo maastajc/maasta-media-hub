@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton"; 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Default cover image
 const DEFAULT_COVER = "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?q=80&w=320";
@@ -29,6 +30,18 @@ const RecentAuditions = () => {
   useEffect(() => {
     const fetchRecentAuditions = async () => {
       try {
+        // Check if the auditions table has the new columns
+        const { data: columnsCheck, error: columnsError } = await supabase
+          .from('auditions')
+          .select('id')
+          .limit(1);
+          
+        if (columnsError) {
+          console.error("Error checking auditions:", columnsError);
+          throw columnsError;
+        }
+        
+        // Proceed with the main query
         const { data, error } = await supabase
           .from('auditions')
           .select(`
@@ -46,7 +59,54 @@ const RecentAuditions = () => {
           .order('created_at', { ascending: false })
           .limit(3);
 
-        if (error) throw error;
+        if (error) {
+          // If we get an error about missing columns, we need to handle it gracefully
+          if (error.message?.includes("column 'tags' does not exist") || 
+              error.message?.includes("column 'cover_image_url' does not exist")) {
+            console.warn("Using fallback query for auditions due to missing columns:", error.message);
+            
+            // Fallback query without the new columns
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('auditions')
+              .select(`
+                id,
+                title,
+                location,
+                deadline,
+                requirements,
+                creator_id,
+                profiles:profiles(full_name)
+              `)
+              .eq('status', 'open')
+              .order('created_at', { ascending: false })
+              .limit(3);
+              
+            if (fallbackError) throw fallbackError;
+            
+            // Transform the data to match our component's expected format
+            const formattedAuditions = fallbackData.map(item => ({
+              id: item.id,
+              title: item.title,
+              location: item.location,
+              deadline: item.deadline,
+              requirements: item.requirements,
+              tags: [] as string[], // Empty array as fallback
+              urgent: item.deadline ? isUrgent(item.deadline) : false,
+              cover_image_url: null, // Null as fallback
+              company: item.profiles?.full_name || 'Unknown Company'
+            }));
+            
+            setAuditions(formattedAuditions);
+            return;
+          } else {
+            throw error;
+          }
+        }
+        
+        if (!data) {
+          setAuditions([]);
+          return;
+        }
         
         // Transform the data to match our component's expected format
         const formattedAuditions = data.map(item => ({
@@ -64,6 +124,7 @@ const RecentAuditions = () => {
         setAuditions(formattedAuditions);
       } catch (error) {
         console.error("Error fetching recent auditions:", error);
+        toast.error("Failed to load recent auditions");
       } finally {
         setLoading(false);
       }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 // Default cover image
 const DEFAULT_COVER = "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?q=80&w=1200";
@@ -57,7 +58,7 @@ const AuditionDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   const [audition, setAudition] = useState<AuditionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,7 +76,7 @@ const AuditionDetails = () => {
       
       try {
         // Fetch the audition with the creator profile info
-        const { data: audition, error: auditionError } = await supabase
+        const { data: auditionData, error: auditionError } = await supabase
           .from('auditions')
           .select(`
             *,
@@ -88,11 +89,22 @@ const AuditionDetails = () => {
           throw auditionError;
         }
         
-        if (!audition) {
+        if (!auditionData) {
           throw new Error('Audition not found');
         }
         
-        setAudition(audition);
+        // Add default values for potentially missing fields
+        const completeAudition: AuditionDetails = {
+          ...auditionData,
+          cover_image_url: auditionData.cover_image_url || null,
+          tags: auditionData.tags || [],
+          category: auditionData.category || null,
+          age_range: auditionData.age_range || null,
+          gender: auditionData.gender || null,
+          experience_level: auditionData.experience_level || null
+        };
+        
+        setAudition(completeAudition);
         
         // Check if the current user has already applied
         if (user) {
@@ -116,11 +128,11 @@ const AuditionDetails = () => {
     };
     
     fetchAudition();
-  }, [id, user, toast]);
+  }, [id, user]);
 
   const handleApply = async () => {
     if (!user) {
-      toast({
+      uiToast({
         title: "Sign in required",
         description: "You need to sign in to apply for auditions",
         variant: "default",
@@ -146,7 +158,7 @@ const AuditionDetails = () => {
       
       if (error) throw error;
       
-      toast({
+      uiToast({
         title: "Application submitted",
         description: "Your application has been received. Check your dashboard for updates.",
       });
@@ -154,7 +166,7 @@ const AuditionDetails = () => {
       setHasApplied(true);
     } catch (error: any) {
       console.error('Error applying to audition:', error);
-      toast({
+      uiToast({
         title: "Error submitting application",
         description: error.message || "Failed to submit your application. Please try again.",
         variant: "destructive",

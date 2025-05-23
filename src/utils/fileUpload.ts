@@ -26,6 +26,23 @@ export async function uploadFile(
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;
 
+    // Check if the bucket exists before uploading
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error("Error checking buckets:", bucketsError);
+      return { path: "", url: "", error: "Error accessing storage: " + bucketsError.message };
+    }
+    
+    // Check if the bucket exists in the list
+    const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+    
+    // If bucket doesn't exist, return an error
+    if (!bucketExists) {
+      console.error(`Bucket "${bucketName}" does not exist`);
+      return { path: "", url: "", error: `Storage bucket "${bucketName}" does not exist` };
+    }
+
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -64,6 +81,23 @@ export async function uploadFile(
  */
 export async function deleteFile(path: string, bucketName: string): Promise<boolean> {
   try {
+    // Check if the bucket exists before trying to delete
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error("Error checking buckets:", bucketsError);
+      return false;
+    }
+    
+    // Check if the bucket exists in the list
+    const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+    
+    // If bucket doesn't exist, return an error
+    if (!bucketExists) {
+      console.error(`Bucket "${bucketName}" does not exist`);
+      return false;
+    }
+    
     const { error } = await supabase.storage
       .from(bucketName)
       .remove([path]);
