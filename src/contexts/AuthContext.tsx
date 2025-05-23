@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string, 
     password: string, 
     userData?: { full_name: string; role?: string }
-  ) => {
+  ): Promise<void> => {
     try {
       setLoading(true);
       
@@ -85,8 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: 'Success!',
         description: 'Please check your email to confirm your account',
       });
-      
-      return data;
     } catch (error: any) {
       console.error('Error signing up:', error.message);
       throw error;
@@ -95,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       
@@ -117,8 +115,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: 'Welcome Back!',
         description: 'You have been successfully signed in.',
       });
-      
-      return data;
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       throw error;
