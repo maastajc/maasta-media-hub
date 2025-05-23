@@ -1,11 +1,14 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for artists
 const allArtists = [
@@ -87,6 +90,9 @@ const Artists = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("all");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   // Extract unique tags from all artists
   const uniqueTags = Array.from(
@@ -118,6 +124,23 @@ const Artists = () => {
     }
   };
 
+  const handleViewProfile = (artistId: number) => {
+    // In a real app, navigate to artist profile page
+    // For now, we'll show a toast message
+    toast({
+      title: "Profile View",
+      description: "This would open the artist's profile page.",
+    });
+  };
+
+  const handleJoinAsArtist = () => {
+    if (user) {
+      navigate("/profile"); // Direct to profile if already logged in
+    } else {
+      navigate("/sign-up"); // Direct to sign up if not logged in
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -125,10 +148,20 @@ const Artists = () => {
         {/* Header Section */}
         <section className="bg-maasta-purple/10 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Discover Artists</h1>
-            <p className="text-lg text-gray-600 mb-8">
-              Connect with talented professionals from across the media industry
-            </p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">Discover Artists</h1>
+                <p className="text-lg text-gray-600 mb-8">
+                  Connect with talented professionals from across the media industry
+                </p>
+              </div>
+              <Button 
+                className="bg-maasta-orange hover:bg-maasta-orange/90"
+                onClick={handleJoinAsArtist}
+              >
+                Join as an Artist
+              </Button>
+            </div>
             
             {/* Search and filter */}
             <div className="flex flex-col md:flex-row gap-4">
@@ -218,7 +251,11 @@ const Artists = () => {
                           </span>
                         ))}
                       </div>
-                      <Button variant="outline" className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5">
+                      <Button 
+                        variant="outline" 
+                        className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
+                        onClick={() => handleViewProfile(artist.id)}
+                      >
                         View Profile
                       </Button>
                     </CardContent>

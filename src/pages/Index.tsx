@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/layout/Navbar";
@@ -7,8 +7,43 @@ import Footer from "@/components/layout/Footer";
 import FeaturedArtists from "@/components/home/FeaturedArtists";
 import UpcomingEvents from "@/components/home/UpcomingEvents";
 import RecentAuditions from "@/components/home/RecentAuditions";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleJoinAsArtist = () => {
+    if (user) {
+      navigate("/profile"); // Direct to profile if already logged in
+    } else {
+      navigate("/sign-up"); // Direct to sign up if not logged in
+    }
+  };
+
+  const handlePostAudition = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "You need to sign in to post an audition",
+        variant: "default",
+      });
+      navigate("/sign-in");
+      return;
+    }
+    navigate("/auditions/create");
+  };
+
+  const handleCreateAccount = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      navigate("/sign-up");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -23,10 +58,19 @@ const Index = () => {
               Connect with artists, discover genuine auditions, and promote your events—all in one place.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up">
-              <Button size="lg" className="bg-maasta-orange hover:bg-maasta-orange/90">
+              <Button 
+                size="lg" 
+                className="bg-maasta-orange hover:bg-maasta-orange/90"
+                onClick={handleJoinAsArtist}
+              >
                 Join as an Artist
               </Button>
-              <Button size="lg" variant="outline" className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple/10">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple/10"
+                onClick={handlePostAudition}
+              >
                 Post an Audition
               </Button>
             </div>
@@ -102,7 +146,11 @@ const Index = () => {
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Connect with industry professionals, showcase your talent, and take your career to the next level.
             </p>
-            <Button size="lg" className="bg-maasta-orange hover:bg-maasta-orange/90">
+            <Button 
+              size="lg" 
+              className="bg-maasta-orange hover:bg-maasta-orange/90"
+              onClick={handleCreateAccount}
+            >
               Create Your Free Account
             </Button>
           </div>

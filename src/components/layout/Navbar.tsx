@@ -1,14 +1,34 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, UserCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const handleSignIn = () => {
+    navigate("/sign-in");
   };
 
   return (
@@ -30,7 +50,42 @@ const Navbar = () => {
             <Link to="/artists" className="text-gray-700 hover:text-maasta-orange px-3 py-2 rounded-md text-sm font-medium">Artists</Link>
             <Link to="/auditions" className="text-gray-700 hover:text-maasta-orange px-3 py-2 rounded-md text-sm font-medium">Auditions</Link>
             <Link to="/events" className="text-gray-700 hover:text-maasta-orange px-3 py-2 rounded-md text-sm font-medium">Events</Link>
-            <Button className="ml-4 bg-maasta-orange hover:bg-maasta-orange/90">Sign In</Button>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative flex items-center gap-2 rounded-full focus-visible:ring-0">
+                    <UserCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">My Account</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/events/create">Create Event</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/auditions/create">Post Audition</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-500">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button onClick={handleSignIn} className="bg-maasta-orange hover:bg-maasta-orange/90">
+                Sign In
+              </Button>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -70,12 +125,58 @@ const Navbar = () => {
             >
               Events
             </Link>
-            <Button 
-              className="w-full mt-4 bg-maasta-orange hover:bg-maasta-orange/90"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Sign In
-            </Button>
+            
+            {user ? (
+              <>
+                <Link 
+                  to="/dashboard" 
+                  className="text-gray-700 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/profile" 
+                  className="text-gray-700 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Profile
+                </Link>
+                <Link 
+                  to="/events/create" 
+                  className="text-gray-700 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Create Event
+                </Link>
+                <Link 
+                  to="/auditions/create" 
+                  className="text-gray-700 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Post Audition
+                </Link>
+                <button
+                  className="text-red-500 hover:bg-gray-50 w-full text-left block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleSignOut();
+                  }}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Button 
+                className="w-full mt-4 bg-maasta-orange hover:bg-maasta-orange/90"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleSignIn();
+                }}
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       )}

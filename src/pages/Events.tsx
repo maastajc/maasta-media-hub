@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -105,6 +106,7 @@ const Events = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("all");
   const [sortOption, setSortOption] = useState("upcoming");
+  const navigate = useNavigate();
   
   // Extract unique tags from all events
   const uniqueTags = Array.from(
@@ -144,6 +146,14 @@ const Events = () => {
     }
   };
 
+  const handleCreateEvent = () => {
+    navigate("/events/create");
+  };
+
+  const handleViewEventDetails = (eventId: number) => {
+    navigate(`/events/${eventId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -158,7 +168,10 @@ const Events = () => {
                   Discover workshops, courses, contests, and more
                 </p>
               </div>
-              <Button className="bg-maasta-orange hover:bg-maasta-orange/90">
+              <Button 
+                className="bg-maasta-orange hover:bg-maasta-orange/90"
+                onClick={handleCreateEvent}
+              >
                 Create Event
               </Button>
             </div>
@@ -291,7 +304,11 @@ const Events = () => {
                           ))}
                         </div>
                         
-                        <Button variant="outline" className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5">
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
+                          onClick={() => handleViewEventDetails(event.id)}
+                        >
                           View Details
                         </Button>
                       </CardContent>

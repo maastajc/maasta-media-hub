@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for auditions
 const allAuditions = [
@@ -114,6 +117,9 @@ const Auditions = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   // Extract unique tags from all auditions
   const uniqueTags = Array.from(
@@ -155,6 +161,38 @@ const Auditions = () => {
     }
   };
 
+  const handlePostAudition = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "You need to sign in to post an audition",
+        variant: "default",
+      });
+      navigate("/sign-in");
+      return;
+    }
+    navigate("/auditions/create");
+  };
+
+  const handleApplyNow = (auditionId: number) => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "You need to sign in to apply for auditions",
+        variant: "default",
+      });
+      navigate("/sign-in");
+      return;
+    }
+    
+    // In a real application, you would navigate to an application form
+    // or submit an application directly
+    toast({
+      title: "Application submitted",
+      description: "Your application has been received. Check your dashboard for updates.",
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -169,7 +207,10 @@ const Auditions = () => {
                   Find genuine casting opportunities from verified production houses
                 </p>
               </div>
-              <Button className="bg-maasta-purple hover:bg-maasta-purple/90">
+              <Button 
+                className="bg-maasta-purple hover:bg-maasta-purple/90"
+                onClick={handlePostAudition}
+              >
                 Post an Audition
               </Button>
             </div>
@@ -298,7 +339,11 @@ const Auditions = () => {
                               {daysRemaining} days left
                             </span>
                           </div>
-                          <Button size="sm" className="bg-maasta-purple hover:bg-maasta-purple/90">
+                          <Button 
+                            size="sm" 
+                            className="bg-maasta-purple hover:bg-maasta-purple/90"
+                            onClick={() => handleApplyNow(audition.id)}
+                          >
                             Apply Now
                           </Button>
                         </div>
