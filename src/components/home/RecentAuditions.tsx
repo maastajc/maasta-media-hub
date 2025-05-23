@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,17 +29,6 @@ const RecentAuditions = () => {
   useEffect(() => {
     const fetchRecentAuditions = async () => {
       try {
-        // Check if the auditions table has the new columns
-        const { data: columnsCheck, error: columnsError } = await supabase
-          .from('auditions')
-          .select('id')
-          .limit(1);
-          
-        if (columnsError) {
-          console.error("Error checking auditions:", columnsError);
-          throw columnsError;
-        }
-        
         // Proceed with the main query
         const { data, error } = await supabase
           .from('auditions')
@@ -60,7 +48,7 @@ const RecentAuditions = () => {
           .limit(3);
 
         if (error) {
-          // If we get an error about missing columns, we need to handle it gracefully
+          // Check if the error is specifically about missing columns
           if (error.message?.includes("column 'tags' does not exist") || 
               error.message?.includes("column 'cover_image_url' does not exist")) {
             console.warn("Using fallback query for auditions due to missing columns:", error.message);
@@ -81,50 +69,55 @@ const RecentAuditions = () => {
               .order('created_at', { ascending: false })
               .limit(3);
               
-            if (fallbackError) throw fallbackError;
+            if (fallbackError) {
+              console.error("Fallback query also failed:", fallbackError);
+              throw fallbackError;
+            }
             
-            // Transform the data to match our component's expected format
-            const formattedAuditions = fallbackData.map(item => ({
-              id: item.id,
-              title: item.title,
-              location: item.location,
-              deadline: item.deadline,
-              requirements: item.requirements,
-              tags: [] as string[], // Empty array as fallback
-              urgent: item.deadline ? isUrgent(item.deadline) : false,
-              cover_image_url: null, // Null as fallback
-              company: item.profiles?.full_name || 'Unknown Company'
-            }));
-            
-            setAuditions(formattedAuditions);
-            return;
+            if (fallbackData) {
+              // Transform the data to match our component's expected format
+              const formattedAuditions = fallbackData.map(item => ({
+                id: item.id,
+                title: item.title,
+                location: item.location,
+                deadline: item.deadline,
+                requirements: item.requirements,
+                tags: [] as string[], // Empty array as fallback
+                urgent: item.deadline ? isUrgent(item.deadline) : false,
+                cover_image_url: null, // Null as fallback
+                company: item.profiles?.full_name || 'Unknown Company'
+              }));
+              
+              setAuditions(formattedAuditions);
+            } else {
+              setAuditions([]);
+            }
           } else {
+            // Handle other types of errors
             throw error;
           }
-        }
-        
-        if (!data) {
-          setAuditions([]);
-          return;
-        }
-        
-        // Transform the data to match our component's expected format
-        const formattedAuditions = data.map(item => ({
-          id: item.id,
-          title: item.title,
-          location: item.location,
-          deadline: item.deadline,
-          requirements: item.requirements,
-          tags: item.tags || [],
-          urgent: item.deadline ? isUrgent(item.deadline) : false,
-          cover_image_url: item.cover_image_url,
-          company: item.profiles?.full_name || 'Unknown Company'
-        }));
+        } else if (data) {
+          // Transform the data to match our component's expected format
+          const formattedAuditions = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            location: item.location,
+            deadline: item.deadline,
+            requirements: item.requirements,
+            tags: item.tags || [],
+            urgent: item.deadline ? isUrgent(item.deadline) : false,
+            cover_image_url: item.cover_image_url,
+            company: item.profiles?.full_name || 'Unknown Company'
+          }));
 
-        setAuditions(formattedAuditions);
+          setAuditions(formattedAuditions);
+        } else {
+          setAuditions([]);
+        }
       } catch (error) {
         console.error("Error fetching recent auditions:", error);
         toast.error("Failed to load recent auditions");
+        setAuditions([]);
       } finally {
         setLoading(false);
       }

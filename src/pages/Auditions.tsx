@@ -111,12 +111,15 @@ const Auditions = () => {
             if (fallbackError) throw fallbackError;
             
             // Transform the data to match our component's expected format
-            const processedAuditions = fallbackData.map(item => ({
+            const processedAuditions = fallbackData?.map(item => ({
               ...item,
               tags: [] as string[], // Empty array as fallback
               cover_image_url: null, // Null as fallback
               category: null, // Null as fallback
-            }));
+              age_range: null,
+              gender: null,
+              experience_level: null
+            })) || [];
             
             setAuditions(processedAuditions);
             setUniqueTags([]);
@@ -135,12 +138,18 @@ const Auditions = () => {
             tags: item.tags || [],
             cover_image_url: item.cover_image_url || null,
             category: item.category || null,
+            age_range: item.age_range || null,
+            gender: item.gender || null,
+            experience_level: item.experience_level || null
           }));
           
           setAuditions(processedAuditions);
           
           // Extract all tags to create a unique set
-          const allTags = processedAuditions.flatMap(audition => audition.tags || []);
+          const allTags = processedAuditions
+            .flatMap(audition => audition.tags || [])
+            .filter(Boolean); // Filter out any undefined or null values
+          
           const uniqueTagsSet = Array.from(new Set(allTags)).sort();
           setUniqueTags(uniqueTagsSet);
         } else {
@@ -150,6 +159,8 @@ const Auditions = () => {
       } catch (error: any) {
         console.error('Error fetching auditions:', error);
         toast.error("Failed to load auditions");
+        setAuditions([]);
+        setUniqueTags([]);
       } finally {
         setIsLoading(false);
       }
