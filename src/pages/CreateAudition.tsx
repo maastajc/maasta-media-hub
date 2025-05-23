@@ -27,8 +27,36 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FileUpload } from "@/components/ui/file-upload";
+import { uploadFile } from "@/utils/fileUpload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
+// Categories for auditions
+const AUDITION_CATEGORIES = [
+  "Acting", "Voiceover", "Dancing", "Singing", "Modeling",
+  "Music", "Direction", "Production", "Writing",
+  "Animation", "Editing", "Photography", "Cinematography",
+  "Makeup", "Costume", "Set Design", "Sound Design", "Other"
+];
+
+// Gender options
+const GENDER_OPTIONS = [
+  "Male", "Female", "Non-binary", "Any"
+];
+
+// Experience levels
+const EXPERIENCE_LEVELS = [
+  "Beginner", "Intermediate", "Advanced", "Professional", "Any"
+];
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -39,6 +67,12 @@ const formSchema = z.object({
   projectDetails: z.string().optional(),
   auditionDate: z.date().optional(),
   deadline: z.date().optional(),
+  category: z.string({
+    required_error: "Please select a category",
+  }),
+  ageRange: z.string().optional(),
+  gender: z.string().optional(),
+  experienceLevel: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,6 +82,11 @@ const CreateAudition = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string>("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,8 +97,57 @@ const CreateAudition = () => {
       location: "",
       compensation: "",
       projectDetails: "",
+      category: "",
+      ageRange: "",
+      gender: "",
+      experienceLevel: "",
     },
   });
+  
+  const handleImageUpload = async (file: File) => {
+    setCoverImage(file);
+    setUploadingImage(true);
+    
+    try {
+      // Generate a preview URL for immediate display
+      const objectUrl = URL.createObjectURL(file);
+      setCoverImageUrl(objectUrl);
+    } catch (error) {
+      console.error("Error creating preview:", error);
+      toast({
+        title: "Preview error",
+        description: "Failed to create image preview",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+  
+  const handleRemoveImage = () => {
+    setCoverImage(null);
+    setCoverImageUrl("");
+  };
+  
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (tags.includes(tagInput.trim())) {
+        toast({
+          title: "Duplicate tag",
+          description: "This tag is already added",
+          variant: "destructive",
+        });
+        return;
+      }
+      setTags([...tags, tagInput.trim()]);
+      setTagInput("");
+    }
+  };
+  
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
   
   const onSubmit = async (values: FormValues) => {
     if (!user) {
@@ -75,6 +163,16 @@ const CreateAudition = () => {
     try {
       setIsSubmitting(true);
       
+      // Upload cover image if provided
+      let finalCoverImageUrl = "";
+      if (coverImage) {
+        const { url, error } = await uploadFile(coverImage, "audition_covers");
+        if (error) {
+          throw new Error(`Error uploading cover image: ${error}`);
+        }
+        finalCoverImageUrl = url;
+      }
+      
       // Process form values
       const auditionData = {
         title: values.title,
@@ -87,6 +185,12 @@ const CreateAudition = () => {
         audition_date: values.auditionDate ? values.auditionDate.toISOString() : null,
         deadline: values.deadline ? values.deadline.toISOString() : null,
         status: "open",
+        cover_image_url: finalCoverImageUrl || null,
+        tags: tags.length > 0 ? tags : null,
+        category: values.category,
+        age_range: values.ageRange || null,
+        gender: values.gender || null,
+        experience_level: values.experienceLevel || null,
       };
       
       const { data, error } = await supabase
@@ -138,6 +242,21 @@ const CreateAudition = () => {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Cover Image Upload */}
+                  <div className="mb-6">
+                    <FormLabel className="block mb-2">Cover Image (Optional)</FormLabel>
+                    <FileUpload
+                      onFileUpload={handleImageUpload}
+                      previewUrl={coverImageUrl}
+                      isLoading={uploadingImage}
+                      onRemove={handleRemoveImage}
+                      buttonText="Upload cover image"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      A compelling image will help your audition stand out
+                    </p>
+                  </div>
+                  
                   <FormField
                     control={form.control}
                     name="title"
@@ -147,6 +266,31 @@ const CreateAudition = () => {
                         <FormControl>
                           <Input placeholder="e.g., Lead Actor for Feature Film" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category*</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {AUDITION_CATEGORIES.map((category) => (
+                              <SelectItem key={category} value={category.toLowerCase()}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -170,25 +314,100 @@ const CreateAudition = () => {
                     )}
                   />
                   
-                  <FormField
-                    control={form.control}
-                    name="requirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Requirements</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Age range, gender, physical traits, skills needed, etc."
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  {/* Tags Input */}
+                  <div className="space-y-2">
+                    <FormLabel>Tags</FormLabel>
+                    <div className="flex items-center">
+                      <Input
+                        placeholder="Add tags (press Enter to add)"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleAddTag}
+                      />
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {tags.map(tag => (
+                          <Badge key={tag} variant="outline" className="flex items-center gap-1">
+                            {tag}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => handleRemoveTag(tag)}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
                     )}
-                  />
+                    <p className="text-xs text-muted-foreground">
+                      Add relevant tags to improve discoverability (e.g., Commercial, Theater, Lead Role)
+                    </p>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender Preference</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {GENDER_OPTIONS.map((gender) => (
+                                <SelectItem key={gender} value={gender.toLowerCase()}>
+                                  {gender}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="ageRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Age Range</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., 18-25, 30-40" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="experienceLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Experience Level</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select experience level" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EXPERIENCE_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level.toLowerCase()}>
+                                  {level}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    
                     <FormField
                       control={form.control}
                       name="location"
@@ -202,21 +421,39 @@ const CreateAudition = () => {
                         </FormItem>
                       )}
                     />
-                    
-                    <FormField
-                      control={form.control}
-                      name="compensation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Compensation</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Paid, Non-paid, Profit Share" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Requirements</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Skills needed, physical traits, etc."
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="compensation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Compensation</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Paid, Non-paid, Profit Share" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}
