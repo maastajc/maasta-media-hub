@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Artists from "./pages/Artists";
 import Auditions from "./pages/Auditions";
 import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/artists" element={<Artists />} />
             <Route path="/auditions" element={<Auditions />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="*" element={<NotFound />} />
