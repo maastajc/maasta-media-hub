@@ -10,91 +10,43 @@ import * as z from "zod";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-
-const profileFormSchema = z.object({
-  full_name: z.string().min(2, "Full name is required"),
-  bio: z.string().optional(),
-  phone_number: z.string().optional(),
-  gender: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  date_of_birth: z.date().optional(),
-  profile_picture_url: z.string().optional(),
-  willing_to_relocate: z.boolean().optional(),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
-const socialLinksSchema = z.object({
-  imdb_profile: z.string().optional(),
-  youtube_vimeo: z.string().optional(),
-  instagram: z.string().optional(),
-  linkedin: z.string().optional(),
-  personal_website: z.string().optional(),
-});
-
-type SocialLinksValues = z.infer<typeof socialLinksSchema>;
+import { 
+  Eye, 
+  Edit, 
+  MapPin, 
+  Calendar, 
+  Briefcase, 
+  GraduationCap, 
+  Star, 
+  Globe,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Plus,
+  Camera,
+  Settings
+} from "lucide-react";
+import ProfileEditForm from "@/components/profile/ProfileEditForm";
+import ProjectsSection from "@/components/profile/ProjectsSection";
+import EducationSection from "@/components/profile/EducationSection";
+import SkillsSection from "@/components/profile/SkillsSection";
+import MediaSection from "@/components/profile/MediaSection";
+import SocialLinksForm from "@/components/profile/SocialLinksForm";
 
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
-  
-  const profileForm = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      full_name: "",
-      bio: "",
-      phone_number: "",
-      gender: "",
-      city: "",
-      state: "",
-      country: "",
-      profile_picture_url: "",
-      willing_to_relocate: false,
-    },
-  });
-  
-  const socialLinksForm = useForm<SocialLinksValues>({
-    resolver: zodResolver(socialLinksSchema),
-    defaultValues: {
-      imdb_profile: "",
-      youtube_vimeo: "",
-      instagram: "",
-      linkedin: "",
-      personal_website: "",
-    },
-  });
-  
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
   useEffect(() => {
     if (!user) {
       navigate("/sign-in");
@@ -107,35 +59,21 @@ const Profile = () => {
         
         const { data, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select(`
+            *,
+            artist_details (*),
+            projects (*),
+            education_training (*),
+            special_skills (*),
+            language_skills (*),
+            tools_software (*),
+            media_assets (*)
+          `)
           .eq("id", user.id)
           .single();
         
         if (error) throw error;
-        
         setProfileData(data);
-        
-        // Set form values
-        profileForm.reset({
-          full_name: data.full_name || "",
-          bio: data.bio || "",
-          phone_number: data.phone_number || "",
-          gender: data.gender || "",
-          city: data.city || "",
-          state: data.state || "",
-          country: data.country || "",
-          date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
-          profile_picture_url: data.profile_picture_url || "",
-          willing_to_relocate: data.willing_to_relocate || false,
-        });
-        
-        socialLinksForm.reset({
-          imdb_profile: data.imdb_profile || "",
-          youtube_vimeo: data.youtube_vimeo || "",
-          instagram: data.instagram || "",
-          linkedin: data.linkedin || "",
-          personal_website: data.personal_website || "",
-        });
       } catch (error: any) {
         console.error("Error fetching profile:", error.message);
         toast({
@@ -149,523 +87,324 @@ const Profile = () => {
     };
     
     fetchProfile();
-  }, [user, navigate, toast, profileForm, socialLinksForm]);
-  
-  const onSaveProfile = async (values: ProfileFormValues) => {
+  }, [user, navigate, toast]);
+
+  const handleViewPublicProfile = () => {
+    navigate(`/artists/${user?.id}`);
+  };
+
+  const refreshProfile = async () => {
     if (!user) return;
     
-    try {
-      setIsSavingProfile(true);
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: values.full_name,
-          bio: values.bio,
-          phone_number: values.phone_number,
-          gender: values.gender,
-          city: values.city,
-          state: values.state,
-          country: values.country,
-          date_of_birth: values.date_of_birth ? values.date_of_birth.toISOString().split('T')[0] : null,
-          profile_picture_url: values.profile_picture_url,
-          willing_to_relocate: values.willing_to_relocate,
-        })
-        .eq("id", user.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully",
-      });
-    } catch (error: any) {
-      console.error("Error updating profile:", error.message);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
-  
-  const onSaveSocialLinks = async (values: SocialLinksValues) => {
-    if (!user) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(`
+        *,
+        artist_details (*),
+        projects (*),
+        education_training (*),
+        special_skills (*),
+        language_skills (*),
+        tools_software (*),
+        media_assets (*)
+      `)
+      .eq("id", user.id)
+      .single();
     
-    try {
-      setIsSavingSocial(true);
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          imdb_profile: values.imdb_profile,
-          youtube_vimeo: values.youtube_vimeo,
-          instagram: values.instagram,
-          linkedin: values.linkedin,
-          personal_website: values.personal_website,
-        })
-        .eq("id", user.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Social links updated",
-        description: "Your social media links have been updated successfully",
-      });
-    } catch (error: any) {
-      console.error("Error updating social links:", error.message);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update social links",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingSocial(false);
+    if (!error && data) {
+      setProfileData(data);
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow py-10">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-96 mt-2" />
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="animate-pulse space-y-8">
+              <div className="h-80 bg-gray-200 rounded-2xl"></div>
+              <div className="h-64 bg-gray-200 rounded-2xl"></div>
             </div>
-            
-            <Skeleton className="h-12 w-full mb-6" />
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-32 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </main>
         <Footer />
       </div>
     );
   }
-  
+
+  const socialLinks = [
+    { icon: Globe, url: profileData?.personal_website, label: 'Website' },
+    { icon: Instagram, url: profileData?.instagram, label: 'Instagram' },
+    { icon: Linkedin, url: profileData?.linkedin, label: 'LinkedIn' },
+    { icon: Youtube, url: profileData?.youtube_vimeo, label: 'YouTube/Vimeo' },
+  ].filter(link => link.url);
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <main className="flex-grow py-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            className="mb-6"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back to Dashboard
-          </Button>
+      <main className="flex-grow">
+        {/* Profile Header - Live Preview Style */}
+        <div className="relative">
+          <div className="h-64 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
           
-          <header className="mb-6">
-            <h1 className="text-3xl font-bold">My Profile</h1>
-            <p className="text-gray-500">Manage your personal information and preferences</p>
-          </header>
-          
-          <Tabs defaultValue="personal" className="mb-6">
-            <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="personal">Personal Info</TabsTrigger>
-              <TabsTrigger value="social">Social Links</TabsTrigger>
-              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="personal">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...profileForm}>
-                    <form onSubmit={profileForm.handleSubmit(onSaveProfile)} className="space-y-6">
-                      <FormField
-                        control={profileForm.control}
-                        name="full_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name*</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={profileForm.control}
-                          name="phone_number"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="+91 xxxxxxxx" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+            <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative bg-white p-8">
+                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                    
+                    {/* Profile Picture */}
+                    <div className="relative group">
+                      <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
+                        <AvatarImage 
+                          src={profileData?.profile_picture_url} 
+                          alt={profileData?.full_name}
+                          className="object-cover"
                         />
-                        
-                        <FormField
-                          control={profileForm.control}
-                          name="gender"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Gender</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select gender" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="male">Male</SelectItem>
-                                  <SelectItem value="female">Female</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                  <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <AvatarFallback className="text-4xl font-bold bg-maasta-purple text-white">
+                          {profileData?.full_name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center cursor-pointer">
+                        <Camera className="text-white" size={32} />
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white"></div>
+                    </div>
+
+                    {/* Main Info */}
+                    <div className="flex-1 text-center lg:text-left">
+                      <div className="flex items-center gap-4 mb-4">
+                        <h1 className="text-4xl font-bold text-gray-900">{profileData?.full_name || 'Your Name'}</h1>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingProfile(true)}
+                          className="text-gray-500 hover:text-maasta-purple"
+                        >
+                          <Edit size={16} />
+                        </Button>
                       </div>
                       
-                      <FormField
-                        control={profileForm.control}
-                        name="date_of_birth"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Date of Birth</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP")
-                                    ) : (
-                                      <span>Select date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  disabled={(date) => date > new Date()}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={profileForm.control}
-                        name="bio"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Bio</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Tell us about yourself"
-                                className="min-h-[120px]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <Separator className="my-4" />
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Location</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormField
-                            control={profileForm.control}
-                            name="city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Your city" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={profileForm.control}
-                            name="state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>State</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Your state" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={profileForm.control}
-                            name="country"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Country</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Your country" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      {profileData?.artist_details?.[0]?.category && (
+                        <div className="flex justify-center lg:justify-start mb-4">
+                          <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full">
+                            {profileData.artist_details[0].category}
+                          </Badge>
                         </div>
-                        
-                        <FormField
-                          control={profileForm.control}
-                          name="willing_to_relocate"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-md border p-4">
-                              <div>
-                                <FormLabel>Willing to Relocate</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <Separator className="my-4" />
-                      
-                      <FormField
-                        control={profileForm.control}
-                        name="profile_picture_url"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Profile Picture URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="URL to your profile picture" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-end">
+                      )}
+
+                      {(profileData?.city || profileData?.state || profileData?.country) && (
+                        <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-4">
+                          <MapPin size={20} className="mr-2" />
+                          <span className="text-lg">
+                            {[profileData?.city, profileData?.state, profileData?.country].filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                      )}
+
+                      {profileData?.bio && (
+                        <p className="text-gray-700 mb-6 max-w-2xl">{profileData.bio}</p>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap justify-center lg:justify-start gap-4">
                         <Button 
-                          type="submit" 
-                          disabled={isSavingProfile}
-                          className="bg-maasta-orange hover:bg-maasta-orange/90"
+                          onClick={handleViewPublicProfile}
+                          className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium"
                         >
-                          {isSavingProfile ? "Saving..." : "Save Changes"}
+                          <Eye className="w-5 h-5 mr-2" />
+                          View Public Profile
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium"
+                        >
+                          <Settings className="w-5 h-5 mr-2" />
+                          Settings
                         </Button>
                       </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="social">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Social Media & Professional Links</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...socialLinksForm}>
-                    <form onSubmit={socialLinksForm.handleSubmit(onSaveSocialLinks)} className="space-y-6">
-                      <FormField
-                        control={socialLinksForm.control}
-                        name="imdb_profile"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>IMDB Profile</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://www.imdb.com/name/..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialLinksForm.control}
-                        name="youtube_vimeo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>YouTube/Vimeo</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Link to your channel or profile" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialLinksForm.control}
-                        name="instagram"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instagram</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://www.instagram.com/..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialLinksForm.control}
-                        name="linkedin"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LinkedIn</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://www.linkedin.com/in/..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialLinksForm.control}
-                        name="personal_website"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Personal Website</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-end">
-                        <Button 
-                          type="submit" 
-                          disabled={isSavingSocial}
-                          className="bg-maasta-orange hover:bg-maasta-orange/90"
-                        >
-                          {isSavingSocial ? "Saving..." : "Save Links"}
-                        </Button>
+                    </div>
+
+                    {/* Social Links */}
+                    {socialLinks.length > 0 && (
+                      <div className="flex lg:flex-col gap-4">
+                        {socialLinks.map((link, index) => {
+                          const Icon = link.icon;
+                          return (
+                            <a
+                              key={index}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-maasta-purple hover:text-white transition-all duration-300"
+                            >
+                              <Icon size={20} />
+                            </a>
+                          );
+                        })}
                       </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="portfolio">
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Profile Content */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <TabsList className="grid grid-cols-6 bg-white rounded-xl shadow-sm border">
+              <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
+              <TabsTrigger value="projects" className="rounded-lg">Projects</TabsTrigger>
+              <TabsTrigger value="education" className="rounded-lg">Education</TabsTrigger>
+              <TabsTrigger value="skills" className="rounded-lg">Skills</TabsTrigger>
+              <TabsTrigger value="media" className="rounded-lg">Media</TabsTrigger>
+              <TabsTrigger value="social" className="rounded-lg">Social</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Quick Stats */}
+                <Card className="lg:col-span-1">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Profile Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Projects</span>
+                      <span className="font-semibold">{profileData?.projects?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Skills</span>
+                      <span className="font-semibold">{profileData?.special_skills?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Education</span>
+                      <span className="font-semibold">{profileData?.education_training?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Media Assets</span>
+                      <span className="font-semibold">{profileData?.media_assets?.length || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Activity */}
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Recent Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 bg-maasta-orange rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium">Profile updated</p>
+                          <p className="text-sm text-gray-600">2 hours ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium">New project added</p>
+                          <p className="text-sm text-gray-600">1 day ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium">Portfolio viewed</p>
+                          <p className="text-sm text-gray-600">2 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Profile Completion */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Portfolio & Experience</CardTitle>
+                  <CardTitle className="text-lg">Profile Completion</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Media Assets</h3>
-                      <Button variant="outline" size="sm">
-                        Add Media
-                      </Button>
+                      <span>Basic Info</span>
+                      <Badge variant={profileData?.full_name ? "default" : "secondary"}>
+                        {profileData?.full_name ? "Complete" : "Incomplete"}
+                      </Badge>
                     </div>
-                    
-                    <p className="text-sm text-gray-500">
-                      No media assets found. Add photos and videos to showcase your work.
-                    </p>
-                    
-                    <Separator />
-                    
                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Projects</h3>
-                      <Button variant="outline" size="sm">
-                        Add Project
-                      </Button>
+                      <span>Projects</span>
+                      <Badge variant={profileData?.projects?.length ? "default" : "secondary"}>
+                        {profileData?.projects?.length ? "Complete" : "Add Projects"}
+                      </Badge>
                     </div>
-                    
-                    <p className="text-sm text-gray-500">
-                      No projects found. Add your work experience to showcase your portfolio.
-                    </p>
-                    
-                    <Separator />
-                    
                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Education & Training</h3>
-                      <Button variant="outline" size="sm">
-                        Add Education
-                      </Button>
-                    </div>
-                    
-                    <p className="text-sm text-gray-500">
-                      No education or training records found. Add your qualifications and training.
-                    </p>
-                    
-                    <Separator />
-                    
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Skills</h3>
-                      <Button variant="outline" size="sm">
-                        Add Skills
-                      </Button>
-                    </div>
-                    
-                    <p className="text-sm text-gray-500">
-                      No skills found. Add your special skills and talents.
-                    </p>
-                    
-                    <div className="text-center">
-                      <p className="text-gray-500 mb-4">
-                        Complete your portfolio to attract casting directors and event organizers
-                      </p>
-                      <Button className="bg-maasta-purple hover:bg-maasta-purple/90">
-                        Set Up Portfolio
-                      </Button>
+                      <span>Skills</span>
+                      <Badge variant={profileData?.special_skills?.length ? "default" : "secondary"}>
+                        {profileData?.special_skills?.length ? "Complete" : "Add Skills"}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="projects">
+              <ProjectsSection 
+                profileData={profileData} 
+                onUpdate={refreshProfile}
+                userId={user?.id}
+              />
+            </TabsContent>
+
+            <TabsContent value="education">
+              <EducationSection 
+                profileData={profileData} 
+                onUpdate={refreshProfile}
+                userId={user?.id}
+              />
+            </TabsContent>
+
+            <TabsContent value="skills">
+              <SkillsSection 
+                profileData={profileData} 
+                onUpdate={refreshProfile}
+                userId={user?.id}
+              />
+            </TabsContent>
+
+            <TabsContent value="media">
+              <MediaSection 
+                profileData={profileData} 
+                onUpdate={refreshProfile}
+                userId={user?.id}
+              />
+            </TabsContent>
+
+            <TabsContent value="social">
+              <SocialLinksForm 
+                profileData={profileData} 
+                onUpdate={refreshProfile}
+                userId={user?.id}
+              />
+            </TabsContent>
           </Tabs>
         </div>
+
+        {/* Edit Profile Modal */}
+        {isEditingProfile && (
+          <ProfileEditForm
+            profileData={profileData}
+            onClose={() => setIsEditingProfile(false)}
+            onUpdate={refreshProfile}
+            userId={user?.id}
+          />
+        )}
       </main>
       <Footer />
     </div>
