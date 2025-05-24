@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +27,7 @@ interface AuditionDetailsData {
     full_name: string;
     profile_picture_url?: string;
   };
-  // Optional fields that might not exist in database yet
+  // Fields that now exist in database
   cover_image_url?: string | null;
   tags?: string[] | null;
   category?: string | null;

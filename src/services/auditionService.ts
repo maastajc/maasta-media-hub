@@ -6,7 +6,6 @@ import { isUrgent } from "@/utils/auditionHelpers";
 
 export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
-    // First try with all fields
     const { data, error } = await supabase
       .from('auditions')
       .select(`
@@ -18,6 +17,10 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         tags,
         cover_image_url,
         creator_id,
+        category,
+        age_range,
+        gender,
+        experience_level,
         profiles:profiles(full_name)
       `)
       .eq('status', 'open')
@@ -25,52 +28,8 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       .limit(3);
 
     if (error) {
-      // Check if the error is specifically about missing columns
-      if (error.message?.includes("column 'tags' does not exist") || 
-          error.message?.includes("column 'cover_image_url' does not exist")) {
-        console.warn("Using fallback query for auditions due to missing columns:", error.message);
-        
-        // Fallback query without the new columns
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('auditions')
-          .select(`
-            id,
-            title,
-            location,
-            deadline,
-            requirements,
-            creator_id,
-            profiles:profiles(full_name)
-          `)
-          .eq('status', 'open')
-          .order('created_at', { ascending: false })
-          .limit(3);
-          
-        if (fallbackError) {
-          console.error("Fallback query also failed:", fallbackError);
-          throw fallbackError;
-        }
-        
-        if (fallbackData) {
-          // Transform the data to match our component's expected format
-          return fallbackData.map(item => ({
-            id: item.id,
-            title: item.title,
-            location: item.location,
-            deadline: item.deadline,
-            requirements: item.requirements,
-            tags: [] as string[], // Empty array as fallback
-            urgent: item.deadline ? isUrgent(item.deadline) : false,
-            cover_image_url: null, // Null as fallback
-            company: item.profiles?.full_name || 'Unknown Company'
-          }));
-        } else {
-          return [];
-        }
-      } else {
-        // Handle other types of errors
-        throw error;
-      }
+      console.error("Error fetching recent auditions:", error);
+      throw error;
     } else if (data) {
       // Transform the data to match our component's expected format
       return data.map(item => ({
@@ -82,7 +41,11 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         tags: item.tags || [],
         urgent: item.deadline ? isUrgent(item.deadline) : false,
         cover_image_url: item.cover_image_url,
-        company: item.profiles?.full_name || 'Unknown Company'
+        company: item.profiles?.full_name || 'Unknown Company',
+        category: item.category,
+        age_range: item.age_range,
+        gender: item.gender,
+        experience_level: item.experience_level
       }));
     } else {
       return [];

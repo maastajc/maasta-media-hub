@@ -100,47 +100,65 @@ export type Database = {
       }
       auditions: {
         Row: {
+          age_range: string | null
           audition_date: string | null
+          category: string | null
           compensation: string | null
+          cover_image_url: string | null
           created_at: string | null
           creator_id: string | null
           deadline: string | null
           description: string | null
+          experience_level: string | null
+          gender: string | null
           id: string
           location: string | null
           project_details: string | null
           requirements: string | null
           status: string | null
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          age_range?: string | null
           audition_date?: string | null
+          category?: string | null
           compensation?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
           deadline?: string | null
           description?: string | null
+          experience_level?: string | null
+          gender?: string | null
           id?: string
           location?: string | null
           project_details?: string | null
           requirements?: string | null
           status?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          age_range?: string | null
           audition_date?: string | null
+          category?: string | null
           compensation?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
           deadline?: string | null
           description?: string | null
+          experience_level?: string | null
+          gender?: string | null
           id?: string
           location?: string | null
           project_details?: string | null
           requirements?: string | null
           status?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
