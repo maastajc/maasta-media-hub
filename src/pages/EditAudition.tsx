@@ -1,13 +1,13 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,6 @@ import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadFile } from '@/utils/fileUpload';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -35,13 +34,15 @@ const formSchema = z.object({
   experience_level: z.string().optional(),
 });
 
-const CreateAudition = () => {
+const EditAudition = () => {
+  const { auditionId } = useParams<{ auditionId: string }>();
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -64,6 +65,65 @@ const CreateAudition = () => {
       experience_level: '',
     },
   });
+
+  useEffect(() => {
+    const fetchAudition = async () => {
+      if (!auditionId || !user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('auditions')
+          .select('*')
+          .eq('id', auditionId)
+          .eq('creator_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching audition:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load audition details",
+            variant: "destructive",
+          });
+          navigate('/auditions');
+          return;
+        }
+
+        if (data) {
+          // Populate form with existing data
+          form.reset({
+            title: data.title || '',
+            description: data.description || '',
+            requirements: data.requirements || '',
+            location: data.location || '',
+            deadline: data.deadline ? new Date(data.deadline).toISOString().slice(0, 16) : '',
+            audition_date: data.audition_date ? new Date(data.audition_date).toISOString().slice(0, 16) : '',
+            project_details: data.project_details || '',
+            compensation: data.compensation || '',
+            category: data.category || '',
+            age_range: data.age_range || '',
+            gender: data.gender || '',
+            experience_level: data.experience_level || '',
+          });
+
+          setTags(data.tags || []);
+          setCoverImageUrl(data.cover_image_url || '');
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+        navigate('/auditions');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAudition();
+  }, [auditionId, user, form, toast, navigate]);
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -88,7 +148,6 @@ const CreateAudition = () => {
     setCoverImage(file);
     
     try {
-      // Use the correct bucket name
       const result = await uploadFile(file, 'audition-covers', 'covers');
       
       if (result.error) {
@@ -123,10 +182,10 @@ const CreateAudition = () => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
+    if (!user || !auditionId) {
       toast({
         title: "Authentication required",
-        description: "Please sign in to create an audition",
+        description: "Please sign in to edit this audition",
         variant: "destructive",
       });
       return;
@@ -135,7 +194,6 @@ const CreateAudition = () => {
     setIsSubmitting(true);
 
     try {
-      // Prepare the audition data
       const auditionData = {
         title: values.title,
         description: values.description,
@@ -151,24 +209,20 @@ const CreateAudition = () => {
         experience_level: values.experience_level || null,
         tags: tags.length > 0 ? tags : null,
         cover_image_url: coverImageUrl || null,
-        creator_id: user.id,
-        status: 'open'
+        updated_at: new Date().toISOString()
       };
 
-      console.log('Posting audition with data:', auditionData);
-
-      // Insert the audition
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('auditions')
-        .insert([auditionData])
-        .select()
-        .single();
+        .update(auditionData)
+        .eq('id', auditionId)
+        .eq('creator_id', user.id);
 
       if (error) {
-        console.error('Error posting audition:', error);
+        console.error('Error updating audition:', error);
         toast({
           title: "Error",
-          description: error.message || "Failed to create audition",
+          description: error.message || "Failed to update audition",
           variant: "destructive",
         });
         return;
@@ -176,11 +230,10 @@ const CreateAudition = () => {
 
       toast({
         title: "Success",
-        description: "Audition created successfully!",
+        description: "Audition updated successfully!",
       });
 
-      // Navigate to the auditions list or the created audition
-      navigate('/auditions');
+      navigate(`/auditions/${auditionId}`);
     } catch (error: any) {
       console.error('Unexpected error:', error);
       toast({
@@ -193,6 +246,21 @@ const CreateAudition = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
+            <p className="text-gray-600">Please wait while we load the audition details.</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -200,15 +268,15 @@ const CreateAudition = () => {
         <section className="py-12 bg-gray-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Create New Audition</h1>
-              <p className="text-gray-600">Post a new audition opportunity for artists</p>
+              <h1 className="text-3xl font-bold mb-2">Edit Audition</h1>
+              <p className="text-gray-600">Update your audition posting</p>
             </div>
 
             <Card>
               <CardHeader>
                 <CardTitle>Audition Details</CardTitle>
                 <CardDescription>
-                  Fill in the details for your audition posting
+                  Update the details for your audition posting
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -228,7 +296,7 @@ const CreateAudition = () => {
                       />
                     </div>
 
-                    {/* Basic Information */}
+                    {/* Form fields - same as CreateAudition but abbreviated */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
@@ -485,13 +553,22 @@ const CreateAudition = () => {
                       )}
                     />
 
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-maasta-purple hover:bg-maasta-purple/90"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Creating Audition...' : 'Create Audition'}
-                    </Button>
+                    <div className="flex gap-4">
+                      <Button 
+                        type="submit" 
+                        className="flex-1 bg-maasta-purple hover:bg-maasta-purple/90"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Updating Audition...' : 'Update Audition'}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => navigate(`/auditions/${auditionId}`)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
                   </form>
                 </Form>
               </CardContent>
@@ -504,4 +581,4 @@ const CreateAudition = () => {
   );
 };
 
-export default CreateAudition;
+export default EditAudition;

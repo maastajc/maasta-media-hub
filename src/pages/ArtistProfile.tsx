@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -18,7 +19,11 @@ import {
   Award,
   BookOpen,
   Users,
-  Briefcase
+  Briefcase,
+  Mail,
+  Download,
+  Eye,
+  ExternalLink
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -155,22 +160,16 @@ const ArtistProfile = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow">
-          <section className="py-16 bg-white">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                  <Skeleton className="h-64 w-full rounded-lg" />
-                  <Skeleton className="h-8 w-3/4 mt-4" />
-                  <Skeleton className="h-6 w-1/2 mt-2" />
-                </div>
-                <div className="lg:col-span-2">
-                  <Skeleton className="h-8 w-1/2 mb-4" />
-                  <Skeleton className="h-24 w-full mb-6" />
-                  <Skeleton className="h-48 w-full" />
-                </div>
+          <div className="relative">
+            <Skeleton className="h-80 w-full" />
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+              <div className="bg-white rounded-xl shadow-xl p-8">
+                <Skeleton className="h-32 w-32 rounded-full mx-auto" />
+                <Skeleton className="h-8 w-64 mx-auto mt-4" />
+                <Skeleton className="h-6 w-48 mx-auto mt-2" />
               </div>
             </div>
-          </section>
+          </div>
         </main>
         <Footer />
       </div>
@@ -202,278 +201,333 @@ const ArtistProfile = () => {
   ].filter(link => link.url);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-grow">
-        <section className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column - Profile Card */}
-              <div className="lg:col-span-1">
-                <Card className="sticky top-8">
-                  <CardContent className="p-6">
-                    <div className="text-center mb-6">
+        {/* Hero Section with Cover */}
+        <div className="relative">
+          <div className="h-80 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
+          
+          {/* Profile Card Overlay */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+            <Card className="bg-white shadow-2xl rounded-2xl overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative bg-white p-8">
+                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                    
+                    {/* Profile Picture */}
+                    <div className="relative">
                       <img
                         src={artist.profile_picture_url || '/placeholder.svg'}
                         alt={artist.full_name}
-                        className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                        className="w-48 h-48 rounded-2xl object-cover shadow-xl border-4 border-white"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null;
                           target.src = '/placeholder.svg';
                         }}
                       />
-                      <h1 className="text-2xl font-bold">{artist.full_name}</h1>
+                      <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white"></div>
+                    </div>
+
+                    {/* Main Info */}
+                    <div className="flex-1 text-center lg:text-left">
+                      <h1 className="text-4xl font-bold text-gray-900 mb-2">{artist.full_name}</h1>
+                      
                       {artist.artist_details?.category && (
-                        <p className="text-maasta-purple font-medium capitalize">
-                          {artist.artist_details.category}
-                        </p>
+                        <div className="flex justify-center lg:justify-start mb-4">
+                          <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full">
+                            {artist.artist_details.category}
+                          </Badge>
+                        </div>
                       )}
+
                       {(artist.city || artist.state || artist.country) && (
-                        <div className="flex items-center justify-center text-gray-500 mt-2">
-                          <MapPin size={16} className="mr-1" />
-                          <span>
+                        <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-4">
+                          <MapPin size={20} className="mr-2" />
+                          <span className="text-lg">
                             {[artist.city, artist.state, artist.country].filter(Boolean).join(', ')}
                           </span>
                         </div>
                       )}
+
+                      {artist.artist_details && (
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-6">
+                          {artist.artist_details.experience_level && (
+                            <div className="flex items-center bg-gray-100 px-4 py-2 rounded-full">
+                              <Star className="w-5 h-5 mr-2 text-maasta-orange" />
+                              <span className="font-medium capitalize">{artist.artist_details.experience_level}</span>
+                            </div>
+                          )}
+                          {artist.artist_details.years_of_experience && (
+                            <div className="flex items-center bg-gray-100 px-4 py-2 rounded-full">
+                              <Calendar className="w-5 h-5 mr-2 text-maasta-purple" />
+                              <span className="font-medium">{artist.artist_details.years_of_experience} years</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                        <Button className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium">
+                          <Mail className="w-5 h-5 mr-2" />
+                          Contact
+                        </Button>
+                        <Button variant="outline" className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium">
+                          <Download className="w-5 h-5 mr-2" />
+                          Portfolio
+                        </Button>
+                      </div>
                     </div>
 
-                    {artist.artist_details && (
-                      <div className="space-y-3 mb-6">
-                        {artist.artist_details.experience_level && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Experience:</span>
-                            <Badge variant="secondary" className="capitalize">
-                              {artist.artist_details.experience_level}
-                            </Badge>
+                    {/* Social Links Sidebar */}
+                    {socialLinks.length > 0 && (
+                      <div className="flex lg:flex-col gap-4">
+                        {socialLinks.map((link, index) => {
+                          const Icon = link.icon;
+                          return (
+                            <a
+                              key={index}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-maasta-purple hover:text-white transition-all duration-300 group"
+                            >
+                              <Icon size={20} />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Content Sections */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+          
+          {/* About Section */}
+          {artist.bio && (
+            <Card className="rounded-2xl shadow-lg">
+              <CardContent className="p-8">
+                <h2 className="text-2xl font-bold mb-6 flex items-center">
+                  <Users className="mr-3 text-maasta-purple" size={24} />
+                  About
+                </h2>
+                <p className="text-gray-700 leading-relaxed text-lg">{artist.bio}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Projects Showcase */}
+          {artist.projects && artist.projects.length > 0 && (
+            <Card className="rounded-2xl shadow-lg">
+              <CardContent className="p-8">
+                <h2 className="text-2xl font-bold mb-6 flex items-center">
+                  <Briefcase className="mr-3 text-maasta-purple" size={24} />
+                  Featured Projects ({artist.projects.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {artist.projects.map((project) => (
+                    <div key={project.id} className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 group">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="font-bold text-xl text-gray-900 group-hover:text-maasta-purple transition-colors">
+                          {project.project_name}
+                        </h3>
+                        {project.year_of_release && (
+                          <Badge variant="outline" className="bg-white">
+                            {project.year_of_release}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center text-gray-600">
+                          <Award className="w-4 h-4 mr-2" />
+                          <span className="font-medium">Role:</span>
+                          <span className="ml-1">{project.role_in_project}</span>
+                        </div>
+                        
+                        {project.director_producer && (
+                          <div className="flex items-center text-gray-600">
+                            <Users className="w-4 h-4 mr-2" />
+                            <span className="font-medium">Director:</span>
+                            <span className="ml-1">{project.director_producer}</span>
                           </div>
                         )}
-                        {artist.artist_details.years_of_experience && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Years:</span>
-                            <span className="font-medium">{artist.artist_details.years_of_experience}</span>
+                        
+                        {project.streaming_platform && (
+                          <div className="flex items-center text-gray-600">
+                            <Eye className="w-4 h-4 mr-2" />
+                            <span className="font-medium">Platform:</span>
+                            <span className="ml-1">{project.streaming_platform}</span>
                           </div>
                         )}
                       </div>
-                    )}
+                      
+                      <div className="flex justify-between items-center mt-4">
+                        <Badge className="bg-maasta-purple/10 text-maasta-purple border-maasta-purple/20">
+                          {project.project_type}
+                        </Badge>
+                        {project.link && (
+                          <a 
+                            href={project.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-maasta-orange hover:text-maasta-orange/80 transition-colors"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-                    {socialLinks.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="font-medium">Connect</h3>
-                        <div className="space-y-2">
-                          {socialLinks.map((link, index) => {
-                            const Icon = link.icon;
-                            return (
-                              <a
-                                key={index}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-gray-600 hover:text-maasta-purple transition-colors"
-                              >
-                                <Icon size={16} className="mr-2" />
-                                {link.label}
-                              </a>
-                            );
-                          })}
+          {/* Skills & Expertise Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Special Skills */}
+            {artist.special_skills && artist.special_skills.length > 0 && (
+              <Card className="rounded-2xl shadow-lg">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold mb-6 flex items-center">
+                    <Star className="mr-3 text-maasta-orange" size={20} />
+                    Specializations
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {artist.special_skills.map((skill) => (
+                      <Badge 
+                        key={skill.id} 
+                        className="bg-gradient-to-r from-maasta-purple to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:shadow-lg transition-all"
+                      >
+                        {skill.skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Languages */}
+            {artist.language_skills && artist.language_skills.length > 0 && (
+              <Card className="rounded-2xl shadow-lg">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold mb-6">Languages</h3>
+                  <div className="space-y-4">
+                    {artist.language_skills.map((lang) => (
+                      <div key={lang.id} className="flex justify-between items-center">
+                        <span className="font-medium text-gray-900">{lang.language}</span>
+                        <Badge 
+                          variant="outline" 
+                          className="capitalize bg-gray-50 border-gray-200"
+                        >
+                          {lang.proficiency}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Education & Tools Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Education */}
+            {artist.education_training && artist.education_training.length > 0 && (
+              <Card className="rounded-2xl shadow-lg">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold mb-6 flex items-center">
+                    <BookOpen className="mr-3 text-maasta-purple" size={20} />
+                    Education & Training
+                  </h3>
+                  <div className="space-y-6">
+                    {artist.education_training.map((edu) => (
+                      <div key={edu.id} className="border-l-4 border-maasta-orange pl-6 pb-4">
+                        <h4 className="font-bold text-gray-900 text-lg">{edu.qualification_name}</h4>
+                        {edu.institution && (
+                          <p className="text-gray-600 mb-2">{edu.institution}</p>
+                        )}
+                        <div className="flex items-center gap-3">
+                          {edu.year_completed && (
+                            <Badge variant="outline" className="bg-white">
+                              {edu.year_completed}
+                            </Badge>
+                          )}
+                          <Badge 
+                            className={edu.is_academic ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}
+                          >
+                            {edu.is_academic ? "Academic" : "Professional"}
+                          </Badge>
                         </div>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                    <Button className="w-full mt-6 bg-maasta-orange hover:bg-maasta-orange/90">
-                      Contact Artist
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - Content */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* Bio Section */}
-                {artist.bio && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Users className="mr-2" size={20} />
-                        About
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-700 leading-relaxed">{artist.bio}</p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Projects Section */}
-                {artist.projects && artist.projects.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Briefcase className="mr-2" size={20} />
-                        Projects ({artist.projects.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {artist.projects.map((project) => (
-                          <div key={project.id} className="border-l-4 border-maasta-purple pl-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium">{project.project_name}</h4>
-                              {project.year_of_release && (
-                                <Badge variant="outline">{project.year_of_release}</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Role:</span> {project.role_in_project}
-                            </p>
-                            {project.director_producer && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <span className="font-medium">Director/Producer:</span> {project.director_producer}
-                              </p>
-                            )}
-                            {project.streaming_platform && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <span className="font-medium">Platform:</span> {project.streaming_platform}
-                              </p>
-                            )}
-                            <Badge variant="secondary" className="capitalize">
-                              {project.project_type}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Skills Section */}
-                {artist.special_skills && artist.special_skills.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Star className="mr-2" size={20} />
-                        Special Skills
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {artist.special_skills.map((skill) => (
-                          <Badge key={skill.id} variant="secondary">
-                            {skill.skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Languages Section */}
-                {artist.language_skills && artist.language_skills.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Languages</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-3">
-                        {artist.language_skills.map((lang) => (
-                          <div key={lang.id} className="flex justify-between">
-                            <span>{lang.language}</span>
-                            <Badge variant="outline" className="capitalize">
-                              {lang.proficiency}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Education Section */}
-                {artist.education_training && artist.education_training.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <BookOpen className="mr-2" size={20} />
-                        Education & Training
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {artist.education_training.map((edu) => (
-                          <div key={edu.id} className="border-l-4 border-maasta-orange pl-4">
-                            <h4 className="font-medium">{edu.qualification_name}</h4>
-                            {edu.institution && (
-                              <p className="text-sm text-gray-600">{edu.institution}</p>
-                            )}
-                            <div className="flex items-center mt-1">
-                              {edu.year_completed && (
-                                <Badge variant="outline" className="mr-2">
-                                  {edu.year_completed}
-                                </Badge>
-                              )}
-                              <Badge variant={edu.is_academic ? "default" : "secondary"}>
-                                {edu.is_academic ? "Academic" : "Professional Training"}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Tools & Software Section */}
-                {artist.tools_software && artist.tools_software.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Tools & Software</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {artist.tools_software.map((tool) => (
-                          <Badge key={tool.id} variant="outline">
-                            {tool.tool_name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Media Gallery Section */}
-                {artist.media_assets && artist.media_assets.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Media Gallery</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {artist.media_assets.map((media) => (
-                          <div key={media.id} className="aspect-square rounded-lg overflow-hidden">
-                            {media.is_video ? (
-                              <video
-                                src={media.url}
-                                className="w-full h-full object-cover"
-                                controls
-                              />
-                            ) : (
-                              <img
-                                src={media.url}
-                                alt={media.description || media.file_name}
-                                className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+            {/* Tools & Software */}
+            {artist.tools_software && artist.tools_software.length > 0 && (
+              <Card className="rounded-2xl shadow-lg">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold mb-6">Tools & Software</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {artist.tools_software.map((tool) => (
+                      <Badge 
+                        key={tool.id} 
+                        variant="outline"
+                        className="bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200 px-4 py-2 rounded-full hover:shadow-md transition-all"
+                      >
+                        {tool.tool_name}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </section>
+
+          {/* Media Gallery */}
+          {artist.media_assets && artist.media_assets.length > 0 && (
+            <Card className="rounded-2xl shadow-lg">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-6">Portfolio Gallery</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {artist.media_assets.map((media) => (
+                    <div key={media.id} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 hover:shadow-xl transition-all duration-300">
+                      {media.is_video ? (
+                        <video
+                          src={media.url}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={media.url}
+                          alt={media.description || media.file_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                        <Eye className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" size={24} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

@@ -1,4 +1,3 @@
-
 import { StrictMode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,6 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import CreateEvent from "./pages/CreateEvent";
 import CreateAudition from "./pages/CreateAudition";
+import EditAudition from "@/pages/EditAudition";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Create a new QueryClient instance outside the component
@@ -65,6 +65,8 @@ const App = () => (
                   <CreateAudition />
                 </ProtectedRoute>
               } />
+              
+              <Route path="/auditions/edit/:auditionId" element={<EditAudition />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
