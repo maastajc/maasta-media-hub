@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,7 +43,7 @@ interface ArtistProfileData {
     experience_level: string;
     years_of_experience: number;
     association_membership: string;
-  };
+  } | null;
   projects?: Array<{
     id: string;
     project_name: string;
@@ -54,27 +53,27 @@ interface ArtistProfileData {
     director_producer: string;
     streaming_platform: string;
     link: string;
-  }>;
+  }> | null;
   education_training?: Array<{
     id: string;
     qualification_name: string;
     institution: string;
     year_completed: number;
     is_academic: boolean;
-  }>;
+  }> | null;
   special_skills?: Array<{
     id: string;
     skill: string;
-  }>;
+  }> | null;
   language_skills?: Array<{
     id: string;
     language: string;
     proficiency: string;
-  }>;
+  }> | null;
   tools_software?: Array<{
     id: string;
     tool_name: string;
-  }>;
+  }> | null;
   media_assets?: Array<{
     id: string;
     url: string;
@@ -82,7 +81,7 @@ interface ArtistProfileData {
     file_type: string;
     is_video: boolean;
     description: string;
-  }>;
+  }> | null;
 }
 
 const ArtistProfile = () => {
@@ -123,7 +122,20 @@ const ArtistProfile = () => {
         }
 
         if (data) {
-          setArtist(data as ArtistProfileData);
+          // Safely handle the data conversion
+          const artistData: ArtistProfileData = {
+            ...data,
+            artist_details: Array.isArray(data.artist_details) && data.artist_details.length > 0 
+              ? data.artist_details[0] 
+              : null,
+            projects: Array.isArray(data.projects) ? data.projects : null,
+            education_training: Array.isArray(data.education_training) ? data.education_training : null,
+            special_skills: Array.isArray(data.special_skills) ? data.special_skills : null,
+            language_skills: Array.isArray(data.language_skills) ? data.language_skills : null,
+            tools_software: Array.isArray(data.tools_software) ? data.tools_software : null,
+            media_assets: Array.isArray(data.media_assets) ? data.media_assets : null,
+          };
+          setArtist(artistData);
         } else {
           toast.error("Artist not found");
         }
