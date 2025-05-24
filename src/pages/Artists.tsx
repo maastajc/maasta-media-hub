@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 
 // Mock data for artists
 const allArtists = [
@@ -92,7 +91,6 @@ const Artists = () => {
   const [currentTab, setCurrentTab] = useState("all");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   
   // Extract unique tags from all artists
   const uniqueTags = Array.from(
@@ -125,12 +123,9 @@ const Artists = () => {
   };
 
   const handleViewProfile = (artistId: number) => {
-    // In a real app, navigate to artist profile page
-    // For now, we'll show a toast message
-    toast({
-      title: "Profile View",
-      description: "This would open the artist's profile page.",
-    });
+    // Navigate to the artist profile page - for now using mock ID
+    // In a real app, this would be the actual artist UUID from the database
+    navigate(`/artists/${artistId}`);
   };
 
   const handleJoinAsArtist = () => {

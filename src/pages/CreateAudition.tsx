@@ -1,576 +1,503 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileUpload } from "@/components/ui/file-upload";
-import { uploadFile } from "@/utils/fileUpload";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-
-// Categories for auditions
-const AUDITION_CATEGORIES = [
-  "Acting", "Voiceover", "Dancing", "Singing", "Modeling",
-  "Music", "Direction", "Production", "Writing",
-  "Animation", "Editing", "Photography", "Cinematography",
-  "Makeup", "Costume", "Set Design", "Sound Design", "Other"
-];
-
-// Gender options
-const GENDER_OPTIONS = [
-  "Male", "Female", "Non-binary", "Any"
-];
-
-// Experience levels
-const EXPERIENCE_LEVELS = [
-  "Beginner", "Intermediate", "Advanced", "Professional", "Any"
-];
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FileUpload } from '@/components/ui/file-upload';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { uploadFile } from '@/utils/fileUpload';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 
 const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  requirements: z.string().optional(),
-  location: z.string().min(2, "Location is required"),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  requirements: z.string().min(1, 'Requirements are required'),
+  location: z.string().min(1, 'Location is required'),
+  deadline: z.string().optional(),
+  audition_date: z.string().optional(),
+  project_details: z.string().optional(),
   compensation: z.string().optional(),
-  projectDetails: z.string().optional(),
-  auditionDate: z.date().optional(),
-  deadline: z.date().optional(),
-  category: z.string({
-    required_error: "Please select a category",
-  }),
-  ageRange: z.string().optional(),
+  category: z.string().optional(),
+  age_range: z.string().optional(),
   gender: z.string().optional(),
-  experienceLevel: z.string().optional(),
+  experience_level: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 const CreateAudition = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverImageUrl, setCoverImageUrl] = useState<string>("");
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState('');
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<FormValues>({
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      requirements: "",
-      location: "",
-      compensation: "",
-      projectDetails: "",
-      category: "",
-      ageRange: "",
-      gender: "",
-      experienceLevel: "",
+      title: '',
+      description: '',
+      requirements: '',
+      location: '',
+      deadline: '',
+      audition_date: '',
+      project_details: '',
+      compensation: '',
+      category: '',
+      age_range: '',
+      gender: '',
+      experience_level: '',
     },
   });
-  
-  const handleImageUpload = async (file: File) => {
-    setCoverImage(file);
-    setUploadingImage(true);
-    
-    try {
-      // Generate a preview URL for immediate display
-      const objectUrl = URL.createObjectURL(file);
-      setCoverImageUrl(objectUrl);
-    } catch (error) {
-      console.error("Error creating preview:", error);
-      toast({
-        title: "Preview error",
-        description: "Failed to create image preview",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingImage(false);
+
+  const addTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
     }
   };
-  
-  const handleRemoveImage = () => {
-    setCoverImage(null);
-    setCoverImageUrl("");
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
-  
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      if (tags.includes(tagInput.trim())) {
+      addTag();
+    }
+  };
+
+  const handleCoverImageUpload = async (file: File) => {
+    setIsUploading(true);
+    setCoverImage(file);
+    
+    try {
+      // Create a bucket if it doesn't exist - we'll use a more generic bucket name
+      const result = await uploadFile(file, 'media-uploads', 'audition-covers');
+      
+      if (result.error) {
         toast({
-          title: "Duplicate tag",
-          description: "This tag is already added",
+          title: "Upload failed",
+          description: result.error,
           variant: "destructive",
         });
         return;
       }
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
+
+      setCoverImageUrl(result.url);
+      toast({
+        title: "Success",
+        description: "Cover image uploaded successfully",
+      });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed", 
+        description: error.message || "Failed to upload cover image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
-  
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
+
+  const removeCoverImage = () => {
+    setCoverImage(null);
+    setCoverImageUrl('');
   };
-  
-  const onSubmit = async (values: FormValues) => {
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please sign in to post an audition",
+        description: "Please sign in to create an audition",
         variant: "destructive",
       });
-      navigate("/sign-in");
       return;
     }
-    
+
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      
-      // Upload cover image if provided
-      let finalCoverImageUrl = "";
-      if (coverImage) {
-        const { url, error } = await uploadFile(coverImage, "audition_covers");
-        if (error) {
-          throw new Error(`Error uploading cover image: ${error}`);
-        }
-        finalCoverImageUrl = url;
-      }
-      
-      // Process form values
+      // Prepare the audition data
       const auditionData = {
         title: values.title,
         description: values.description,
-        requirements: values.requirements || null,
+        requirements: values.requirements,
         location: values.location,
+        deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
+        audition_date: values.audition_date ? new Date(values.audition_date).toISOString() : null,
+        project_details: values.project_details || null,
         compensation: values.compensation || null,
-        project_details: values.projectDetails || null,
-        creator_id: user.id,
-        audition_date: values.auditionDate ? values.auditionDate.toISOString() : null,
-        deadline: values.deadline ? values.deadline.toISOString() : null,
-        status: "open",
-        cover_image_url: finalCoverImageUrl || null,
-        tags: tags.length > 0 ? tags : null,
-        category: values.category,
-        age_range: values.ageRange || null,
+        category: values.category || null,
+        age_range: values.age_range || null,
         gender: values.gender || null,
-        experience_level: values.experienceLevel || null,
+        experience_level: values.experience_level || null,
+        tags: tags.length > 0 ? tags : null,
+        cover_image_url: coverImageUrl || null,
+        creator_id: user.id,
+        status: 'open'
       };
-      
+
+      console.log('Posting audition with data:', auditionData);
+
+      // Insert the audition
       const { data, error } = await supabase
-        .from("auditions")
-        .insert(auditionData)
-        .select("id")
+        .from('auditions')
+        .insert([auditionData])
+        .select()
         .single();
-      
-      if (error) throw error;
-      
+
+      if (error) {
+        console.error('Error posting audition:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create audition",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Audition posted successfully",
-        description: "Your audition has been published",
+        title: "Success",
+        description: "Audition created successfully!",
       });
-      
-      navigate(`/auditions/${data.id}`);
+
+      // Navigate to the auditions list or the created audition
+      navigate('/auditions');
     } catch (error: any) {
-      console.error("Error posting audition:", error.message);
+      console.error('Unexpected error:', error);
       toast({
-        title: "Error posting audition",
-        description: error.message || "An error occurred while posting the audition",
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow py-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            className="mb-6"
-            onClick={() => navigate(-1)}
-          >
-            ← Back
-          </Button>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Post an Audition</CardTitle>
-              <CardDescription>
-                Fill out the form below to create and publish your audition call
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Cover Image Upload */}
-                  <div className="mb-6">
-                    <FormLabel className="block mb-2">Cover Image (Optional)</FormLabel>
-                    <FileUpload
-                      onFileUpload={handleImageUpload}
-                      previewUrl={coverImageUrl}
-                      isLoading={uploadingImage}
-                      onRemove={handleRemoveImage}
-                      buttonText="Upload cover image"
-                    />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      A compelling image will help your audition stand out
-                    </p>
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Audition Title*</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Lead Actor for Feature Film" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category*</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {AUDITION_CATEGORIES.map((category) => (
-                              <SelectItem key={category} value={category.toLowerCase()}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description*</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe the role and audition process"
-                            className="min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* Tags Input */}
-                  <div className="space-y-2">
-                    <FormLabel>Tags</FormLabel>
-                    <div className="flex items-center">
-                      <Input
-                        placeholder="Add tags (press Enter to add)"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleAddTag}
+      <main className="flex-grow">
+        <section className="py-12 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Create New Audition</h1>
+              <p className="text-gray-600">Post a new audition opportunity for artists</p>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Audition Details</CardTitle>
+                <CardDescription>
+                  Fill in the details for your audition posting
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Cover Image Upload */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Cover Image</label>
+                      <FileUpload
+                        onFileUpload={handleCoverImageUpload}
+                        acceptedTypes="image/*"
+                        maxSizeMB={5}
+                        previewUrl={coverImageUrl}
+                        isLoading={isUploading}
+                        onRemove={removeCoverImage}
+                        buttonText="Upload cover image"
                       />
                     </div>
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {tags.map(tag => (
-                          <Badge key={tag} variant="outline" className="flex items-center gap-1">
+
+                    {/* Basic Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter audition title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Location *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter location" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Describe the audition opportunity"
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="requirements"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Requirements *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="List the requirements for applicants"
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Additional Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="film">Film</SelectItem>
+                                <SelectItem value="television">Television</SelectItem>
+                                <SelectItem value="theater">Theater</SelectItem>
+                                <SelectItem value="commercial">Commercial</SelectItem>
+                                <SelectItem value="voice">Voice Acting</SelectItem>
+                                <SelectItem value="music">Music</SelectItem>
+                                <SelectItem value="dance">Dance</SelectItem>
+                                <SelectItem value="modeling">Modeling</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="experience_level"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Experience Level</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select experience level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="beginner">Beginner</SelectItem>
+                                <SelectItem value="intermediate">Intermediate</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                                <SelectItem value="professional">Professional</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="age_range"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Age Range</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. 25-35" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select gender preference" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any</SelectItem>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="non-binary">Non-binary</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Tags</label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Add a tag and press Enter"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                        />
+                        <Button type="button" onClick={addTag} variant="outline">
+                          Add
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
                             {tag}
                             <X 
-                              className="h-3 w-3 cursor-pointer" 
-                              onClick={() => handleRemoveTag(tag)}
+                              size={14} 
+                              className="cursor-pointer hover:text-red-500" 
+                              onClick={() => removeTag(tag)}
                             />
                           </Badge>
                         ))}
                       </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Add relevant tags to improve discoverability (e.g., Commercial, Theater, Lead Role)
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gender Preference</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    </div>
+
+                    {/* Dates and Compensation */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="deadline"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Application Deadline</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select gender" />
-                              </SelectTrigger>
+                              <Input type="datetime-local" {...field} />
                             </FormControl>
-                            <SelectContent>
-                              {GENDER_OPTIONS.map((gender) => (
-                                <SelectItem key={gender} value={gender.toLowerCase()}>
-                                  {gender}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                    
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="audition_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Audition Date</FormLabel>
+                            <FormControl>
+                              <Input type="datetime-local" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="ageRange"
+                      name="project_details"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Age Range</FormLabel>
+                          <FormLabel>Project Details</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., 18-25, 30-40" {...field} />
+                            <Textarea 
+                              placeholder="Additional details about the project"
+                              className="min-h-[80px]"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                     <FormField
                       control={form.control}
-                      name="experienceLevel"
+                      name="compensation"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Experience Level</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select experience level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {EXPERIENCE_LEVELS.map((level) => (
-                                <SelectItem key={level} value={level.toLowerCase()}>
-                                  {level}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location*</FormLabel>
+                          <FormLabel>Compensation</FormLabel>
                           <FormControl>
-                            <Input placeholder="City, Venue, or Online" {...field} />
+                            <Textarea 
+                              placeholder="Details about payment, benefits, etc."
+                              className="min-h-[80px]"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="requirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Requirements</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Skills needed, physical traits, etc."
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="compensation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Compensation</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Paid, Non-paid, Profit Share" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="projectDetails"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Details</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Information about the project (film, TV show, etc.)"
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="auditionDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Audition Date (Optional)</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Select date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="deadline"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Application Deadline (Optional)</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Select date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="mr-2"
-                      onClick={() => navigate(-1)}
-                    >
-                      Cancel
-                    </Button>
+
                     <Button 
                       type="submit" 
+                      className="w-full bg-maasta-purple hover:bg-maasta-purple/90"
                       disabled={isSubmitting}
-                      className="bg-maasta-purple hover:bg-maasta-purple/90"
                     >
-                      {isSubmitting ? "Posting..." : "Post Audition"}
+                      {isSubmitting ? 'Creating Audition...' : 'Create Audition'}
                     </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>

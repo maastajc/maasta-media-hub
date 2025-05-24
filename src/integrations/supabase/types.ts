@@ -104,6 +104,7 @@ export type Database = {
           audition_date: string | null
           category: string | null
           compensation: string | null
+          "Cover image": Json | null
           cover_image_url: string | null
           created_at: string | null
           creator_id: string | null
@@ -125,6 +126,7 @@ export type Database = {
           audition_date?: string | null
           category?: string | null
           compensation?: string | null
+          "Cover image"?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
@@ -146,6 +148,7 @@ export type Database = {
           audition_date?: string | null
           category?: string | null
           compensation?: string | null
+          "Cover image"?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
