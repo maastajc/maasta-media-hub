@@ -58,23 +58,71 @@ const Profile = () => {
       try {
         setIsLoading(true);
         
-        const { data, error } = await supabase
+        // First, get the basic profile data
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select(`
-            *,
-            artist_details (*),
-            projects (*),
-            education_training (*),
-            special_skills (*),
-            language_skills (*),
-            tools_software (*),
-            media_assets (*)
-          `)
+          .select("*")
           .eq("id", user.id)
           .single();
         
-        if (error) throw error;
-        setProfileData(data);
+        if (profileError) throw profileError;
+
+        // Then get artist details
+        const { data: artistDetails, error: artistError } = await supabase
+          .from("artist_details")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        // Get projects with proper artist_id filter
+        const { data: projects, error: projectsError } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("artist_id", user.id);
+
+        // Get education
+        const { data: education, error: educationError } = await supabase
+          .from("education_training")
+          .select("*")
+          .eq("artist_id", user.id);
+
+        // Get skills
+        const { data: specialSkills, error: skillsError } = await supabase
+          .from("special_skills")
+          .select("*")
+          .eq("artist_id", user.id);
+
+        // Get languages
+        const { data: languageSkills, error: languagesError } = await supabase
+          .from("language_skills")
+          .select("*")
+          .eq("artist_id", user.id);
+
+        // Get tools
+        const { data: toolsSoftware, error: toolsError } = await supabase
+          .from("tools_software")
+          .select("*")
+          .eq("artist_id", user.id);
+
+        // Get media assets
+        const { data: mediaAssets, error: mediaError } = await supabase
+          .from("media_assets")
+          .select("*")
+          .eq("user_id", user.id);
+
+        // Combine all data
+        const combinedData = {
+          ...profile,
+          artist_details: artistDetails ? [artistDetails] : [],
+          projects: projects || [],
+          education_training: education || [],
+          special_skills: specialSkills || [],
+          language_skills: languageSkills || [],
+          tools_software: toolsSoftware || [],
+          media_assets: mediaAssets || []
+        };
+
+        setProfileData(combinedData);
       } catch (error: any) {
         console.error("Error fetching profile:", error.message);
         toast({
@@ -97,23 +145,74 @@ const Profile = () => {
   const refreshProfile = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(`
-        *,
-        artist_details (*),
-        projects (*),
-        education_training (*),
-        special_skills (*),
-        language_skills (*),
-        tools_software (*),
-        media_assets (*)
-      `)
-      .eq("id", user.id)
-      .single();
-    
-    if (!error && data) {
-      setProfileData(data);
+    try {
+      // First, get the basic profile data
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      if (profileError) throw profileError;
+
+      // Then get artist details
+      const { data: artistDetails, error: artistError } = await supabase
+        .from("artist_details")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      // Get projects with proper artist_id filter
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("artist_id", user.id);
+
+      // Get education
+      const { data: education, error: educationError } = await supabase
+        .from("education_training")
+        .select("*")
+        .eq("artist_id", user.id);
+
+      // Get skills
+      const { data: specialSkills, error: skillsError } = await supabase
+        .from("special_skills")
+        .select("*")
+        .eq("artist_id", user.id);
+
+      // Get languages
+      const { data: languageSkills, error: languagesError } = await supabase
+        .from("language_skills")
+        .select("*")
+        .eq("artist_id", user.id);
+
+      // Get tools
+      const { data: toolsSoftware, error: toolsError } = await supabase
+        .from("tools_software")
+        .select("*")
+        .eq("artist_id", user.id);
+
+      // Get media assets
+      const { data: mediaAssets, error: mediaError } = await supabase
+        .from("media_assets")
+        .select("*")
+        .eq("user_id", user.id);
+
+      // Combine all data
+      const combinedData = {
+        ...profile,
+        artist_details: artistDetails ? [artistDetails] : [],
+        projects: projects || [],
+        education_training: education || [],
+        special_skills: specialSkills || [],
+        language_skills: languageSkills || [],
+        tools_software: toolsSoftware || [],
+        media_assets: mediaAssets || []
+      };
+
+      setProfileData(combinedData);
+    } catch (error: any) {
+      console.error("Error refreshing profile:", error.message);
     }
   };
 
