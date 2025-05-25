@@ -24,10 +24,10 @@ const profileSchema = z.object({
   date_of_birth: z.string().optional(),
   gender: z.string().optional(),
   willing_to_relocate: z.boolean().default(false),
-  work_preference: z.enum(["remote", "on_site", "hybrid", "any"]).default("any"),
+  work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
   // Artist details
   category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
-  experience_level: z.enum(["beginner", "intermediate", "advanced", "expert"]).default("beginner"),
+  experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).default("beginner"),
   years_of_experience: z.number().min(0).optional(),
   association_membership: z.string().optional(),
 });
@@ -332,9 +332,10 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="beginner">Beginner</SelectItem>
+                            <SelectItem value="fresher">Fresher</SelectItem>
                             <SelectItem value="intermediate">Intermediate</SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
                             <SelectItem value="expert">Expert</SelectItem>
+                            <SelectItem value="veteran">Veteran</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -396,9 +397,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="remote">Remote</SelectItem>
-                            <SelectItem value="on_site">On-site</SelectItem>
-                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                            <SelectItem value="freelance">Freelance</SelectItem>
+                            <SelectItem value="contract">Contract</SelectItem>
+                            <SelectItem value="full_time">Full Time</SelectItem>
                             <SelectItem value="any">Any</SelectItem>
                           </SelectContent>
                         </Select>
