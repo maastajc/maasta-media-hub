@@ -20,7 +20,7 @@ const skillSchema = z.object({
 
 const languageSchema = z.object({
   language: z.string().min(1, "Language is required"),
-  proficiency: z.enum(["basic", "conversational", "fluent", "native"]),
+  proficiency: z.enum(["basic", "intermediate", "fluent", "native"]),
 });
 
 const toolSchema = z.object({
@@ -199,10 +199,10 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const handleDelete = async (itemId: string, table: string, type: string) => {
+  const handleDelete = async (itemId: string, tableName: "special_skills" | "language_skills" | "tools_software", type: string) => {
     try {
       const { error } = await supabase
-        .from(table)
+        .from(tableName)
         .delete()
         .eq("id", itemId);
 
@@ -452,7 +452,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="basic">Basic</SelectItem>
-                        <SelectItem value="conversational">Conversational</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
                         <SelectItem value="fluent">Fluent</SelectItem>
                         <SelectItem value="native">Native</SelectItem>
                       </SelectContent>
