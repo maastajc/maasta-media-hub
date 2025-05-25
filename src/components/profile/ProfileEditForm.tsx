@@ -9,28 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import ProfilePictureUpload from "./ProfilePictureUpload";
 
-const profileFormSchema = z.object({
-  full_name: z.string().min(2, "Full name is required"),
+const profileSchema = z.object({
+  full_name: z.string().min(1, "Full name is required"),
   bio: z.string().optional(),
-  phone_number: z.string().optional(),
-  gender: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  date_of_birth: z.date().optional(),
-  profile_picture_url: z.string().optional(),
-  willing_to_relocate: z.boolean().optional(),
+  phone_number: z.string().optional(),
+  date_of_birth: z.string().optional(),
+  gender: z.string().optional(),
+  willing_to_relocate: z.boolean().default(false),
+  work_preference: z.enum(["remote", "on_site", "hybrid", "any"]).default("any"),
+  // Artist details
+  category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
+  experience_level: z.enum(["beginner", "intermediate", "advanced", "expert"]).default("beginner"),
+  years_of_experience: z.number().min(0).optional(),
+  association_membership: z.string().optional(),
 });
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface ProfileEditFormProps {
   profileData: any;
@@ -42,52 +44,78 @@ interface ProfileEditFormProps {
 const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEditFormProps) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
+
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: profileData?.full_name || "",
       bio: profileData?.bio || "",
-      phone_number: profileData?.phone_number || "",
-      gender: profileData?.gender || "",
       city: profileData?.city || "",
       state: profileData?.state || "",
       country: profileData?.country || "",
-      date_of_birth: profileData?.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
-      profile_picture_url: profileData?.profile_picture_url || "",
+      phone_number: profileData?.phone_number || "",
+      date_of_birth: profileData?.date_of_birth || "",
+      gender: profileData?.gender || "",
       willing_to_relocate: profileData?.willing_to_relocate || false,
+      work_preference: profileData?.work_preference || "any",
+      category: profileData?.artist_details?.[0]?.category || undefined,
+      experience_level: profileData?.artist_details?.[0]?.experience_level || "beginner",
+      years_of_experience: profileData?.artist_details?.[0]?.years_of_experience || 0,
+      association_membership: profileData?.artist_details?.[0]?.association_membership || "",
     },
   });
-  
+
   const onSubmit = async (values: ProfileFormValues) => {
     if (!userId) return;
-    
+
     try {
       setIsSaving(true);
-      
-      const { error } = await supabase
+
+      // Update profile
+      const profileUpdate = {
+        full_name: values.full_name,
+        bio: values.bio,
+        city: values.city,
+        state: values.state,
+        country: values.country,
+        phone_number: values.phone_number,
+        date_of_birth: values.date_of_birth,
+        gender: values.gender,
+        willing_to_relocate: values.willing_to_relocate,
+        work_preference: values.work_preference,
+        profile_picture_url: profilePictureUrl,
+      };
+
+      const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          full_name: values.full_name,
-          bio: values.bio,
-          phone_number: values.phone_number,
-          gender: values.gender,
-          city: values.city,
-          state: values.state,
-          country: values.country,
-          date_of_birth: values.date_of_birth ? values.date_of_birth.toISOString().split('T')[0] : null,
-          profile_picture_url: values.profile_picture_url,
-          willing_to_relocate: values.willing_to_relocate,
-        })
+        .update(profileUpdate)
         .eq("id", userId);
-      
-      if (error) throw error;
-      
+
+      if (profileError) throw profileError;
+
+      // Update or create artist details if category is provided
+      if (values.category) {
+        const artistDetailsData = {
+          id: userId,
+          category: values.category,
+          experience_level: values.experience_level,
+          years_of_experience: values.years_of_experience,
+          association_membership: values.association_membership,
+        };
+
+        const { error: artistError } = await supabase
+          .from("artist_details")
+          .upsert(artistDetailsData);
+
+        if (artistError) throw artistError;
+      }
+
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
-      
+
       onUpdate();
       onClose();
     } catch (error: any) {
@@ -103,218 +131,317 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Edit Profile
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X size={16} />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name*</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your full name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+
+        <div className="space-y-8">
+          {/* Profile Picture Section */}
+          <div className="flex justify-center">
+            <ProfilePictureUpload
+              currentImageUrl={profilePictureUrl}
+              userId={userId || ""}
+              onImageUpdate={setProfilePictureUrl}
+              fullName={form.watch("full_name")}
             />
-            
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Tell us about yourself"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="phone_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+91 xxxxxxxx" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name*</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
+                        <Input placeholder="Enter your full name" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                        <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your city" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your state" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your country" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="date_of_birth"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of Birth</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Select date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input placeholder="Enter your phone number" {...field} />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date > new Date()}
-                        initialFocus
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Location */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your city" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your state" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your country" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Bio */}
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Tell us about yourself..." 
+                        className="min-h-24"
+                        {...field} 
                       />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="profile_picture_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profile Picture URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="URL to your profile picture" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="willing_to_relocate"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-md border p-4">
-                  <div>
-                    <FormLabel>Willing to Relocate</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSaving}
-                className="bg-maasta-orange hover:bg-maasta-orange/90"
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Artist Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Artist Information</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="actor">Actor</SelectItem>
+                            <SelectItem value="director">Director</SelectItem>
+                            <SelectItem value="cinematographer">Cinematographer</SelectItem>
+                            <SelectItem value="musician">Musician</SelectItem>
+                            <SelectItem value="editor">Editor</SelectItem>
+                            <SelectItem value="art_director">Art Director</SelectItem>
+                            <SelectItem value="stunt_coordinator">Stunt Coordinator</SelectItem>
+                            <SelectItem value="producer">Producer</SelectItem>
+                            <SelectItem value="writer">Writer</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="experience_level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Experience Level</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select experience level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="beginner">Beginner</SelectItem>
+                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="advanced">Advanced</SelectItem>
+                            <SelectItem value="expert">Expert</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="years_of_experience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Years of Experience</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="0"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="association_membership"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Association Membership</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., SAG-AFTRA, DGA" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Work Preferences */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Work Preferences</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="work_preference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Work Preference</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select work preference" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="remote">Remote</SelectItem>
+                            <SelectItem value="on_site">On-site</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                            <SelectItem value="any">Any</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="willing_to_relocate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Willing to Relocate</FormLabel>
+                          <div className="text-sm text-gray-600">
+                            Are you open to relocating for work?
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 pt-6">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving} className="bg-maasta-orange hover:bg-maasta-orange/90">
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

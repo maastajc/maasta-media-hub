@@ -103,6 +103,8 @@ const ArtistProfile = () => {
       }
 
       try {
+        console.log("Fetching artist profile for ID:", artistId);
+        
         // Fetch the artist profile with all related data
         const { data, error } = await supabase
           .from('profiles')
@@ -122,11 +124,16 @@ const ArtistProfile = () => {
 
         if (error) {
           console.error("Error fetching artist profile:", error);
-          toast.error("Failed to load artist profile");
+          if (error.code === 'PGRST116') {
+            toast.error("Artist profile not found");
+          } else {
+            toast.error("Failed to load artist profile");
+          }
           return;
         }
 
         if (data) {
+          console.log("Artist data received:", data);
           // Safely handle the data conversion
           const artistData: ArtistProfileData = {
             ...data,

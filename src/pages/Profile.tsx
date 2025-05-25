@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +36,7 @@ import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import MediaSection from "@/components/profile/MediaSection";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
+import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -116,6 +116,33 @@ const Profile = () => {
     }
   };
 
+  const handleProfilePictureUpdate = async (imageUrl: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ profile_picture_url: imageUrl })
+        .eq("id", user.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setProfileData((prev: any) => ({ 
+        ...prev, 
+        profile_picture_url: imageUrl 
+      }));
+      
+    } catch (error: any) {
+      console.error("Error updating profile picture:", error.message);
+      toast({
+        title: "Error",
+        description: "Failed to update profile picture",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -154,23 +181,13 @@ const Profile = () => {
                 <div className="relative bg-white p-8">
                   <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
                     
-                    {/* Profile Picture */}
-                    <div className="relative group">
-                      <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
-                        <AvatarImage 
-                          src={profileData?.profile_picture_url} 
-                          alt={profileData?.full_name}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="text-4xl font-bold bg-maasta-purple text-white">
-                          {profileData?.full_name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center cursor-pointer">
-                        <Camera className="text-white" size={32} />
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white"></div>
-                    </div>
+                    {/* Profile Picture with Upload */}
+                    <ProfilePictureUpload
+                      currentImageUrl={profileData?.profile_picture_url}
+                      userId={user?.id || ""}
+                      onImageUpdate={handleProfilePictureUpdate}
+                      fullName={profileData?.full_name}
+                    />
 
                     {/* Main Info */}
                     <div className="flex-1 text-center lg:text-left">
