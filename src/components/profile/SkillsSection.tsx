@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,13 +13,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Star, Languages, Wrench } from "lucide-react";
 
+// Define valid proficiency levels based on the database enum
+const PROFICIENCY_LEVELS = ["basic", "intermediate", "fluent", "native"] as const;
+
 const skillSchema = z.object({
   skill: z.string().min(1, "Skill is required"),
 });
 
 const languageSchema = z.object({
   language: z.string().min(1, "Language is required"),
-  proficiency: z.string().min(1, "Proficiency level is required"),
+  proficiency: z.enum(PROFICIENCY_LEVELS, { errorMap: () => ({ message: "Please select a valid proficiency level" }) }),
 });
 
 const toolSchema = z.object({
@@ -50,7 +52,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
 
   const languageForm = useForm<LanguageFormValues>({
     resolver: zodResolver(languageSchema),
-    defaultValues: { language: "", proficiency: "" },
+    defaultValues: { language: "", proficiency: "intermediate" },
   });
 
   const toolForm = useForm<ToolFormValues>({
@@ -68,17 +70,22 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       setIsSaving(true);
       
+      const skillData = {
+        skill: values.skill,
+        artist_id: userId,
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from("special_skills")
-          .update({ ...values, artist_id: userId })
+          .update(skillData)
           .eq("id", editingItem.id);
         if (error) throw error;
         toast({ title: "Skill updated successfully" });
       } else {
         const { error } = await supabase
           .from("special_skills")
-          .insert({ ...values, artist_id: userId });
+          .insert(skillData);
         if (error) throw error;
         toast({ title: "Skill added successfully" });
       }
@@ -102,17 +109,23 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       setIsSaving(true);
       
+      const languageData = {
+        language: values.language,
+        proficiency: values.proficiency,
+        artist_id: userId,
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from("language_skills")
-          .update({ ...values, artist_id: userId })
+          .update(languageData)
           .eq("id", editingItem.id);
         if (error) throw error;
         toast({ title: "Language updated successfully" });
       } else {
         const { error } = await supabase
           .from("language_skills")
-          .insert({ ...values, artist_id: userId });
+          .insert(languageData);
         if (error) throw error;
         toast({ title: "Language added successfully" });
       }
@@ -136,17 +149,22 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       setIsSaving(true);
       
+      const toolData = {
+        tool_name: values.tool_name,
+        artist_id: userId,
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from("tools_software")
-          .update({ ...values, artist_id: userId })
+          .update(toolData)
           .eq("id", editingItem.id);
         if (error) throw error;
         toast({ title: "Tool updated successfully" });
       } else {
         const { error } = await supabase
           .from("tools_software")
-          .insert({ ...values, artist_id: userId });
+          .insert(toolData);
         if (error) throw error;
         toast({ title: "Tool added successfully" });
       }
@@ -200,7 +218,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     setActiveDialog(null);
     setEditingItem(null);
     skillForm.reset({ skill: "" });
-    languageForm.reset({ language: "", proficiency: "" });
+    languageForm.reset({ language: "", proficiency: "intermediate" });
     toolForm.reset({ tool_name: "" });
   };
 
@@ -448,10 +466,10 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="native">Native</SelectItem>
-                        <SelectItem value="fluent">Fluent</SelectItem>
+                        <SelectItem value="basic">Basic</SelectItem>
                         <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="fluent">Fluent</SelectItem>
+                        <SelectItem value="native">Native</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

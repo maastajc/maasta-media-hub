@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,10 +61,18 @@ const EducationSection = ({ profileData, onUpdate, userId }: EducationSectionPro
     try {
       setIsSaving(true);
 
+      const educationData = {
+        qualification_name: values.qualification_name,
+        institution: values.institution || null,
+        year_completed: values.year_completed,
+        is_academic: values.is_academic,
+        artist_id: userId,
+      };
+
       if (editingEducation) {
         const { error } = await supabase
           .from("education_training")
-          .update({ ...values, artist_id: userId })
+          .update(educationData)
           .eq("id", editingEducation.id);
 
         if (error) throw error;
@@ -73,7 +80,7 @@ const EducationSection = ({ profileData, onUpdate, userId }: EducationSectionPro
       } else {
         const { error } = await supabase
           .from("education_training")
-          .insert({ ...values, artist_id: userId });
+          .insert(educationData);
 
         if (error) throw error;
         toast({ title: "Education added successfully" });

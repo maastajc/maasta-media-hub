@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,10 +75,22 @@ const MediaSection = ({ profileData, onUpdate, userId }: MediaSectionProps) => {
     try {
       setIsSaving(true);
 
+      const mediaData = {
+        url: values.url,
+        file_name: values.file_name,
+        file_type: values.file_type,
+        description: values.description || null,
+        is_video: values.is_video,
+        is_embed: values.is_embed,
+        embed_source: values.embed_source || null,
+        file_size: values.file_size,
+        user_id: userId,
+      };
+
       if (editingMedia) {
         const { error } = await supabase
           .from("media_assets")
-          .update({ ...values, user_id: userId })
+          .update(mediaData)
           .eq("id", editingMedia.id);
 
         if (error) throw error;
@@ -87,7 +98,7 @@ const MediaSection = ({ profileData, onUpdate, userId }: MediaSectionProps) => {
       } else {
         const { error } = await supabase
           .from("media_assets")
-          .insert({ ...values, user_id: userId });
+          .insert(mediaData);
 
         if (error) throw error;
         toast({ title: "Media added successfully" });

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,9 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ExternalLink, Award } from "lucide-react";
 
+// Define valid project types based on the database enum
+const PROJECT_TYPES = ["feature_film", "short_film", "web_series", "ad", "music_video", "other"] as const;
+
 const projectSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
-  project_type: z.string().min(1, "Project type is required"),
+  project_type: z.enum(PROJECT_TYPES, { errorMap: () => ({ message: "Please select a valid project type" }) }),
   role_in_project: z.string().min(1, "Role is required"),
   year_of_release: z.number().min(1900).max(new Date().getFullYear()),
   director_producer: z.string().optional(),
@@ -43,7 +45,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     resolver: zodResolver(projectSchema),
     defaultValues: {
       project_name: "",
-      project_type: "",
+      project_type: "feature_film",
       role_in_project: "",
       year_of_release: new Date().getFullYear(),
       director_producer: "",
@@ -57,7 +59,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
   const resetForm = () => {
     form.reset({
       project_name: "",
-      project_type: "",
+      project_type: "feature_film",
       role_in_project: "",
       year_of_release: new Date().getFullYear(),
       director_producer: "",
@@ -72,10 +74,21 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     try {
       setIsSaving(true);
 
+      const projectData = {
+        project_name: values.project_name,
+        project_type: values.project_type,
+        role_in_project: values.role_in_project,
+        year_of_release: values.year_of_release,
+        director_producer: values.director_producer || null,
+        streaming_platform: values.streaming_platform || null,
+        link: values.link || null,
+        artist_id: userId,
+      };
+
       if (editingProject) {
         const { error } = await supabase
           .from("projects")
-          .update({ ...values, artist_id: userId })
+          .update(projectData)
           .eq("id", editingProject.id);
 
         if (error) throw error;
@@ -83,7 +96,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
       } else {
         const { error } = await supabase
           .from("projects")
-          .insert({ ...values, artist_id: userId });
+          .insert(projectData);
 
         if (error) throw error;
         toast({ title: "Project added successfully" });
@@ -227,7 +240,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
                 <div className="flex justify-between items-center mt-4">
                   <div className="flex gap-2">
                     <Badge className="bg-maasta-purple/10 text-maasta-purple border-maasta-purple/20">
-                      {project.project_type}
+                      {project.project_type.replace('_', ' ')}
                     </Badge>
                     <Badge variant="outline">
                       {project.year_of_release}
@@ -288,14 +301,12 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="film">Film</SelectItem>
-                          <SelectItem value="television">Television</SelectItem>
-                          <SelectItem value="web_series">Web Series</SelectItem>
-                          <SelectItem value="commercial">Commercial</SelectItem>
-                          <SelectItem value="theater">Theater</SelectItem>
-                          <SelectItem value="music_video">Music Video</SelectItem>
-                          <SelectItem value="documentary">Documentary</SelectItem>
+                          <SelectItem value="feature_film">Feature Film</SelectItem>
                           <SelectItem value="short_film">Short Film</SelectItem>
+                          <SelectItem value="web_series">Web Series</SelectItem>
+                          <SelectItem value="ad">Commercial/Ad</SelectItem>
+                          <SelectItem value="music_video">Music Video</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
