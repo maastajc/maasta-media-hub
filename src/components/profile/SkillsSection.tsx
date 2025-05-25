@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -182,20 +183,58 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const handleDelete = async (table: string, id: string) => {
+  const handleDeleteSkill = async (id: string) => {
     try {
       const { error } = await supabase
-        .from(table)
+        .from("special_skills")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
-      toast({ title: "Item deleted successfully" });
+      toast({ title: "Skill deleted successfully" });
       onUpdate();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete item",
+        description: "Failed to delete skill",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteLanguage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("language_skills")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast({ title: "Language deleted successfully" });
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete language",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTool = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("tools_software")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast({ title: "Tool deleted successfully" });
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete tool",
         variant: "destructive",
       });
     }
@@ -268,7 +307,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                   variant="ghost"
                   size="sm"
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDelete('special_skills', skill.id)}
+                  onClick={() => handleDeleteSkill(skill.id)}
                 >
                   <Trash2 size={12} />
                 </Button>
@@ -332,7 +371,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete('language_skills', lang.id)}
+                    onClick={() => handleDeleteLanguage(lang.id)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 size={16} />
@@ -389,7 +428,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                   variant="ghost"
                   size="sm"
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDelete('tools_software', tool.id)}
+                  onClick={() => handleDeleteTool(tool.id)}
                 >
                   <Trash2 size={12} />
                 </Button>
