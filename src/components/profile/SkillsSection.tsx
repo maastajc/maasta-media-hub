@@ -10,24 +10,21 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Star, Languages, Wrench } from "lucide-react";
-
-// Define valid proficiency levels based on the database enum
-const PROFICIENCY_LEVELS = ["basic", "intermediate", "fluent", "native"] as const;
+import { Plus, Edit, Trash2, Brain, Globe, Wrench } from "lucide-react";
 
 const skillSchema = z.object({
-  skill: z.string().min(1, "Skill is required"),
+  skill: z.string().min(1, "Skill name is required"),
 });
 
 const languageSchema = z.object({
   language: z.string().min(1, "Language is required"),
-  proficiency: z.enum(PROFICIENCY_LEVELS, { errorMap: () => ({ message: "Please select a valid proficiency level" }) }),
+  proficiency: z.enum(["basic", "conversational", "fluent", "native"]),
 });
 
 const toolSchema = z.object({
-  tool_name: z.string().min(1, "Tool name is required"),
+  tool_name: z.string().min(1, "Tool/Software name is required"),
 });
 
 type SkillFormValues = z.infer<typeof skillSchema>;
@@ -42,7 +39,7 @@ interface SkillsSectionProps {
 
 const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) => {
   const { toast } = useToast();
-  const [activeDialog, setActiveDialog] = useState<'skill' | 'language' | 'tool' | null>(null);
+  const [activeDialog, setActiveDialog] = useState<"skill" | "language" | "tool" | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -53,7 +50,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
 
   const languageForm = useForm<LanguageFormValues>({
     resolver: zodResolver(languageSchema),
-    defaultValues: { language: "", proficiency: "intermediate" },
+    defaultValues: { language: "", proficiency: "basic" },
   });
 
   const toolForm = useForm<ToolFormValues>({
@@ -65,28 +62,32 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
   const languages = profileData?.language_skills || [];
   const tools = profileData?.tools_software || [];
 
-  const handleAddSkill = async (values: SkillFormValues) => {
+  const resetForms = () => {
+    skillForm.reset({ skill: "" });
+    languageForm.reset({ language: "", proficiency: "basic" });
+    toolForm.reset({ tool_name: "" });
+  };
+
+  const onSubmitSkill = async (values: SkillFormValues) => {
     if (!userId) return;
 
     try {
       setIsSaving(true);
-      
-      const skillData = {
-        skill: values.skill,
-        artist_id: userId,
-      };
+      const skillData = { skill: values.skill, artist_id: userId };
 
       if (editingItem) {
         const { error } = await supabase
           .from("special_skills")
           .update(skillData)
           .eq("id", editingItem.id);
+
         if (error) throw error;
         toast({ title: "Skill updated successfully" });
       } else {
         const { error } = await supabase
           .from("special_skills")
           .insert(skillData);
+
         if (error) throw error;
         toast({ title: "Skill added successfully" });
       }
@@ -94,6 +95,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       closeDialog();
     } catch (error: any) {
+      console.error("Error saving skill:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save skill",
@@ -104,16 +106,15 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const handleAddLanguage = async (values: LanguageFormValues) => {
+  const onSubmitLanguage = async (values: LanguageFormValues) => {
     if (!userId) return;
 
     try {
       setIsSaving(true);
-      
-      const languageData = {
-        language: values.language,
-        proficiency: values.proficiency,
-        artist_id: userId,
+      const languageData = { 
+        language: values.language, 
+        proficiency: values.proficiency, 
+        artist_id: userId 
       };
 
       if (editingItem) {
@@ -121,12 +122,14 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
           .from("language_skills")
           .update(languageData)
           .eq("id", editingItem.id);
+
         if (error) throw error;
         toast({ title: "Language updated successfully" });
       } else {
         const { error } = await supabase
           .from("language_skills")
           .insert(languageData);
+
         if (error) throw error;
         toast({ title: "Language added successfully" });
       }
@@ -134,6 +137,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       closeDialog();
     } catch (error: any) {
+      console.error("Error saving language:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save language",
@@ -144,28 +148,26 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const handleAddTool = async (values: ToolFormValues) => {
+  const onSubmitTool = async (values: ToolFormValues) => {
     if (!userId) return;
 
     try {
       setIsSaving(true);
-      
-      const toolData = {
-        tool_name: values.tool_name,
-        artist_id: userId,
-      };
+      const toolData = { tool_name: values.tool_name, artist_id: userId };
 
       if (editingItem) {
         const { error } = await supabase
           .from("tools_software")
           .update(toolData)
           .eq("id", editingItem.id);
+
         if (error) throw error;
         toast({ title: "Tool updated successfully" });
       } else {
         const { error } = await supabase
           .from("tools_software")
           .insert(toolData);
+
         if (error) throw error;
         toast({ title: "Tool added successfully" });
       }
@@ -173,6 +175,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       closeDialog();
     } catch (error: any) {
+      console.error("Error saving tool:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save tool",
@@ -183,277 +186,219 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const handleDeleteSkill = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("special_skills")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast({ title: "Skill deleted successfully" });
-      onUpdate();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete skill",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteLanguage = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("language_skills")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast({ title: "Language deleted successfully" });
-      onUpdate();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete language",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteTool = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("tools_software")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast({ title: "Tool deleted successfully" });
-      onUpdate();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete tool",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const openEditDialog = (type: 'skill' | 'language' | 'tool', item: any) => {
+  const handleEdit = (item: any, type: "skill" | "language" | "tool") => {
     setEditingItem(item);
     setActiveDialog(type);
-    
-    if (type === 'skill') {
+
+    if (type === "skill") {
       skillForm.reset({ skill: item.skill });
-    } else if (type === 'language') {
+    } else if (type === "language") {
       languageForm.reset({ language: item.language, proficiency: item.proficiency });
-    } else if (type === 'tool') {
+    } else if (type === "tool") {
       toolForm.reset({ tool_name: item.tool_name });
+    }
+  };
+
+  const handleDelete = async (itemId: string, table: string, type: string) => {
+    try {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq("id", itemId);
+
+      if (error) throw error;
+      
+      toast({ title: `${type} deleted successfully` });
+      onUpdate();
+    } catch (error: any) {
+      console.error(`Error deleting ${type}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to delete ${type}`,
+        variant: "destructive",
+      });
     }
   };
 
   const closeDialog = () => {
     setActiveDialog(null);
     setEditingItem(null);
-    skillForm.reset({ skill: "" });
-    languageForm.reset({ language: "", proficiency: "intermediate" });
-    toolForm.reset({ tool_name: "" });
+    resetForms();
   };
 
   return (
     <div className="space-y-8">
-      {/* Special Skills */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold flex items-center">
-            <Star className="mr-2 text-maasta-orange" size={20} />
-            Special Skills ({skills.length})
-          </h3>
-          <Button
-            onClick={() => setActiveDialog('skill')}
-            size="sm"
-            className="bg-maasta-orange hover:bg-maasta-orange/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Skill
-          </Button>
-        </div>
-        
-        {skills.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-600 mb-4">No special skills added yet</p>
-              <Button
-                onClick={() => setActiveDialog('skill')}
-                className="bg-maasta-orange hover:bg-maasta-orange/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Skill
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-wrap gap-3">
-            {skills.map((skill: any) => (
-              <div key={skill.id} className="group relative">
-                <Badge 
-                  className="bg-gradient-to-r from-maasta-purple to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:shadow-lg transition-all cursor-pointer"
-                  onClick={() => openEditDialog('skill', skill)}
-                >
-                  {skill.skill}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDeleteSkill(skill.id)}
-                >
-                  <Trash2 size={12} />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Skills & Abilities</h2>
       </div>
 
-      {/* Languages */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold flex items-center">
-            <Languages className="mr-2 text-maasta-purple" size={20} />
-            Languages ({languages.length})
-          </h3>
+      {/* Special Skills */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Brain className="mr-2 text-maasta-purple" size={24} />
+            Special Skills ({skills.length})
+          </CardTitle>
           <Button
-            onClick={() => setActiveDialog('language')}
+            onClick={() => setActiveDialog("skill")}
             size="sm"
             className="bg-maasta-purple hover:bg-maasta-purple/90"
           >
             <Plus className="w-4 h-4 mr-2" />
+            Add Skill
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {skills.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No special skills added yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill: any) => (
+                <Badge
+                  key={skill.id}
+                  variant="outline"
+                  className="group hover:bg-red-50 hover:border-red-200 cursor-pointer p-2"
+                >
+                  {skill.skill}
+                  <div className="ml-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                    <button
+                      onClick={() => handleEdit(skill, "skill")}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <Edit size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(skill.id, "special_skills", "Skill")}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Language Skills */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Globe className="mr-2 text-maasta-orange" size={24} />
+            Languages ({languages.length})
+          </CardTitle>
+          <Button
+            onClick={() => setActiveDialog("language")}
+            size="sm"
+            className="bg-maasta-orange hover:bg-maasta-orange/90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
             Add Language
           </Button>
-        </div>
-        
-        {languages.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-600 mb-4">No languages added yet</p>
-              <Button
-                onClick={() => setActiveDialog('language')}
-                className="bg-maasta-purple hover:bg-maasta-purple/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Language
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {languages.map((lang: any) => (
-              <div key={lang.id} className="group flex justify-between items-center bg-gray-50 p-4 rounded-lg hover:shadow-md transition-all">
-                <div>
-                  <span className="font-medium text-gray-900">{lang.language}</span>
-                  <Badge 
-                    variant="outline" 
-                    className="ml-3 capitalize bg-white border-gray-200"
-                  >
-                    {lang.proficiency}
-                  </Badge>
+        </CardHeader>
+        <CardContent>
+          {languages.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No languages added yet</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {languages.map((lang: any) => (
+                <div
+                  key={lang.id}
+                  className="group border rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium">{lang.language}</h4>
+                      <Badge className="mt-1 capitalize">{lang.proficiency}</Badge>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                      <button
+                        onClick={() => handleEdit(lang, "language")}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(lang.id, "language_skills", "Language")}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog('language', lang)}
-                  >
-                    <Edit size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteLanguage(lang.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tools & Software */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold flex items-center">
-            <Wrench className="mr-2 text-blue-600" size={20} />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Wrench className="mr-2 text-green-600" size={24} />
             Tools & Software ({tools.length})
-          </h3>
+          </CardTitle>
           <Button
-            onClick={() => setActiveDialog('tool')}
+            onClick={() => setActiveDialog("tool")}
             size="sm"
-            variant="outline"
+            className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Tool
           </Button>
-        </div>
-        
-        {tools.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-600 mb-4">No tools or software added yet</p>
-              <Button
-                onClick={() => setActiveDialog('tool')}
-                variant="outline"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Tool
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-wrap gap-3">
-            {tools.map((tool: any) => (
-              <div key={tool.id} className="group relative">
-                <Badge 
+        </CardHeader>
+        <CardContent>
+          {tools.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No tools or software added yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tools.map((tool: any) => (
+                <Badge
+                  key={tool.id}
                   variant="outline"
-                  className="bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200 px-4 py-2 rounded-full hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => openEditDialog('tool', tool)}
+                  className="group hover:bg-red-50 hover:border-red-200 cursor-pointer p-2"
                 >
                   {tool.tool_name}
+                  <div className="ml-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                    <button
+                      onClick={() => handleEdit(tool, "tool")}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <Edit size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tool.id, "tools_software", "Tool")}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDeleteTool(tool.id)}
-                >
-                  <Trash2 size={12} />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Dialogs */}
-      <Dialog open={activeDialog === 'skill'} onOpenChange={closeDialog}>
+      {/* Skill Dialog */}
+      <Dialog open={activeDialog === "skill"} onOpenChange={() => activeDialog === "skill" && closeDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Edit Skill" : "Add Special Skill"}</DialogTitle>
           </DialogHeader>
           <Form {...skillForm}>
-            <form onSubmit={skillForm.handleSubmit(handleAddSkill)} className="space-y-4">
+            <form onSubmit={skillForm.handleSubmit(onSubmitSkill)} className="space-y-4">
               <FormField
                 control={skillForm.control}
                 name="skill"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Skill*</FormLabel>
+                    <FormLabel>Skill Name*</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Dancing, Singing, Martial Arts" {...field} />
+                      <Input placeholder="e.g., Horse Riding, Sword Fighting" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -472,13 +417,14 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={activeDialog === 'language'} onOpenChange={closeDialog}>
+      {/* Language Dialog */}
+      <Dialog open={activeDialog === "language"} onOpenChange={() => activeDialog === "language" && closeDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Edit Language" : "Add Language"}</DialogTitle>
           </DialogHeader>
           <Form {...languageForm}>
-            <form onSubmit={languageForm.handleSubmit(handleAddLanguage)} className="space-y-4">
+            <form onSubmit={languageForm.handleSubmit(onSubmitLanguage)} className="space-y-4">
               <FormField
                 control={languageForm.control}
                 name="language"
@@ -486,7 +432,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                   <FormItem>
                     <FormLabel>Language*</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., English, Hindi, Spanish" {...field} />
+                      <Input placeholder="e.g., Spanish, French, Hindi" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -497,16 +443,16 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                 name="proficiency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Proficiency*</FormLabel>
+                    <FormLabel>Proficiency Level*</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select proficiency level" />
+                          <SelectValue placeholder="Select proficiency" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="basic">Basic</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="conversational">Conversational</SelectItem>
                         <SelectItem value="fluent">Fluent</SelectItem>
                         <SelectItem value="native">Native</SelectItem>
                       </SelectContent>
@@ -528,21 +474,22 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={activeDialog === 'tool'} onOpenChange={closeDialog}>
+      {/* Tool Dialog */}
+      <Dialog open={activeDialog === "tool"} onOpenChange={() => activeDialog === "tool" && closeDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Edit Tool" : "Add Tool/Software"}</DialogTitle>
           </DialogHeader>
           <Form {...toolForm}>
-            <form onSubmit={toolForm.handleSubmit(handleAddTool)} className="space-y-4">
+            <form onSubmit={toolForm.handleSubmit(onSubmitTool)} className="space-y-4">
               <FormField
                 control={toolForm.control}
                 name="tool_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tool/Software*</FormLabel>
+                    <FormLabel>Tool/Software Name*</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Photoshop, Final Cut Pro, Pro Tools" {...field} />
+                      <Input placeholder="e.g., Adobe Premiere, Final Cut Pro" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -37,6 +37,7 @@ import SkillsSection from "@/components/profile/SkillsSection";
 import MediaSection from "@/components/profile/MediaSection";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
+import MediaUploadSection from "@/components/profile/MediaUploadSection";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -396,7 +397,7 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="media">
-              <MediaSection 
+              <MediaUploadSection 
                 profileData={profileData} 
                 onUpdate={refreshProfile}
                 userId={user?.id}
