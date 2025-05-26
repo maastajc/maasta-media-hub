@@ -1,111 +1,118 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Mock data for artists
-const allArtists = [
-  {
-    id: 1,
-    name: "Priya Sharma",
-    profession: "Actress & Dancer",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Acting", "Dance", "Voice"],
-    category: "performer",
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Arjun Kapoor",
-    profession: "Music Producer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Music", "Production", "Vocals"],
-    category: "technical",
-    verified: true,
-  },
-  {
-    id: 3,
-    name: "Zoya Patel",
-    profession: "Photographer",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Photography", "Direction"],
-    category: "technical",
-    verified: true,
-  },
-  {
-    id: 4,
-    name: "Rahul Desai",
-    profession: "Director",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Direction", "Screenplay", "Production"],
-    category: "creative",
-    verified: false,
-  },
-  {
-    id: 5,
-    name: "Meera Nair",
-    profession: "Choreographer",
-    image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Dance", "Choreography", "Direction"],
-    category: "performer",
-    verified: true,
-  },
-  {
-    id: 6,
-    name: "Vikram Singh",
-    profession: "Sound Engineer",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Sound", "Music", "Production"],
-    category: "technical",
-    verified: false,
-  },
-  {
-    id: 7,
-    name: "Ananya Das",
-    profession: "Costume Designer",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Fashion", "Design", "Styling"],
-    category: "creative",
-    verified: true,
-  },
-  {
-    id: 8,
-    name: "Sameer Khanna",
-    profession: "Actor",
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    tags: ["Acting", "Voice", "Theater"],
-    category: "performer",
-    verified: true,
-  },
-];
+interface Artist {
+  id: string;
+  full_name: string;
+  bio?: string;
+  profile_picture_url?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  instagram?: string;
+  linkedin?: string;
+  skills?: string[];
+  category?: string;
+  verified?: boolean;
+}
 
 const Artists = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("all");
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uniqueTags, setUniqueTags] = useState<string[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  // Extract unique tags from all artists
-  const uniqueTags = Array.from(
-    new Set(allArtists.flatMap((artist) => artist.tags))
-  ).sort();
+
+  useEffect(() => {
+    const fetchArtists = async () => {
+      setLoading(true);
+      try {
+        console.log("Fetching artists from database...");
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            full_name,
+            bio,
+            profile_picture_url,
+            city,
+            state,
+            country,
+            instagram,
+            linkedin,
+            role,
+            special_skills(skill),
+            artist_details(category)
+          `)
+          .eq('role', 'artist')
+          .not('full_name', 'is', null);
+
+        if (error) {
+          console.error("Error fetching artists:", error);
+          toast.error("Failed to load artists");
+          return;
+        }
+
+        if (data) {
+          console.log("Artists data:", data);
+          
+          const formattedArtists = data.map(artist => ({
+            id: artist.id,
+            full_name: artist.full_name,
+            bio: artist.bio || 'No bio available',
+            profile_picture_url: artist.profile_picture_url,
+            city: artist.city,
+            state: artist.state,
+            country: artist.country,
+            instagram: artist.instagram,
+            linkedin: artist.linkedin,
+            skills: artist.special_skills?.map((skill: any) => skill.skill) || [],
+            category: artist.artist_details?.[0]?.category || 'performer',
+            verified: Math.random() > 0.5 // Random verification status for demo
+          }));
+
+          setArtists(formattedArtists);
+
+          // Extract unique skills for filtering
+          const allSkills = formattedArtists.flatMap(artist => artist.skills || []);
+          const uniqueSkills = Array.from(new Set(allSkills)).sort();
+          setUniqueTags(uniqueSkills);
+        }
+      } catch (error) {
+        console.error("Error fetching artists:", error);
+        toast.error("Failed to load artists");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtists();
+  }, []);
   
   // Filter artists based on search term, selected tags, and current tab
-  const filteredArtists = allArtists.filter((artist) => {
+  const filteredArtists = artists.filter((artist) => {
     const matchesSearch = 
-      artist.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      artist.profession.toLowerCase().includes(searchTerm.toLowerCase());
+      artist.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (artist.bio && artist.bio.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesTags = 
       selectedTags.length === 0 || 
-      selectedTags.some((tag) => artist.tags.includes(tag));
+      selectedTags.some((tag) => artist.skills?.includes(tag));
     
     const matchesCategory = 
       currentTab === "all" || artist.category === currentTab;
@@ -122,18 +129,21 @@ const Artists = () => {
     }
   };
 
-  const handleViewProfile = (artistId: number) => {
-    // Navigate to the artist profile page - for now using mock ID
-    // In a real app, this would be the actual artist UUID from the database
+  const handleViewProfile = (artistId: string) => {
     navigate(`/artists/${artistId}`);
   };
 
   const handleJoinAsArtist = () => {
     if (user) {
-      navigate("/profile"); // Direct to profile if already logged in
+      navigate("/profile");
     } else {
-      navigate("/sign-up"); // Direct to sign up if not logged in
+      navigate("/sign-in");
     }
+  };
+
+  const getLocationString = (artist: Artist) => {
+    const parts = [artist.city, artist.state, artist.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : 'Location not specified';
   };
 
   return (
@@ -163,7 +173,7 @@ const Artists = () => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="Search by name or profession..."
+                  placeholder="Search by name or bio..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
@@ -192,77 +202,100 @@ const Artists = () => {
             </Tabs>
             
             {/* Tags filter */}
-            <div className="mb-8">
-              <h3 className="text-sm font-medium mb-2">Filter by skills:</h3>
-              <div className="flex flex-wrap gap-2">
-                {uniqueTags.map((tag) => (
-                  <Button
-                    key={tag}
-                    variant={selectedTags.includes(tag) ? "default" : "outline"}
-                    size="sm"
-                    className={selectedTags.includes(tag) 
-                      ? "bg-maasta-purple hover:bg-maasta-purple/90" 
-                      : "hover:bg-maasta-purple/10 hover:text-maasta-purple"
-                    }
-                    onClick={() => toggleTag(tag)}
-                  >
-                    {tag}
-                  </Button>
-                ))}
+            {uniqueTags.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-medium mb-2">Filter by skills:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {uniqueTags.map((tag) => (
+                    <Button
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? "default" : "outline"}
+                      size="sm"
+                      className={selectedTags.includes(tag) 
+                        ? "bg-maasta-purple hover:bg-maasta-purple/90" 
+                        : "hover:bg-maasta-purple/10 hover:text-maasta-purple"
+                      }
+                      onClick={() => toggleTag(tag)}
+                    >
+                      {tag}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Results display */}
             <div>
-              <p className="text-sm text-gray-500 mb-4">
-                Showing {filteredArtists.length} artists
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredArtists.map((artist) => (
-                  <Card key={artist.id} className="overflow-hidden card-hover">
-                    <div className="relative h-64">
-                      <img
-                        src={artist.image}
-                        alt={artist.name}
-                        className="w-full h-full object-cover"
-                      />
-                      {artist.verified && (
-                        <div className="absolute top-2 right-2 bg-maasta-purple text-white text-xs p-1 px-2 rounded-full flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                          </svg>
-                          Verified
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg">{artist.name}</h3>
-                      <p className="text-gray-500 text-sm mb-3">{artist.profession}</p>
-                      <div className="flex flex-wrap">
-                        {artist.tags.map((tag, idx) => (
-                          <span key={idx} className="tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
-                        onClick={() => handleViewProfile(artist.id)}
-                      >
-                        View Profile
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              
-              {filteredArtists.length === 0 && (
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-medium mb-2">No artists found</h3>
-                  <p className="text-gray-500">Try adjusting your search or filters</p>
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {Array(8).fill(0).map((_, index) => (
+                    <Card key={index} className="overflow-hidden">
+                      <Skeleton className="h-64 w-full" />
+                      <CardContent className="p-4">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2 mb-3" />
+                        <Skeleton className="h-8 w-full" />
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Showing {filteredArtists.length} artists
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {filteredArtists.map((artist) => (
+                      <Card key={artist.id} className="overflow-hidden card-hover">
+                        <div className="relative h-64">
+                          <img
+                            src={artist.profile_picture_url || `https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3`}
+                            alt={artist.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                          {artist.verified && (
+                            <div className="absolute top-2 right-2 bg-maasta-purple text-white text-xs p-1 px-2 rounded-full flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                              </svg>
+                              Verified
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-lg">{artist.full_name}</h3>
+                          <p className="text-gray-500 text-sm mb-3">{getLocationString(artist)}</p>
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{artist.bio}</p>
+                          <div className="flex flex-wrap mb-3">
+                            {artist.skills?.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="tag">
+                                {skill}
+                              </span>
+                            ))}
+                            {(artist.skills?.length || 0) > 3 && (
+                              <span className="tag">+{(artist.skills?.length || 0) - 3} more</span>
+                            )}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            className="w-full border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
+                            onClick={() => handleViewProfile(artist.id)}
+                          >
+                            View Profile
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {filteredArtists.length === 0 && !loading && (
+                    <div className="text-center py-12">
+                      <h3 className="text-lg font-medium mb-2">No artists found</h3>
+                      <p className="text-gray-500">Try adjusting your search or filters</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

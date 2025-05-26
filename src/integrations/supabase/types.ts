@@ -86,7 +86,7 @@ export type Database = {
             foreignKeyName: "audition_applications_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
