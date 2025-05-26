@@ -27,7 +27,6 @@ interface AuditionDetailsData {
     full_name: string;
     profile_picture_url?: string;
   };
-  // Fields that now exist in database
   cover_image_url?: string | null;
   tags?: string[] | null;
   category?: string | null;
@@ -37,24 +36,33 @@ interface AuditionDetailsData {
 }
 
 const AuditionDetails = () => {
-  const { auditionId } = useParams<{ auditionId: string }>();
+  const { id: auditionId } = useParams<{ id: string }>();
   const [audition, setAudition] = useState<AuditionDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAuditionDetails = async () => {
+      if (!auditionId) {
+        toast.error("No audition ID provided");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
+        console.log("Fetching audition details for ID:", auditionId);
+        
         const { data, error } = await supabase
           .from('auditions')
           .select(`
             *,
-            creator: creator_id (
+            profiles!auditions_creator_id_fkey (
               full_name,
               profile_picture_url
             )
           `)
-          .eq('id', auditionId);
+          .eq('id', auditionId)
+          .single();
 
         if (error) {
           console.error("Error fetching audition details:", error);
@@ -63,16 +71,17 @@ const AuditionDetails = () => {
           return;
         }
 
-        if (data && data.length > 0) {
-          const auditionData = data[0] as AuditionDetailsData;
+        if (data) {
+          console.log("Audition data fetched:", data);
           setAudition({
-            ...auditionData,
-            cover_image_url: auditionData.cover_image_url || null,
-            tags: auditionData.tags || [],
-            category: auditionData.category || null,
-            age_range: auditionData.age_range || null,
-            gender: auditionData.gender || null,
-            experience_level: auditionData.experience_level || null
+            ...data,
+            creator: data.profiles || { full_name: 'Unknown Creator' },
+            cover_image_url: data.cover_image_url || null,
+            tags: data.tags || [],
+            category: data.category || null,
+            age_range: data.age_range || null,
+            gender: data.gender || null,
+            experience_level: data.experience_level || null
           });
         } else {
           toast.error("Audition not found");
@@ -85,14 +94,7 @@ const AuditionDetails = () => {
       }
     };
 
-    if (auditionId) {
-      fetchAuditionDetails();
-    }
-
-    // Cleanup function (if needed)
-    return () => {
-      // Any cleanup logic here
-    };
+    fetchAuditionDetails();
   }, [auditionId]);
 
   if (loading) {
@@ -126,6 +128,11 @@ const AuditionDetails = () => {
           <div className="text-center">
             <h3 className="text-lg font-medium mb-1">Audition not found</h3>
             <p className="text-gray-500 mb-4">Please check the audition ID or try again later.</p>
+            <Link to="/auditions">
+              <Button className="bg-maasta-purple hover:bg-maasta-purple/90 text-white">
+                Back to Auditions
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -144,7 +151,6 @@ const AuditionDetails = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Image Section */}
           <div>
             <img
               src={audition.cover_image_url || DEFAULT_COVER}
@@ -158,7 +164,6 @@ const AuditionDetails = () => {
             />
           </div>
 
-          {/* Details Section */}
           <div>
             <h2 className="text-3xl font-bold mb-2">{audition.title}</h2>
             <p className="text-maasta-purple font-medium text-sm mb-4">
@@ -214,31 +219,26 @@ const AuditionDetails = () => {
           </div>
         </div>
 
-        {/* Full Description Section */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-4">Description</h3>
           <p className="text-gray-700 leading-relaxed">{audition.description}</p>
         </div>
 
-        {/* Requirements Section */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-4">Requirements</h3>
           <p className="text-gray-700 leading-relaxed">{audition.requirements}</p>
         </div>
 
-        {/* Project Details Section */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-4">Project Details</h3>
           <p className="text-gray-700 leading-relaxed">{audition.project_details}</p>
         </div>
 
-        {/* Compensation Section */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-4">Compensation</h3>
           <p className="text-gray-700 leading-relaxed">{audition.compensation}</p>
         </div>
 
-        {/* Audition Date Section */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-4">Audition Date</h3>
           <p className="text-gray-700 leading-relaxed">{audition.audition_date ? new Date(audition.audition_date).toLocaleDateString() : 'To be announced'}</p>

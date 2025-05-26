@@ -57,6 +57,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
+        console.log("Fetching profile for user:", user.id);
         
         // First, get the basic profile data
         const { data: profile, error: profileError } = await supabase
@@ -65,7 +66,12 @@ const Profile = () => {
           .eq("id", user.id)
           .single();
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile error:", profileError);
+          throw profileError;
+        }
+
+        console.log("Profile data:", profile);
 
         // Then get artist details
         const { data: artistDetails, error: artistError } = await supabase
@@ -74,11 +80,19 @@ const Profile = () => {
           .eq("id", user.id)
           .maybeSingle();
 
-        // Get projects with proper artist_id filter
+        if (artistError && artistError.code !== 'PGRST116') {
+          console.error("Artist details error:", artistError);
+        }
+
+        // Get projects - use user.id as artist_id since they should match
         const { data: projects, error: projectsError } = await supabase
           .from("projects")
           .select("*")
           .eq("artist_id", user.id);
+
+        if (projectsError) {
+          console.error("Projects error:", projectsError);
+        }
 
         // Get education
         const { data: education, error: educationError } = await supabase
@@ -86,11 +100,19 @@ const Profile = () => {
           .select("*")
           .eq("artist_id", user.id);
 
+        if (educationError) {
+          console.error("Education error:", educationError);
+        }
+
         // Get skills
         const { data: specialSkills, error: skillsError } = await supabase
           .from("special_skills")
           .select("*")
           .eq("artist_id", user.id);
+
+        if (skillsError) {
+          console.error("Skills error:", skillsError);
+        }
 
         // Get languages
         const { data: languageSkills, error: languagesError } = await supabase
@@ -98,17 +120,29 @@ const Profile = () => {
           .select("*")
           .eq("artist_id", user.id);
 
+        if (languagesError) {
+          console.error("Languages error:", languagesError);
+        }
+
         // Get tools
         const { data: toolsSoftware, error: toolsError } = await supabase
           .from("tools_software")
           .select("*")
           .eq("artist_id", user.id);
 
+        if (toolsError) {
+          console.error("Tools error:", toolsError);
+        }
+
         // Get media assets
         const { data: mediaAssets, error: mediaError } = await supabase
           .from("media_assets")
           .select("*")
           .eq("user_id", user.id);
+
+        if (mediaError) {
+          console.error("Media error:", mediaError);
+        }
 
         // Combine all data
         const combinedData = {
@@ -122,6 +156,7 @@ const Profile = () => {
           media_assets: mediaAssets || []
         };
 
+        console.log("Combined profile data:", combinedData);
         setProfileData(combinedData);
       } catch (error: any) {
         console.error("Error fetching profile:", error.message);
@@ -146,6 +181,8 @@ const Profile = () => {
     if (!user) return;
     
     try {
+      console.log("Refreshing profile for user:", user.id);
+      
       // First, get the basic profile data
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -227,7 +264,6 @@ const Profile = () => {
       
       if (error) throw error;
       
-      // Update local state
       setProfileData((prev: any) => ({ 
         ...prev, 
         profile_picture_url: imageUrl 
@@ -271,7 +307,6 @@ const Profile = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-grow">
-        {/* Profile Header - Live Preview Style */}
         <div className="relative">
           <div className="h-64 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
           
@@ -281,7 +316,6 @@ const Profile = () => {
                 <div className="relative bg-white p-8">
                   <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
                     
-                    {/* Profile Picture with Upload */}
                     <ProfilePictureUpload
                       currentImageUrl={profileData?.profile_picture_url}
                       userId={user?.id || ""}
@@ -289,7 +323,6 @@ const Profile = () => {
                       fullName={profileData?.full_name}
                     />
 
-                    {/* Main Info */}
                     <div className="flex-1 text-center lg:text-left">
                       <div className="flex items-center gap-4 mb-4">
                         <h1 className="text-4xl font-bold text-gray-900">{profileData?.full_name || 'Your Name'}</h1>
@@ -324,7 +357,6 @@ const Profile = () => {
                         <p className="text-gray-700 mb-6 max-w-2xl">{profileData.bio}</p>
                       )}
 
-                      {/* Action Buttons */}
                       <div className="flex flex-wrap justify-center lg:justify-start gap-4">
                         <Button 
                           onClick={handleViewPublicProfile}
@@ -343,7 +375,6 @@ const Profile = () => {
                       </div>
                     </div>
 
-                    {/* Social Links */}
                     {socialLinks.length > 0 && (
                       <div className="flex lg:flex-col gap-4">
                         {socialLinks.map((link, index) => {
@@ -369,7 +400,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Profile Content */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             <TabsList className="grid grid-cols-6 bg-white rounded-xl shadow-sm border">
@@ -383,7 +413,6 @@ const Profile = () => {
 
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Quick Stats */}
                 <Card className="lg:col-span-1">
                   <CardHeader>
                     <CardTitle className="text-lg">Profile Stats</CardTitle>
@@ -408,7 +437,6 @@ const Profile = () => {
                   </CardContent>
                 </Card>
 
-                {/* Recent Activity */}
                 <Card className="lg:col-span-2">
                   <CardHeader>
                     <CardTitle className="text-lg">Recent Activity</CardTitle>
@@ -441,7 +469,6 @@ const Profile = () => {
                 </Card>
               </div>
 
-              {/* Profile Completion */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Profile Completion</CardTitle>
@@ -513,7 +540,6 @@ const Profile = () => {
           </Tabs>
         </div>
 
-        {/* Edit Profile Modal */}
         {isEditingProfile && (
           <ProfileEditForm
             profileData={profileData}

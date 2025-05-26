@@ -6,6 +6,8 @@ import { isUrgent } from "@/utils/auditionHelpers";
 
 export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
+    console.log("Fetching recent auditions...");
+    
     const { data, error } = await supabase
       .from('auditions')
       .select(`
@@ -21,7 +23,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         age_range,
         gender,
         experience_level,
-        profiles:profiles(full_name)
+        profiles!auditions_creator_id_fkey(full_name)
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -31,7 +33,8 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       console.error("Error fetching recent auditions:", error);
       throw error;
     } else if (data) {
-      // Transform the data to match our component's expected format
+      console.log("Recent auditions data:", data);
+      
       return data.map(item => ({
         id: item.id,
         title: item.title,
