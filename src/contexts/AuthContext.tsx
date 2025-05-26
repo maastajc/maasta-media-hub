@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthSession, User } from '@supabase/supabase-js';
@@ -21,6 +20,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const ensureProfileExists = async (userId: string, email: string, fullName?: string) => {
+    try {
+      console.log("Ensuring profile exists for user:", userId);
+      
+      // Check if profile exists
+      const { data: existingProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        console.log("Profile doesn't exist, creating one...");
+        // Profile doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            full_name: fullName || email.split('@')[0] || 'User',
+            email: email,
+            role: 'artist'
+          });
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+        console.log("Profile created successfully");
+      } else if (profileError) {
+        console.error("Error checking profile:", profileError);
+        throw profileError;
+      } else {
+        console.log("Profile already exists:", existingProfile);
+      }
+    } catch (error) {
+      console.error("Error in ensureProfileExists:", error);
+    }
+  };
+
   useEffect(() => {
     const setupAuth = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -35,6 +73,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setSession(data.session);
         setUser(data.session?.user || null);
+        
+        // Ensure profile exists for existing session
+        if (data.session?.user) {
+          await ensureProfileExists(
+            data.session.user.id, 
+            data.session.user.email || '',
+            data.session.user.user_metadata?.full_name
+          );
+        }
       }
 
       setLoading(false);
@@ -44,6 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Auth state changed:', event);
           setSession(newSession);
           setUser(newSession?.user || null);
+          
+          // Ensure profile exists when user signs in
+          if (event === 'SIGNED_IN' && newSession?.user) {
+            await ensureProfileExists(
+              newSession.user.id, 
+              newSession.user.email || '',
+              newSession.user.user_metadata?.full_name
+            );
+          }
+          
           setLoading(false);
         }
       );
@@ -81,6 +138,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
+      // Ensure profile is created for new user
+      if (data.user) {
+        await ensureProfileExists(
+          data.user.id, 
+          email, 
+          userData?.full_name
+        );
+      }
+
       toast({
         title: 'Success!',
         description: 'Please check your email to confirm your account',
@@ -109,6 +175,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: 'destructive',
         });
         throw error;
+      }
+
+      // Ensure profile exists for signed in user
+      if (data.user) {
+        await ensureProfileExists(
+          data.user.id, 
+          email, 
+          data.user.user_metadata?.full_name
+        );
       }
 
       toast({

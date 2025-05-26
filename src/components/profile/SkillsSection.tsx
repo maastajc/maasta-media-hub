@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,11 +67,57 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     toolForm.reset({ tool_name: "" });
   };
 
+  const ensureProfileExists = async () => {
+    if (!userId) {
+      throw new Error("No user ID provided");
+    }
+
+    console.log("Checking if profile exists for user:", userId);
+    
+    // Check if profile exists
+    const { data: existingProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    if (profileError && profileError.code === 'PGRST116') {
+      console.log("Profile doesn't exist, creating one...");
+      // Profile doesn't exist, create it
+      const { data: authUser } = await supabase.auth.getUser();
+      if (authUser.user) {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            full_name: authUser.user.email?.split('@')[0] || 'User',
+            email: authUser.user.email || '',
+            role: 'artist'
+          });
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+        console.log("Profile created successfully");
+      }
+    } else if (profileError) {
+      console.error("Error checking profile:", profileError);
+      throw profileError;
+    } else {
+      console.log("Profile exists:", existingProfile);
+    }
+  };
+
   const onSubmitSkill = async (values: SkillFormValues) => {
     if (!userId) return;
 
     try {
       setIsSaving(true);
+      
+      // Ensure profile exists before adding skill
+      await ensureProfileExists();
+      
       const skillData = { skill: values.skill, artist_id: userId };
 
       if (editingItem) {
@@ -111,6 +156,10 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
 
     try {
       setIsSaving(true);
+      
+      // Ensure profile exists before adding language
+      await ensureProfileExists();
+      
       const languageData = { 
         language: values.language, 
         proficiency: values.proficiency, 
@@ -153,6 +202,10 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
 
     try {
       setIsSaving(true);
+      
+      // Ensure profile exists before adding tool
+      await ensureProfileExists();
+      
       const toolData = { tool_name: values.tool_name, artist_id: userId };
 
       if (editingItem) {
