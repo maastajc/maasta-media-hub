@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,10 +59,10 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       gender: profileData?.gender || "",
       willing_to_relocate: profileData?.willing_to_relocate || false,
       work_preference: profileData?.work_preference || "any",
-      category: profileData?.artist_details?.[0]?.category || "actor",
-      experience_level: profileData?.artist_details?.[0]?.experience_level || "beginner",
-      years_of_experience: profileData?.artist_details?.[0]?.years_of_experience || 0,
-      association_membership: profileData?.artist_details?.[0]?.association_membership || "",
+      category: profileData?.category || "actor",
+      experience_level: profileData?.experience_level || "beginner",
+      years_of_experience: profileData?.years_of_experience || 0,
+      association_membership: profileData?.association_membership || "",
     },
   });
 
@@ -73,47 +72,17 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     try {
       setIsSaving(true);
 
-      // Update profile
-      const profileUpdate = {
-        full_name: values.full_name,
-        bio: values.bio,
-        city: values.city,
-        state: values.state,
-        country: values.country,
-        phone_number: values.phone_number,
-        date_of_birth: values.date_of_birth,
-        gender: values.gender,
-        willing_to_relocate: values.willing_to_relocate,
-        work_preference: values.work_preference,
-        profile_picture_url: profilePictureUrl,
-      };
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update(profileUpdate)
+      // Update artist details with all profile fields
+      const { error: artistError } = await supabase
+        .from("artist_details")
+        .update({
+          ...values,
+          profile_picture_url: profilePictureUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", userId);
 
-      if (profileError) throw profileError;
-
-      // Always ensure artist details exist for artist profiles
-      if (profileData?.role === 'artist' || values.category) {
-        const artistDetailsData = {
-          category: values.category || 'actor',
-          experience_level: values.experience_level || 'beginner',
-          years_of_experience: values.years_of_experience || 0,
-          association_membership: values.association_membership || '',
-        };
-
-        // Use upsert to create or update artist details
-        const { error: artistError } = await supabase
-          .from("artist_details")
-          .upsert({ id: userId, ...artistDetailsData }, { onConflict: 'id' });
-
-        if (artistError) {
-          console.error("Error upserting artist details:", artistError);
-          throw artistError;
-        }
-      }
+      if (artistError) throw artistError;
 
       toast.success("Profile updated successfully!");
       useToastHook({

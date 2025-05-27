@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -58,23 +57,6 @@ export const SignUpForm = () => {
         throw error;
       }
 
-      if (data.user && role === 'artist') {
-        // Create artist_details record for new artists
-        const { error: artistDetailsError } = await supabase
-          .from('artist_details')
-          .insert({
-            id: data.user.id,
-            category: 'actor',
-            experience_level: 'beginner',
-            years_of_experience: 0
-          });
-
-        if (artistDetailsError) {
-          console.error('Error creating artist details:', artistDetailsError);
-          toast.error('Account created but artist profile setup failed. Please complete your profile.');
-        }
-      }
-      
       toast.success('Account created successfully! Please check your email to verify your account.');
       navigate('/sign-in');
     } catch (error: any) {

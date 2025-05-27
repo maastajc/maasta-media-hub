@@ -12,39 +12,96 @@ export type Database = {
       artist_details: {
         Row: {
           association_membership: string | null
+          bio: string | null
           category: Database["public"]["Enums"]["artist_category"]
+          city: string | null
+          country: string | null
           created_at: string | null
+          date_of_birth: string | null
+          email: string
           experience_level:
             | Database["public"]["Enums"]["experience_level"]
             | null
+          full_name: string
+          gender: string | null
           id: string
+          imdb_profile: string | null
+          instagram: string | null
+          linkedin: string | null
+          personal_website: string | null
+          phone_number: string | null
+          profile_picture_url: string | null
           rate_card: Json | null
+          role: string | null
+          state: string | null
+          status: string | null
           updated_at: string | null
+          willing_to_relocate: boolean | null
+          work_preference: string | null
           years_of_experience: number | null
+          youtube_vimeo: string | null
         }
         Insert: {
           association_membership?: string | null
+          bio?: string | null
           category: Database["public"]["Enums"]["artist_category"]
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          email: string
           experience_level?:
             | Database["public"]["Enums"]["experience_level"]
             | null
+          full_name: string
+          gender?: string | null
           id: string
+          imdb_profile?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          personal_website?: string | null
+          phone_number?: string | null
+          profile_picture_url?: string | null
           rate_card?: Json | null
+          role?: string | null
+          state?: string | null
+          status?: string | null
           updated_at?: string | null
+          willing_to_relocate?: boolean | null
+          work_preference?: string | null
           years_of_experience?: number | null
+          youtube_vimeo?: string | null
         }
         Update: {
           association_membership?: string | null
+          bio?: string | null
           category?: Database["public"]["Enums"]["artist_category"]
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          email?: string
           experience_level?:
             | Database["public"]["Enums"]["experience_level"]
             | null
+          full_name?: string
+          gender?: string | null
           id?: string
+          imdb_profile?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          personal_website?: string | null
+          phone_number?: string | null
+          profile_picture_url?: string | null
           rate_card?: Json | null
+          role?: string | null
+          state?: string | null
+          status?: string | null
           updated_at?: string | null
+          willing_to_relocate?: boolean | null
+          work_preference?: string | null
           years_of_experience?: number | null
+          youtube_vimeo?: string | null
         }
         Relationships: [
           {

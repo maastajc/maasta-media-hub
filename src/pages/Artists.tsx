@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -42,9 +41,9 @@ const Artists = () => {
     try {
       console.log("Fetching artists from database...");
       
-      // First, fetch all artist profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+      // Fetch artists directly from artist_details table
+      const { data: artistsData, error: artistsError } = await supabase
+        .from('artist_details')
         .select(`
           id,
           full_name,
@@ -55,64 +54,32 @@ const Artists = () => {
           country,
           instagram,
           linkedin,
-          role
+          special_skills (skill),
+          category,
+          verified: role
         `)
-        .eq('role', 'artist')
-        .not('full_name', 'is', null);
+        .eq('role', 'artist');
 
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+      if (artistsError) {
+        console.error("Error fetching artists:", artistsError);
         toast.error("Failed to load artists");
         return;
       }
 
-      if (!profilesData) {
-        setArtists([]);
-        setLoading(false);
-        return;
-      }
+      // Map the skills from the nested array to a simple array of strings
+      const formattedArtistsData = artistsData ? artistsData.map(artist => ({
+        ...artist,
+        skills: artist.special_skills ? artist.special_skills.map(s => s.skill) : [],
+        verified: Math.random() > 0.5 // setting random verification status for demo
+      })) : [];
 
-      // Then fetch skills and artist details for each artist
-      const artistsWithSkills = await Promise.all(
-        profilesData.map(async (profile) => {
-          // Fetch skills for this artist
-          const { data: skillsData } = await supabase
-            .from('special_skills')
-            .select('skill')
-            .eq('artist_id', profile.id);
-
-          // Fetch artist details for category
-          const { data: artistDetailsData } = await supabase
-            .from('artist_details')
-            .select('category')
-            .eq('id', profile.id)
-            .maybeSingle();
-
-          return {
-            id: profile.id,
-            full_name: profile.full_name,
-            bio: profile.bio || 'No bio available',
-            profile_picture_url: profile.profile_picture_url,
-            city: profile.city,
-            state: profile.state,
-            country: profile.country,
-            instagram: profile.instagram,
-            linkedin: profile.linkedin,
-            skills: skillsData?.map(skill => skill.skill) || [],
-            category: artistDetailsData?.category || 'performer',
-            verified: Math.random() > 0.5 // Random verification status for demo
-          };
-        })
-      );
-
-      console.log("Formatted artists data:", artistsWithSkills);
-      setArtists(artistsWithSkills);
+      console.log("Formatted artists data:", formattedArtistsData);
+      setArtists(formattedArtistsData || []);
 
       // Extract unique skills for filtering
-      const allSkills = artistsWithSkills.flatMap(artist => artist.skills || []);
+      const allSkills = formattedArtistsData.flatMap(artist => artist.skills || []);
       const uniqueSkills = Array.from(new Set(allSkills)).sort();
       setUniqueTags(uniqueSkills);
-
     } catch (error) {
       console.error("Error fetching artists:", error);
       toast.error("Failed to load artists");
