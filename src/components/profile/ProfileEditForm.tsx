@@ -60,7 +60,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       gender: profileData?.gender || "",
       willing_to_relocate: profileData?.willing_to_relocate || false,
       work_preference: profileData?.work_preference || "any",
-      category: profileData?.artist_details?.[0]?.category || "performer",
+      category: profileData?.artist_details?.[0]?.category || "actor",
       experience_level: profileData?.artist_details?.[0]?.experience_level || "beginner",
       years_of_experience: profileData?.artist_details?.[0]?.years_of_experience || 0,
       association_membership: profileData?.artist_details?.[0]?.association_membership || "",
@@ -98,8 +98,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Always ensure artist details exist for artist profiles
       if (profileData?.role === 'artist' || values.category) {
         const artistDetailsData = {
-          id: userId,
-          category: values.category || 'performer',
+          category: values.category || 'actor',
           experience_level: values.experience_level || 'beginner',
           years_of_experience: values.years_of_experience || 0,
           association_membership: values.association_membership || '',
@@ -108,7 +107,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         // Use upsert to create or update artist details
         const { error: artistError } = await supabase
           .from("artist_details")
-          .upsert(artistDetailsData, { onConflict: 'id' });
+          .upsert({ id: userId, ...artistDetailsData }, { onConflict: 'id' });
 
         if (artistError) {
           console.error("Error upserting artist details:", artistError);
@@ -308,7 +307,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="performer">Performer</SelectItem>
                             <SelectItem value="actor">Actor</SelectItem>
                             <SelectItem value="director">Director</SelectItem>
                             <SelectItem value="cinematographer">Cinematographer</SelectItem>

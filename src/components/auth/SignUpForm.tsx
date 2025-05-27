@@ -18,7 +18,6 @@ export const SignUpForm = () => {
   const [role, setRole] = useState('artist');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const validatePassword = () => {
@@ -44,9 +43,15 @@ export const SignUpForm = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signUp(email, password, {
-        full_name: fullName,
-        role,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role,
+          }
+        }
       });
 
       if (error) {
@@ -59,7 +64,7 @@ export const SignUpForm = () => {
           .from('artist_details')
           .insert({
             id: data.user.id,
-            category: 'performer',
+            category: 'actor',
             experience_level: 'beginner',
             years_of_experience: 0
           });
