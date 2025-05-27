@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const SignUpForm = () => {
   const [fullName, setFullName] = useState('');
@@ -42,15 +44,37 @@ export const SignUpForm = () => {
     setIsLoading(true);
     
     try {
-      await signUp(email, password, {
+      const { data, error } = await signUp(email, password, {
         full_name: fullName,
         role,
       });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user && role === 'artist') {
+        // Create artist_details record for new artists
+        const { error: artistDetailsError } = await supabase
+          .from('artist_details')
+          .insert({
+            id: data.user.id,
+            category: 'performer',
+            experience_level: 'beginner',
+            years_of_experience: 0
+          });
+
+        if (artistDetailsError) {
+          console.error('Error creating artist details:', artistDetailsError);
+          toast.error('Account created but artist profile setup failed. Please complete your profile.');
+        }
+      }
       
-      // Redirect to sign-in page after successful registration
+      toast.success('Account created successfully! Please check your email to verify your account.');
       navigate('/sign-in');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up error:', error);
+      toast.error(error.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }

@@ -37,92 +37,102 @@ const Artists = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchArtists = async () => {
-      setLoading(true);
-      try {
-        console.log("Fetching artists from database...");
-        
-        // First, fetch all artist profiles
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            full_name,
-            bio,
-            profile_picture_url,
-            city,
-            state,
-            country,
-            instagram,
-            linkedin,
-            role
-          `)
-          .eq('role', 'artist')
-          .not('full_name', 'is', null);
+  const fetchArtists = async () => {
+    setLoading(true);
+    try {
+      console.log("Fetching artists from database...");
+      
+      // First, fetch all artist profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          bio,
+          profile_picture_url,
+          city,
+          state,
+          country,
+          instagram,
+          linkedin,
+          role
+        `)
+        .eq('role', 'artist')
+        .not('full_name', 'is', null);
 
-        if (profilesError) {
-          console.error("Error fetching profiles:", profilesError);
-          toast.error("Failed to load artists");
-          return;
-        }
-
-        if (!profilesData) {
-          setArtists([]);
-          setLoading(false);
-          return;
-        }
-
-        // Then fetch skills for each artist
-        const artistsWithSkills = await Promise.all(
-          profilesData.map(async (profile) => {
-            // Fetch skills for this artist
-            const { data: skillsData } = await supabase
-              .from('special_skills')
-              .select('skill')
-              .eq('artist_id', profile.id);
-
-            // Fetch artist details for category
-            const { data: artistDetailsData } = await supabase
-              .from('artist_details')
-              .select('category')
-              .eq('id', profile.id)
-              .single();
-
-            return {
-              id: profile.id,
-              full_name: profile.full_name,
-              bio: profile.bio || 'No bio available',
-              profile_picture_url: profile.profile_picture_url,
-              city: profile.city,
-              state: profile.state,
-              country: profile.country,
-              instagram: profile.instagram,
-              linkedin: profile.linkedin,
-              skills: skillsData?.map(skill => skill.skill) || [],
-              category: artistDetailsData?.category || 'performer',
-              verified: Math.random() > 0.5 // Random verification status for demo
-            };
-          })
-        );
-
-        console.log("Formatted artists data:", artistsWithSkills);
-        setArtists(artistsWithSkills);
-
-        // Extract unique skills for filtering
-        const allSkills = artistsWithSkills.flatMap(artist => artist.skills || []);
-        const uniqueSkills = Array.from(new Set(allSkills)).sort();
-        setUniqueTags(uniqueSkills);
-
-      } catch (error) {
-        console.error("Error fetching artists:", error);
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
         toast.error("Failed to load artists");
-      } finally {
-        setLoading(false);
+        return;
       }
+
+      if (!profilesData) {
+        setArtists([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch skills and artist details for each artist
+      const artistsWithSkills = await Promise.all(
+        profilesData.map(async (profile) => {
+          // Fetch skills for this artist
+          const { data: skillsData } = await supabase
+            .from('special_skills')
+            .select('skill')
+            .eq('artist_id', profile.id);
+
+          // Fetch artist details for category
+          const { data: artistDetailsData } = await supabase
+            .from('artist_details')
+            .select('category')
+            .eq('id', profile.id)
+            .maybeSingle();
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name,
+            bio: profile.bio || 'No bio available',
+            profile_picture_url: profile.profile_picture_url,
+            city: profile.city,
+            state: profile.state,
+            country: profile.country,
+            instagram: profile.instagram,
+            linkedin: profile.linkedin,
+            skills: skillsData?.map(skill => skill.skill) || [],
+            category: artistDetailsData?.category || 'performer',
+            verified: Math.random() > 0.5 // Random verification status for demo
+          };
+        })
+      );
+
+      console.log("Formatted artists data:", artistsWithSkills);
+      setArtists(artistsWithSkills);
+
+      // Extract unique skills for filtering
+      const allSkills = artistsWithSkills.flatMap(artist => artist.skills || []);
+      const uniqueSkills = Array.from(new Set(allSkills)).sort();
+      setUniqueTags(uniqueSkills);
+
+    } catch (error) {
+      console.error("Error fetching artists:", error);
+      toast.error("Failed to load artists");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArtists();
+  }, []);
+
+  // Refresh artists when we come back to this page
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchArtists();
     };
 
-    fetchArtists();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
   
   // Filter artists based on search term, selected tags, and current tab
@@ -158,7 +168,7 @@ const Artists = () => {
     if (user) {
       navigate("/profile");
     } else {
-      navigate("/sign-in");
+      navigate("/sign-up");
     }
   };
 
@@ -201,8 +211,11 @@ const Artists = () => {
                 />
               </div>
               <div className="hidden md:block">
-                <Button className="bg-maasta-orange hover:bg-maasta-orange/90">
-                  Search
+                <Button 
+                  className="bg-maasta-orange hover:bg-maasta-orange/90"
+                  onClick={fetchArtists}
+                >
+                  Refresh
                 </Button>
               </div>
             </div>

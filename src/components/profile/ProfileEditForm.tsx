@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import ProfilePictureUpload from "./ProfilePictureUpload";
+import { toast } from "sonner";
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
@@ -42,7 +43,7 @@ interface ProfileEditFormProps {
 }
 
 const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEditFormProps) => {
-  const { toast } = useToast();
+  const { toast: useToastHook } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
 
@@ -59,7 +60,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       gender: profileData?.gender || "",
       willing_to_relocate: profileData?.willing_to_relocate || false,
       work_preference: profileData?.work_preference || "any",
-      category: profileData?.artist_details?.[0]?.category || undefined,
+      category: profileData?.artist_details?.[0]?.category || "performer",
       experience_level: profileData?.artist_details?.[0]?.experience_level || "beginner",
       years_of_experience: profileData?.artist_details?.[0]?.years_of_experience || 0,
       association_membership: profileData?.artist_details?.[0]?.association_membership || "",
@@ -94,24 +95,29 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
       if (profileError) throw profileError;
 
-      // Update or create artist details if category is provided
-      if (values.category) {
+      // Always ensure artist details exist for artist profiles
+      if (profileData?.role === 'artist' || values.category) {
         const artistDetailsData = {
           id: userId,
-          category: values.category,
-          experience_level: values.experience_level,
-          years_of_experience: values.years_of_experience,
-          association_membership: values.association_membership,
+          category: values.category || 'performer',
+          experience_level: values.experience_level || 'beginner',
+          years_of_experience: values.years_of_experience || 0,
+          association_membership: values.association_membership || '',
         };
 
+        // Use upsert to create or update artist details
         const { error: artistError } = await supabase
           .from("artist_details")
-          .upsert(artistDetailsData);
+          .upsert(artistDetailsData, { onConflict: 'id' });
 
-        if (artistError) throw artistError;
+        if (artistError) {
+          console.error("Error upserting artist details:", artistError);
+          throw artistError;
+        }
       }
 
-      toast({
+      toast.success("Profile updated successfully!");
+      useToastHook({
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
@@ -120,7 +126,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       onClose();
     } catch (error: any) {
       console.error("Error updating profile:", error.message);
-      toast({
+      toast.error(error.message || "Failed to update profile");
+      useToastHook({
         title: "Error",
         description: error.message || "Failed to update profile",
         variant: "destructive",
@@ -301,6 +308,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="performer">Performer</SelectItem>
                             <SelectItem value="actor">Actor</SelectItem>
                             <SelectItem value="director">Director</SelectItem>
                             <SelectItem value="cinematographer">Cinematographer</SelectItem>
