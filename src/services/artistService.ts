@@ -228,14 +228,17 @@ export const updateArtistProfile = async (
       language_skills,
       tools_software,
       media_assets,
+      professional_references,
       ...artistDetailsData
     } = profileData;
 
-    // Ensure category is properly typed and remove any non-database fields
+    // Ensure category and experience_level are properly typed and remove any non-database fields
     const updateData = {
       ...artistDetailsData,
       // Ensure category is properly cast to the expected type
       category: artistDetailsData.category as "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other" | undefined,
+      // Ensure experience_level is properly cast to the expected type
+      experience_level: artistDetailsData.experience_level as "beginner" | "fresher" | "intermediate" | "expert" | "veteran" | undefined,
       updated_at: new Date().toISOString()
     };
 
