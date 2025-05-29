@@ -12,6 +12,7 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
       .select(`
         id,
         full_name,
+        email,
         bio,
         profile_picture_url,
         city,
@@ -101,9 +102,12 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
 
 export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist | null> => {
   try {
+    // Filter out nested objects that don't belong in the artist_details table
+    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, ...updateData } = profileData;
+    
     const { data, error } = await supabase
       .from('artist_details')
-      .update(profileData)
+      .update(updateData)
       .eq('id', artistId)
       .select()
       .single();
