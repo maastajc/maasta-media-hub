@@ -1,7 +1,5 @@
 
-import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   MapPin, 
   Calendar, 
@@ -27,80 +26,78 @@ import {
   Brain,
   Wrench,
   Film,
-  ArrowLeft
+  ArrowLeft,
+  AlertCircle
 } from "lucide-react";
+import { useArtistProfile } from "@/hooks/useArtistProfile";
 
 const ArtistProfile = () => {
   const { artistId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [artistData, setArtistData] = useState<any>(null);
 
-  useEffect(() => {
-    if (!artistId) {
-      navigate("/");
-      return;
-    }
-    
-    const fetchArtistProfile = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch artist from artist_details table with all related data
-        const { data, error } = await supabase
-          .from("artist_details")
-          .select(`
-            *,
-            projects (*),
-            education_training (*),
-            special_skills (*),
-            language_skills (*),
-            tools_software (*),
-            media_assets (*)
-          `)
-          .eq("id", artistId)
-          .single();
-        
-        if (error) {
-          if (error.code === 'PGRST116') {
-            toast({
-              title: "Artist not found",
-              description: "The artist profile you're looking for doesn't exist.",
-              variant: "destructive",
-            });
-            navigate("/artists");
-            return;
-          }
-          throw error;
-        }
-        
-        setArtistData(data);
-      } catch (error: any) {
-        console.error("Error fetching artist profile:", error.message);
-        toast({
-          title: "Error",
-          description: "Failed to load artist profile",
-          variant: "destructive",
-        });
-        navigate("/artists");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchArtistProfile();
-  }, [artistId, navigate, toast]);
+  // Use the unified hook for data fetching
+  const { 
+    profile: artistData, 
+    isLoading, 
+    isError, 
+    error,
+    refetch 
+  } = useArtistProfile(artistId, {
+    enabled: !!artistId,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  });
 
+  // Handle missing artist ID
+  if (!artistId) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Card className="p-8 text-center">
+            <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
+            <h2 className="text-2xl font-bold mb-2">Invalid Artist ID</h2>
+            <p className="text-gray-600 mb-4">No artist ID was provided in the URL.</p>
+            <Button onClick={() => navigate("/artists")}>
+              Browse Artists
+            </Button>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Loading state with skeletons
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-grow py-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="animate-pulse space-y-8">
-              <div className="h-80 bg-gray-200 rounded-2xl"></div>
-              <div className="h-64 bg-gray-200 rounded-2xl"></div>
+        <main className="flex-grow">
+          <div className="relative">
+            <div className="h-64 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
+            
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+              <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
+                <CardContent className="p-8">
+                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                    <Skeleton className="w-48 h-48 rounded-2xl" />
+                    <div className="flex-1 space-y-4">
+                      <Skeleton className="h-8 w-64" />
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-20 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-64 rounded-lg" />
+              <Skeleton className="h-64 rounded-lg" />
             </div>
           </div>
         </main>
@@ -109,10 +106,44 @@ const ArtistProfile = () => {
     );
   }
 
-  if (!artistData) {
-    return null;
+  // Error state with retry option
+  if (isError || !artistData) {
+    const errorMessage = error?.message || "Artist profile not found";
+    const isNotFound = errorMessage.includes('not found') || !artistData;
+    
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Card className="p-8 text-center max-w-md">
+            <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
+            <h2 className="text-2xl font-bold mb-2">
+              {isNotFound ? "Artist Not Found" : "Error Loading Profile"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isNotFound 
+                ? "The artist profile you're looking for doesn't exist or may have been removed."
+                : errorMessage
+              }
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate("/artists")} variant="outline">
+                Browse Artists
+              </Button>
+              {!isNotFound && (
+                <Button onClick={() => refetch()}>
+                  Try Again
+                </Button>
+              )}
+            </div>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
+  // Safely extract data with fallbacks
   const socialLinks = [
     { icon: Globe, url: artistData.personal_website, label: 'Website' },
     { icon: Instagram, url: artistData.instagram, label: 'Instagram' },
@@ -121,8 +152,13 @@ const ArtistProfile = () => {
     { icon: Film, url: artistData.imdb_profile, label: 'IMDB' },
   ].filter(link => link.url);
 
-  const photos = artistData.media_assets?.filter((asset: any) => !asset.is_video) || [];
-  const videos = artistData.media_assets?.filter((asset: any) => asset.is_video) || [];
+  const photos = artistData.media_assets?.filter((asset) => !asset.is_video) || [];
+  const videos = artistData.media_assets?.filter((asset) => asset.is_video) || [];
+  const projects = artistData.projects || [];
+  const skills = artistData.special_skills || [];
+  const languages = artistData.language_skills || [];
+  const tools = artistData.tools_software || [];
+  const education = artistData.education_training || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -149,8 +185,8 @@ const ArtistProfile = () => {
                     {/* Profile Picture */}
                     <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
                       <AvatarImage 
-                        src={artistData.profile_picture_url} 
-                        alt={artistData.full_name}
+                        src={artistData.profile_picture_url || ""} 
+                        alt={artistData.full_name || "Artist"}
                         className="object-cover"
                       />
                       <AvatarFallback className="text-4xl font-bold bg-maasta-purple text-white">
@@ -160,7 +196,9 @@ const ArtistProfile = () => {
 
                     {/* Main Info */}
                     <div className="flex-1 text-center lg:text-left">
-                      <h1 className="text-4xl font-bold text-gray-900 mb-4">{artistData.full_name}</h1>
+                      <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                        {artistData.full_name || 'Unknown Artist'}
+                      </h1>
                       
                       {artistData.category && (
                         <div className="flex justify-center lg:justify-start mb-4">
@@ -243,14 +281,14 @@ const ArtistProfile = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
           
           {/* Projects Section */}
-          {artistData.projects && artistData.projects.length > 0 && (
+          {projects.length > 0 && (
             <section>
               <h2 className="text-3xl font-bold mb-8 flex items-center">
                 <Award className="mr-3 text-maasta-orange" size={32} />
-                Projects ({artistData.projects.length})
+                Projects ({projects.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {artistData.projects.map((project: any) => (
+                {projects.map((project) => (
                   <Card key={project.id} className="hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">
@@ -279,11 +317,13 @@ const ArtistProfile = () => {
 
                       <div className="flex gap-2">
                         <Badge className="bg-maasta-purple/10 text-maasta-purple border-maasta-purple/20">
-                          {project.project_type.replace('_', ' ')}
+                          {project.project_type?.replace('_', ' ') || 'Project'}
                         </Badge>
-                        <Badge variant="outline">
-                          {project.year_of_release}
-                        </Badge>
+                        {project.year_of_release && (
+                          <Badge variant="outline">
+                            {project.year_of_release}
+                          </Badge>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -307,12 +347,16 @@ const ArtistProfile = () => {
                     Photos ({photos.length})
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {photos.map((photo: any) => (
+                    {photos.map((photo) => (
                       <div key={photo.id} className="aspect-square relative group overflow-hidden rounded-lg">
                         <img
                           src={photo.url}
                           alt={photo.description || photo.file_name}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center">
                           <a
@@ -337,12 +381,16 @@ const ArtistProfile = () => {
                     Videos ({videos.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {videos.map((video: any) => (
+                    {videos.map((video) => (
                       <div key={video.id} className="aspect-video relative group overflow-hidden rounded-lg">
                         <video
                           src={video.url}
                           className="w-full h-full object-cover"
                           controls
+                          onError={(e) => {
+                            const target = e.target as HTMLVideoElement;
+                            target.style.display = 'none';
+                          }}
                         />
                       </div>
                     ))}
@@ -353,7 +401,7 @@ const ArtistProfile = () => {
           )}
 
           {/* Skills & Abilities */}
-          {(artistData.special_skills?.length > 0 || artistData.language_skills?.length > 0 || artistData.tools_software?.length > 0) && (
+          {(skills.length > 0 || languages.length > 0 || tools.length > 0) && (
             <section>
               <h2 className="text-3xl font-bold mb-8 flex items-center">
                 <Brain className="mr-3 text-green-600" size={32} />
@@ -362,7 +410,7 @@ const ArtistProfile = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Special Skills */}
-                {artistData.special_skills?.length > 0 && (
+                {skills.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center text-lg">
@@ -372,7 +420,7 @@ const ArtistProfile = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        {artistData.special_skills.map((skill: any) => (
+                        {skills.map((skill) => (
                           <Badge key={skill.id} variant="outline">
                             {skill.skill}
                           </Badge>
@@ -383,7 +431,7 @@ const ArtistProfile = () => {
                 )}
 
                 {/* Languages */}
-                {artistData.language_skills?.length > 0 && (
+                {languages.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center text-lg">
@@ -393,7 +441,7 @@ const ArtistProfile = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {artistData.language_skills.map((lang: any) => (
+                        {languages.map((lang) => (
                           <div key={lang.id} className="flex justify-between items-center">
                             <span>{lang.language}</span>
                             <Badge className="capitalize text-xs">{lang.proficiency}</Badge>
@@ -405,7 +453,7 @@ const ArtistProfile = () => {
                 )}
 
                 {/* Tools & Software */}
-                {artistData.tools_software?.length > 0 && (
+                {tools.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center text-lg">
@@ -415,7 +463,7 @@ const ArtistProfile = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        {artistData.tools_software.map((tool: any) => (
+                        {tools.map((tool) => (
                           <Badge key={tool.id} variant="outline">
                             {tool.tool_name}
                           </Badge>
@@ -429,14 +477,14 @@ const ArtistProfile = () => {
           )}
 
           {/* Education & Training */}
-          {artistData.education_training && artistData.education_training.length > 0 && (
+          {education.length > 0 && (
             <section>
               <h2 className="text-3xl font-bold mb-8 flex items-center">
                 <GraduationCap className="mr-3 text-blue-600" size={32} />
-                Education & Training ({artistData.education_training.length})
+                Education & Training ({education.length})
               </h2>
               <div className="space-y-6">
-                {artistData.education_training.map((edu: any) => (
+                {education.map((edu) => (
                   <Card key={edu.id}>
                     <CardContent className="p-6">
                       <div className="border-l-4 border-maasta-orange pl-6">
@@ -460,6 +508,21 @@ const ArtistProfile = () => {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {/* Empty State */}
+          {projects.length === 0 && photos.length === 0 && videos.length === 0 && 
+           skills.length === 0 && languages.length === 0 && tools.length === 0 && 
+           education.length === 0 && (
+            <section className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <AlertCircle className="mx-auto mb-4 text-gray-400" size={48} />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Portfolio Coming Soon</h3>
+                <p className="text-gray-600">
+                  This artist hasn't added their projects, skills, or media yet. Check back later!
+                </p>
               </div>
             </section>
           )}
