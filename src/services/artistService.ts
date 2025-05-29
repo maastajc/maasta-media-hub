@@ -57,12 +57,27 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
     console.log(`Successfully fetched ${artists.length} artists`);
     return artists.map(artist => ({
       ...artist,
-      // Ensure all arrays exist with fallbacks
-      special_skills: artist.special_skills || [],
-      projects: artist.projects || [],
-      education_training: artist.education_training || [],
-      language_skills: artist.language_skills || [],
-      media_assets: artist.media_assets || [],
+      // Map related data and add missing artist_id fields
+      special_skills: (artist.special_skills || []).map(skill => ({
+        ...skill,
+        artist_id: artist.id
+      })),
+      projects: (artist.projects || []).map(project => ({
+        ...project,
+        artist_id: artist.id
+      })),
+      education_training: (artist.education_training || []).map(edu => ({
+        ...edu,
+        artist_id: artist.id
+      })),
+      language_skills: (artist.language_skills || []).map(lang => ({
+        ...lang,
+        artist_id: artist.id
+      })),
+      media_assets: (artist.media_assets || []).map(media => ({
+        ...media,
+        artist_id: artist.id
+      })),
       // Ensure required fields have fallbacks
       full_name: artist.full_name || 'Unknown Artist',
       email: artist.email || '',
@@ -117,12 +132,6 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
           id,
           tool_name
         ),
-        professional_references (
-          id,
-          name,
-          role,
-          contact
-        ),
         media_assets (
           id,
           url,
@@ -150,16 +159,34 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
 
     console.log('Successfully fetched artist:', artist.full_name);
     
-    // Return artist with proper fallbacks for all nested data
+    // Return artist with proper fallbacks for all nested data and add missing artist_id fields
     return {
       ...artist,
-      special_skills: artist.special_skills || [],
-      projects: artist.projects || [],
-      education_training: artist.education_training || [],
-      language_skills: artist.language_skills || [],
-      tools_software: artist.tools_software || [],
-      professional_references: artist.professional_references || [],
-      media_assets: artist.media_assets || [],
+      special_skills: (artist.special_skills || []).map(skill => ({
+        ...skill,
+        artist_id: artist.id
+      })),
+      projects: (artist.projects || []).map(project => ({
+        ...project,
+        artist_id: artist.id
+      })),
+      education_training: (artist.education_training || []).map(edu => ({
+        ...edu,
+        artist_id: artist.id
+      })),
+      language_skills: (artist.language_skills || []).map(lang => ({
+        ...lang,
+        artist_id: artist.id
+      })),
+      tools_software: (artist.tools_software || []).map(tool => ({
+        ...tool,
+        artist_id: artist.id
+      })),
+      media_assets: (artist.media_assets || []).map(media => ({
+        ...media,
+        artist_id: artist.id,
+        user_id: media.user_id || artist.id
+      })),
       // Ensure required fields have fallbacks
       full_name: artist.full_name || 'Unknown Artist',
       email: artist.email || '',
@@ -194,17 +221,19 @@ export const updateArtistProfile = async (
       education_training,
       language_skills,
       tools_software,
-      professional_references,
       media_assets,
       ...artistDetailsData
     } = profileData;
 
+    // Ensure category is properly typed
+    const updateData = {
+      ...artistDetailsData,
+      updated_at: new Date().toISOString()
+    };
+
     const { data: updatedArtist, error } = await supabase
       .from('artist_details')
-      .update({
-        ...artistDetailsData,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', artistId)
       .select()
       .single();

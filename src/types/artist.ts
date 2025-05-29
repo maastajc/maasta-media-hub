@@ -35,6 +35,7 @@ export interface Artist {
   special_skills?: Skill[];
   language_skills?: LanguageSkill[];
   tools_software?: Tool[];
+  professional_references?: ProfessionalReference[];
   media_assets?: MediaAsset[];
 }
 
@@ -79,6 +80,15 @@ export interface Tool {
   id: string;
   artist_id: string;
   tool_name: string;
+}
+
+export interface ProfessionalReference {
+  id: string;
+  artist_id: string;
+  name: string;
+  role: string;
+  contact?: string;
+  created_at?: string;
 }
 
 export interface MediaAsset {
