@@ -18,9 +18,18 @@ export const useArtistProfile = (artistId?: string) => {
   });
   
   const updateProfileMutation = useMutation({
-    mutationFn: (profileData: Partial<Artist>) => updateArtistProfile(user!.id, profileData),
+    mutationFn: (profileData: Partial<Artist>) => {
+      if (!user?.id) {
+        throw new Error('User must be authenticated to update profile');
+      }
+      return updateArtistProfile(user.id, profileData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', targetId] });
+      queryClient.invalidateQueries({ queryKey: ['artists'] }); // Refresh artists list
+    },
+    onError: (error) => {
+      console.error('Profile update error:', error);
     },
   });
   
@@ -32,5 +41,6 @@ export const useArtistProfile = (artistId?: string) => {
     updateProfile: updateProfileMutation.mutate,
     isUpdating: updateProfileMutation.isPending,
     refetch: profileQuery.refetch,
+    canEdit: user?.id === targetId, // User can only edit their own profile
   };
 };

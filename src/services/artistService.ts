@@ -56,7 +56,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
   try {
     console.log("Fetching artist profile for ID:", artistId);
     
-    // Get the main artist details
+    // Get the main artist details - RLS will automatically handle permissions
     const { data: artistDetails, error: artistError } = await supabase
       .from('artist_details')
       .select('*')
@@ -64,11 +64,15 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       .single();
     
     if (artistError) {
+      if (artistError.code === 'PGRST116') {
+        console.log("No artist profile found for ID:", artistId);
+        return null;
+      }
       console.error("Artist details error:", artistError);
       throw artistError;
     }
 
-    // Get related data
+    // Get related data - RLS policies will automatically filter based on permissions
     const [
       { data: projects },
       { data: education },
@@ -107,6 +111,17 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
 
 export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist | null> => {
   try {
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      throw new Error("User must be authenticated to update profile");
+    }
+
+    if (user.id !== artistId) {
+      throw new Error("Users can only update their own profile");
+    }
+
     // Filter out nested objects that don't belong in the artist_details table
     const { projects, education_training, special_skills, language_skills, tools_software, media_assets, verified, ...updateData } = profileData;
     
@@ -122,14 +137,18 @@ export const updateArtistProfile = async (artistId: string, profileData: Partial
     
     if (error) {
       console.error("Error updating artist profile:", error);
+      if (error.code === '42501') {
+        throw new Error("You don't have permission to update this profile");
+      }
       throw error;
     }
     
     console.log("Artist profile updated successfully:", data);
+    toast.success("Profile updated successfully");
     return data;
   } catch (error: any) {
     console.error("Error updating artist profile:", error);
-    toast.error("Failed to update profile");
+    toast.error(error.message || "Failed to update profile");
     return null;
   }
 };

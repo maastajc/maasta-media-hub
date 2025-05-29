@@ -14,19 +14,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // If still loading, show nothing or a loading spinner
+  // If still loading, show loading spinner
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-maasta-purple"></div>
+      </div>
+    );
   }
 
-  // If not authenticated, redirect to login
+  // If not authenticated, redirect to login with return path
   if (!user) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
-  // If a specific role is required but the user doesn't have it, show an unauthorized message
-  // This would require you to also fetch the user's role from profiles table
-  // For now, we'll just return the children
+  // For now, we'll just return the children since role checking would require
+  // additional database queries to the profiles/artist_details table
+  // This can be enhanced later if specific role-based access is needed
   
   return <>{children}</>;
 };
