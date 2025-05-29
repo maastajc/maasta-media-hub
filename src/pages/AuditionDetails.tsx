@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { DEFAULT_COVER } from '@/utils/auditionHelpers';
+import { DEFAULT_COVER, getDeadlineStatus, getAuditionDateStatus } from '@/utils/auditionHelpers';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -323,7 +323,7 @@ const AuditionDetails = () => {
                   <div>
                     <p className="font-medium">Audition Date</p>
                     <p className="text-sm text-gray-600">
-                      {audition.audition_date ? new Date(audition.audition_date).toLocaleDateString() : 'To be announced'}
+                      {getAuditionDateStatus(audition.audition_date)}
                     </p>
                   </div>
                 </div>
@@ -333,7 +333,7 @@ const AuditionDetails = () => {
                   <div>
                     <p className="font-medium">Application Deadline</p>
                     <p className="text-sm text-gray-600">
-                      {audition.deadline ? new Date(audition.deadline).toLocaleDateString() : 'Open until filled'}
+                      {getDeadlineStatus(audition.deadline)}
                     </p>
                   </div>
                 </div>

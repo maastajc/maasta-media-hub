@@ -88,19 +88,29 @@ const CreateAudition = () => {
     setCoverImage(file);
     
     try {
-      // Use the correct bucket name
-      const result = await uploadFile(file, 'audition-covers', 'covers');
+      console.log('Uploading cover image:', file.name);
       
-      if (result.error) {
-        toast({
-          title: "Upload failed",
-          description: result.error,
-          variant: "destructive",
-        });
-        return;
+      // Upload to Supabase Storage using photos bucket (which should exist)
+      const fileExt = file.name.split('.').pop();
+      const fileName = `audition-covers/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
       }
 
-      setCoverImageUrl(result.url);
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('photos')
+        .getPublicUrl(fileName);
+
+      console.log('Cover image uploaded successfully:', publicUrl);
+      setCoverImageUrl(publicUrl);
+      
       toast({
         title: "Success",
         description: "Cover image uploaded successfully",

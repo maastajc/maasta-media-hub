@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -44,7 +43,7 @@ const Artists = () => {
     try {
       console.log("Fetching artists from database...");
       
-      // Fetch artists from artist_details table with related skills
+      // Fetch artists from artist_details table with related skills using explicit relationship
       const { data: artistsData, error: artistsError } = await supabase
         .from('artist_details')
         .select(`
@@ -60,7 +59,7 @@ const Artists = () => {
           category,
           experience_level,
           years_of_experience,
-          special_skills (skill)
+          special_skills!fk_special_skills_artist_details (skill)
         `);
 
       if (artistsError) {
