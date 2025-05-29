@@ -1,328 +1,250 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Artist } from "@/types/artist";
-
-// Cache for artist data to reduce redundant calls
-const artistCache = new Map<string, { data: Artist; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// Helper function to validate artist data
-const validateArtistData = (data: any): data is Artist => {
-  return data && 
-         typeof data.id === 'string' && 
-         typeof data.full_name === 'string' && 
-         typeof data.email === 'string';
-};
-
-// Helper function to format artist data with proper fallbacks
-const formatArtistData = (artistData: any): Artist => {
-  if (!validateArtistData(artistData)) {
-    console.warn("Invalid artist data structure:", artistData);
-  }
-
-  return {
-    id: artistData.id || '',
-    full_name: artistData.full_name || 'Unknown Artist',
-    email: artistData.email || '',
-    bio: artistData.bio || null,
-    profile_picture_url: artistData.profile_picture_url || null,
-    city: artistData.city || null,
-    state: artistData.state || null,
-    country: artistData.country || null,
-    phone_number: artistData.phone_number || null,
-    date_of_birth: artistData.date_of_birth || null,
-    gender: artistData.gender || null,
-    instagram: artistData.instagram || null,
-    linkedin: artistData.linkedin || null,
-    youtube_vimeo: artistData.youtube_vimeo || null,
-    personal_website: artistData.personal_website || null,
-    category: artistData.category || null,
-    experience_level: artistData.experience_level || null,
-    years_of_experience: artistData.years_of_experience || 0,
-    role: artistData.role || 'artist',
-    verified: Math.random() > 0.5, // Random verification status for demo
-    status: artistData.status || 'active',
-    work_preference: artistData.work_preference || null,
-    willing_to_relocate: artistData.willing_to_relocate || false,
-    imdb_profile: artistData.imdb_profile || null,
-    association_membership: artistData.association_membership || null,
-    rate_card: artistData.rate_card || null,
-    created_at: artistData.created_at || null,
-    updated_at: artistData.updated_at || null,
-    
-    // Related data with proper fallbacks
-    projects: artistData.projects || [],
-    education_training: artistData.education_training || [],
-    special_skills: artistData.special_skills || [],
-    language_skills: artistData.language_skills || [],
-    tools_software: artistData.tools_software || [],
-    media_assets: artistData.media_assets || []
-  };
-};
 
 export const fetchAllArtists = async (): Promise<Artist[]> => {
   try {
-    console.log("Fetching all artists from artist_details table...");
+    console.log('Fetching all artists...');
     
-    const { data: artistsData, error: artistsError } = await supabase
+    const { data: artists, error } = await supabase
       .from('artist_details')
       .select(`
-        id,
-        full_name,
-        email,
-        bio,
-        profile_picture_url,
-        city,
-        state,
-        country,
-        instagram,
-        linkedin,
-        category,
-        experience_level,
-        years_of_experience,
-        special_skills!fk_special_skills_artist_details (skill)
-      `);
+        *,
+        special_skills (
+          id,
+          skill
+        ),
+        projects (
+          id,
+          project_name,
+          role_in_project,
+          project_type,
+          year_of_release
+        ),
+        education_training (
+          id,
+          qualification_name,
+          institution,
+          year_completed,
+          is_academic
+        ),
+        language_skills (
+          id,
+          language,
+          proficiency
+        ),
+        media_assets (
+          id,
+          url,
+          file_name,
+          file_type,
+          is_video,
+          description
+        )
+      `)
+      .eq('status', 'active');
 
-    if (artistsError) {
-      console.error("Error fetching artists:", artistsError);
-      toast.error("Failed to load artists. Please try again.");
+    if (error) {
+      console.error('Error fetching artists:', error);
+      throw new Error(`Failed to fetch artists: ${error.message}`);
+    }
+
+    if (!artists || artists.length === 0) {
+      console.log('No artists found');
       return [];
     }
 
-    if (!artistsData || artistsData.length === 0) {
-      console.log("No artists found in database");
-      return [];
-    }
-
-    // Format the artists data with proper error handling
-    const formattedArtists: Artist[] = artistsData.map(artist => {
-      try {
-        const formattedArtist = formatArtistData({
-          ...artist,
-          skills: artist.special_skills ? artist.special_skills.map((s: any) => s.skill) : [],
-          special_skills: artist.special_skills ? artist.special_skills.map((s: any, index: number) => ({
-            id: `temp-${index}`,
-            artist_id: artist.id,
-            skill: s.skill
-          })) : []
-        });
-        
-        return formattedArtist;
-      } catch (error) {
-        console.error("Error formatting artist data:", error, artist);
-        // Return a minimal valid artist object if formatting fails
-        return formatArtistData({
-          id: artist.id,
-          full_name: artist.full_name || 'Unknown Artist',
-          email: artist.email || ''
-        });
-      }
-    });
-
-    console.log("Successfully formatted artists data:", formattedArtists.length, "artists");
-    return formattedArtists;
+    console.log(`Successfully fetched ${artists.length} artists`);
+    return artists.map(artist => ({
+      ...artist,
+      // Ensure all arrays exist with fallbacks
+      special_skills: artist.special_skills || [],
+      projects: artist.projects || [],
+      education_training: artist.education_training || [],
+      language_skills: artist.language_skills || [],
+      media_assets: artist.media_assets || [],
+      // Ensure required fields have fallbacks
+      full_name: artist.full_name || 'Unknown Artist',
+      email: artist.email || '',
+      category: artist.category || 'actor',
+      experience_level: artist.experience_level || 'beginner'
+    }));
   } catch (error: any) {
-    console.error("Unexpected error fetching artists:", error);
-    toast.error("An unexpected error occurred while loading artists");
-    return [];
+    console.error('Error in fetchAllArtists:', error);
+    throw error;
   }
 };
 
 export const fetchArtistById = async (artistId: string): Promise<Artist | null> => {
-  if (!artistId) {
-    console.warn("fetchArtistById called with empty artistId");
-    return null;
-  }
-
-  // Check cache first
-  const cached = artistCache.get(artistId);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log("Returning cached artist data for:", artistId);
-    return cached.data;
-  }
-
   try {
-    console.log("Fetching artist profile for ID:", artistId);
+    console.log('Fetching artist by ID:', artistId);
     
-    // Get the main artist details - RLS will automatically handle permissions
-    const { data: artistDetails, error: artistError } = await supabase
+    if (!artistId) {
+      throw new Error('Artist ID is required');
+    }
+
+    const { data: artist, error } = await supabase
       .from('artist_details')
-      .select('*')
+      .select(`
+        *,
+        special_skills (
+          id,
+          skill
+        ),
+        projects (
+          id,
+          project_name,
+          role_in_project,
+          project_type,
+          year_of_release,
+          director_producer,
+          streaming_platform,
+          link
+        ),
+        education_training (
+          id,
+          qualification_name,
+          institution,
+          year_completed,
+          is_academic
+        ),
+        language_skills (
+          id,
+          language,
+          proficiency
+        ),
+        tools_software (
+          id,
+          tool_name
+        ),
+        professional_references (
+          id,
+          name,
+          role,
+          contact
+        ),
+        media_assets (
+          id,
+          url,
+          file_name,
+          file_type,
+          file_size,
+          is_video,
+          is_embed,
+          embed_source,
+          description
+        )
+      `)
       .eq('id', artistId)
-      .maybeSingle(); // Use maybeSingle instead of single to handle no data gracefully
-    
-    if (artistError) {
-      console.error("Artist details error:", artistError);
-      toast.error("Failed to load artist profile");
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching artist:', error);
+      throw new Error(`Failed to fetch artist: ${error.message}`);
+    }
+
+    if (!artist) {
+      console.log('Artist not found:', artistId);
       return null;
     }
 
-    if (!artistDetails) {
-      console.log("No artist profile found for ID:", artistId);
-      return null;
-    }
-
-    // Get related data with proper error handling for each query
-    const relatedDataPromises = [
-      supabase.from("projects").select("*").eq("artist_id", artistId),
-      supabase.from("education_training").select("*").eq("artist_id", artistId),
-      supabase.from("special_skills").select("*").eq("artist_id", artistId),
-      supabase.from("language_skills").select("*").eq("artist_id", artistId),
-      supabase.from("tools_software").select("*").eq("artist_id", artistId),
-      supabase.from("media_assets").select("*").eq("artist_id", artistId)
-    ];
-
-    const results = await Promise.allSettled(relatedDataPromises);
+    console.log('Successfully fetched artist:', artist.full_name);
     
-    // Extract data with fallbacks for failed queries
-    const [
-      projectsResult,
-      educationResult,
-      skillsResult,
-      languageResult,
-      toolsResult,
-      mediaResult
-    ] = results;
-
-    const projects = projectsResult.status === 'fulfilled' ? projectsResult.value.data || [] : [];
-    const education = educationResult.status === 'fulfilled' ? educationResult.value.data || [] : [];
-    const specialSkills = skillsResult.status === 'fulfilled' ? skillsResult.value.data || [] : [];
-    const languageSkills = languageResult.status === 'fulfilled' ? languageResult.value.data || [] : [];
-    const toolsSoftware = toolsResult.status === 'fulfilled' ? toolsResult.value.data || [] : [];
-    const mediaAssets = mediaResult.status === 'fulfilled' ? mediaResult.value.data || [] : [];
-
-    // Log any failed queries
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        const tableNames = ['projects', 'education_training', 'special_skills', 'language_skills', 'tools_software', 'media_assets'];
-        console.warn(`Failed to fetch ${tableNames[index]} for artist ${artistId}:`, result.reason);
-      }
-    });
-
-    // Combine all data into a unified profile structure
-    const artistProfile: Artist = formatArtistData({
-      ...artistDetails,
-      projects,
-      education_training: education,
-      special_skills: specialSkills,
-      language_skills: languageSkills,
-      tools_software: toolsSoftware,
-      media_assets: mediaAssets
-    });
-
-    // Cache the result
-    artistCache.set(artistId, { data: artistProfile, timestamp: Date.now() });
-
-    console.log("Successfully loaded artist profile for:", artistId);
-    return artistProfile;
+    // Return artist with proper fallbacks for all nested data
+    return {
+      ...artist,
+      special_skills: artist.special_skills || [],
+      projects: artist.projects || [],
+      education_training: artist.education_training || [],
+      language_skills: artist.language_skills || [],
+      tools_software: artist.tools_software || [],
+      professional_references: artist.professional_references || [],
+      media_assets: artist.media_assets || [],
+      // Ensure required fields have fallbacks
+      full_name: artist.full_name || 'Unknown Artist',
+      email: artist.email || '',
+      category: artist.category || 'actor',
+      experience_level: artist.experience_level || 'beginner'
+    };
   } catch (error: any) {
-    console.error("Unexpected error fetching artist:", error);
-    toast.error("An unexpected error occurred while loading the artist profile");
-    return null;
+    console.error('Error in fetchArtistById:', error);
+    throw error;
   }
 };
 
-export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist | null> => {
-  if (!artistId) {
-    console.error("updateArtistProfile called with empty artistId");
-    toast.error("Invalid artist ID");
-    return null;
-  }
-
-  if (!profileData || Object.keys(profileData).length === 0) {
-    console.warn("updateArtistProfile called with empty profile data");
-    toast.error("No data to update");
-    return null;
-  }
-
+export const updateArtistProfile = async (
+  artistId: string, 
+  profileData: Partial<Artist>
+): Promise<Artist | null> => {
   try {
-    // Check if user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Updating artist profile:', artistId, profileData);
     
-    if (authError) {
-      console.error("Authentication error:", authError);
-      toast.error("Authentication failed. Please sign in again.");
-      return null;
+    if (!artistId) {
+      throw new Error('Artist ID is required');
     }
 
-    if (!user) {
-      toast.error("You must be signed in to update your profile");
-      return null;
+    if (!profileData || Object.keys(profileData).length === 0) {
+      throw new Error('Profile data is required');
     }
 
-    if (user.id !== artistId) {
-      console.error("User trying to update profile they don't own:", { userId: user.id, artistId });
-      toast.error("You can only update your own profile");
-      return null;
-    }
+    // Extract only the fields that belong to artist_details table
+    const {
+      special_skills,
+      projects,
+      education_training,
+      language_skills,
+      tools_software,
+      professional_references,
+      media_assets,
+      ...artistDetailsData
+    } = profileData;
 
-    // Filter out nested objects that don't belong in the artist_details table
-    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, verified, ...updateData } = profileData;
-    
-    // Validate required fields
-    if (updateData.full_name !== undefined && (!updateData.full_name || updateData.full_name.trim().length === 0)) {
-      toast.error("Full name is required");
-      return null;
-    }
-
-    if (updateData.email !== undefined && (!updateData.email || !updateData.email.includes('@'))) {
-      toast.error("Valid email is required");
-      return null;
-    }
-
-    // Type cast the update data to match Supabase's expected types
-    const dbUpdateData = updateData as any;
-    
-    const { data, error } = await supabase
+    const { data: updatedArtist, error } = await supabase
       .from('artist_details')
-      .update(dbUpdateData)
+      .update({
+        ...artistDetailsData,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', artistId)
       .select()
-      .maybeSingle();
-    
+      .single();
+
     if (error) {
-      console.error("Error updating artist profile:", error);
-      
-      if (error.code === '42501') {
-        toast.error("You don't have permission to update this profile");
-        return null;
-      }
-      
-      if (error.code === '23505') {
-        toast.error("Email address is already in use");
-        return null;
-      }
-      
-      toast.error("Failed to update profile. Please try again.");
-      return null;
+      console.error('Error updating artist profile:', error);
+      throw new Error(`Failed to update profile: ${error.message}`);
     }
-    
-    if (!data) {
-      console.error("No data returned after update for artist:", artistId);
-      toast.error("Profile update failed - no data returned");
-      return null;
+
+    if (!updatedArtist) {
+      throw new Error('No data returned after update');
     }
+
+    console.log('Successfully updated artist profile');
     
-    // Clear cache for this artist
-    artistCache.delete(artistId);
-    
-    console.log("Artist profile updated successfully:", data);
-    toast.success("Profile updated successfully");
-    
-    return formatArtistData(data);
+    // Fetch the complete updated profile with all related data
+    return await fetchArtistById(artistId);
   } catch (error: any) {
-    console.error("Unexpected error updating artist profile:", error);
-    toast.error("An unexpected error occurred while updating your profile");
-    return null;
+    console.error('Error in updateArtistProfile:', error);
+    throw error;
   }
 };
 
-// Helper function to clear cache (useful for testing or forced refresh)
-export const clearArtistCache = (artistId?: string) => {
-  if (artistId) {
-    artistCache.delete(artistId);
-  } else {
-    artistCache.clear();
+// Helper function to check if an artist profile exists
+export const checkArtistExists = async (artistId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('artist_details')
+      .select('id')
+      .eq('id', artistId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking artist existence:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error in checkArtistExists:', error);
+    return false;
   }
 };

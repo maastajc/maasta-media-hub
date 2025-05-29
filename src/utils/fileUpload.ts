@@ -77,6 +77,30 @@ export async function uploadFile(
 }
 
 /**
+ * Uploads a profile picture using the standardized bucket
+ */
+export async function uploadProfilePicture(
+  file: File,
+  userId: string
+): Promise<FileUploadResult> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `profile.${fileExt}`;
+  return uploadFile(file, 'profile-pictures', userId);
+}
+
+/**
+ * Uploads an audition cover image using the standardized bucket
+ */
+export async function uploadAuditionCover(
+  file: File,
+  auditionId: string
+): Promise<FileUploadResult> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `cover.${fileExt}`;
+  return uploadFile(file, 'audition-covers', auditionId);
+}
+
+/**
  * Deletes a file from Supabase storage
  */
 export async function deleteFile(path: string, bucketName: string): Promise<boolean> {

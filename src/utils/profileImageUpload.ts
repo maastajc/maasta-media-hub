@@ -6,7 +6,7 @@ export const uploadProfileImage = async (file: File, userId: string): Promise<st
   const fileName = `${userId}/profile.${fileExt}`;
   
   try {
-    // Upload file to storage
+    // Upload file to storage using standardized bucket name
     const { error: uploadError } = await supabase.storage
       .from('profile-pictures')
       .upload(fileName, file, {

@@ -34,18 +34,23 @@ export const useArtistProfile = (
         throw new Error('No artist ID provided');
       }
       
+      console.log('Fetching artist profile for ID:', targetId);
+      
       const profile = await fetchArtistById(targetId);
       
       if (!profile) {
         throw new Error(`Artist profile not found for ID: ${targetId}`);
       }
       
+      console.log('Successfully loaded artist profile:', profile.full_name);
       return profile;
     },
     enabled: !!targetId && enabled,
     staleTime,
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
+      console.log(`Artist profile fetch attempt ${failureCount + 1} failed:`, error);
+      
       // Don't retry if it's a "not found" error
       if (error?.message?.includes('not found')) {
         return false;
@@ -66,6 +71,8 @@ export const useArtistProfile = (
         throw new Error('No profile data provided for update');
       }
       
+      console.log('Updating profile with data:', profileData);
+      
       const result = await updateArtistProfile(user.id, profileData);
       
       if (!result) {
@@ -82,7 +89,8 @@ export const useArtistProfile = (
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
       
-      console.log('Profile updated successfully:', updatedProfile);
+      console.log('Profile updated successfully:', updatedProfile.full_name);
+      toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
       console.error('Profile update error:', error);
@@ -96,6 +104,7 @@ export const useArtistProfile = (
   // Helper function to refresh profile data
   const refreshProfile = async () => {
     try {
+      console.log('Refreshing profile data...');
       await profileQuery.refetch();
     } catch (error) {
       console.error('Error refreshing profile:', error);

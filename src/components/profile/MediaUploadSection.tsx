@@ -34,7 +34,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     try {
       setIsUploading(true);
 
-      // Upload file to Supabase Storage
+      // Upload file to Supabase Storage using standardized bucket names
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       const bucketName = isVideo ? 'videos' : 'photos';
@@ -88,7 +88,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
   const handleDelete = async (mediaId: string, fileName: string, isVideo: boolean) => {
     try {
-      // Delete from storage
+      // Delete from storage using correct bucket name
       const bucketName = isVideo ? 'videos' : 'photos';
       await supabase.storage
         .from(bucketName)
