@@ -268,6 +268,13 @@ export type Database = {
             referencedRelation: "artist_details"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_education_training_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_attendees: {
@@ -386,6 +393,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_language_skills_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "language_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -396,6 +410,7 @@ export type Database = {
       }
       media_assets: {
         Row: {
+          artist_id: string | null
           created_at: string | null
           description: string | null
           embed_source: string | null
@@ -409,6 +424,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          artist_id?: string | null
           created_at?: string | null
           description?: string | null
           embed_source?: string | null
@@ -422,6 +438,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          artist_id?: string | null
           created_at?: string | null
           description?: string | null
           embed_source?: string | null
@@ -435,6 +452,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_media_assets_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_assets_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "media_assets_user_id_fkey"
             columns: ["user_id"]
@@ -600,6 +631,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_projects_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "projects_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -626,6 +664,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_special_skills_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "special_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -651,6 +696,13 @@ export type Database = {
           tool_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tools_software_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tools_software_artist_id_fkey"
             columns: ["artist_id"]

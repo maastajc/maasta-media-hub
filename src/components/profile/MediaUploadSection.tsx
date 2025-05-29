@@ -50,7 +50,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         .from(bucketName)
         .getPublicUrl(fileName);
 
-      // Save to database
+      // Save to database with both user_id and artist_id
       const mediaData = {
         url: publicUrl,
         file_name: file.name,
@@ -59,6 +59,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         is_video: isVideo,
         is_embed: false,
         user_id: userId,
+        artist_id: userId, // Use userId as artist_id since they match
       };
 
       const { error: dbError } = await supabase
