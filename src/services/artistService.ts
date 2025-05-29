@@ -10,30 +10,30 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
       .from('artist_details')
       .select(`
         *,
-        special_skills (
+        special_skills!fk_special_skills_artist_details (
           id,
           skill
         ),
-        projects (
+        projects!fk_projects_artist_details (
           id,
           project_name,
           role_in_project,
           project_type,
           year_of_release
         ),
-        education_training (
+        education_training!fk_education_training_artist_details (
           id,
           qualification_name,
           institution,
           year_completed,
           is_academic
         ),
-        language_skills (
+        language_skills!fk_language_skills_artist_details (
           id,
           language,
           proficiency
         ),
-        media_assets (
+        media_assets!fk_media_assets_artist_details (
           id,
           url,
           file_name,
@@ -106,11 +106,11 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       .from('artist_details')
       .select(`
         *,
-        special_skills (
+        special_skills!fk_special_skills_artist_details (
           id,
           skill
         ),
-        projects (
+        projects!fk_projects_artist_details (
           id,
           project_name,
           role_in_project,
@@ -120,23 +120,23 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
           streaming_platform,
           link
         ),
-        education_training (
+        education_training!fk_education_training_artist_details (
           id,
           qualification_name,
           institution,
           year_completed,
           is_academic
         ),
-        language_skills (
+        language_skills!fk_language_skills_artist_details (
           id,
           language,
           proficiency
         ),
-        tools_software (
+        tools_software!fk_tools_software_artist_details (
           id,
           tool_name
         ),
-        media_assets (
+        media_assets!fk_media_assets_artist_details (
           id,
           url,
           file_name,

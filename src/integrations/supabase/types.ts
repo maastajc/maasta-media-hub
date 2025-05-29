@@ -53,7 +53,7 @@ export type Database = {
           experience_level?:
             | Database["public"]["Enums"]["experience_level"]
             | null
-          full_name: string
+          full_name?: string
           gender?: string | null
           id: string
           imdb_profile?: string | null
@@ -594,7 +594,6 @@ export type Database = {
           artist_id: string | null
           created_at: string | null
           director_producer: string | null
-          id: string
           link: string | null
           project_name: string
           project_type: Database["public"]["Enums"]["project_type"]
@@ -607,7 +606,6 @@ export type Database = {
           artist_id?: string | null
           created_at?: string | null
           director_producer?: string | null
-          id?: string
           link?: string | null
           project_name: string
           project_type: Database["public"]["Enums"]["project_type"]
@@ -620,7 +618,6 @@ export type Database = {
           artist_id?: string | null
           created_at?: string | null
           director_producer?: string | null
-          id?: string
           link?: string | null
           project_name?: string
           project_type?: Database["public"]["Enums"]["project_type"]
