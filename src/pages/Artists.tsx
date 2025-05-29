@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -41,9 +42,9 @@ const Artists = () => {
   const fetchArtists = async () => {
     setLoading(true);
     try {
-      console.log("Fetching artists from database...");
+      console.log("Fetching artists from unified artist_details table...");
       
-      // Fetch artists from artist_details table with related skills using explicit relationship
+      // Fetch artists directly from artist_details table with skills
       const { data: artistsData, error: artistsError } = await supabase
         .from('artist_details')
         .select(`

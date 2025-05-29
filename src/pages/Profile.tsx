@@ -1,18 +1,14 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { 
   Eye, 
@@ -38,245 +34,39 @@ import MediaSection from "@/components/profile/MediaSection";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import MediaUploadSection from "@/components/profile/MediaUploadSection";
+import { useArtistProfile } from "@/hooks/useArtistProfile";
 
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/sign-in");
-      return;
-    }
-    
-    const fetchProfile = async () => {
-      try {
-        setIsLoading(true);
-        console.log("Fetching profile for user:", user.id);
-        
-        // First, get the basic profile data
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        
-        if (profileError) {
-          console.error("Profile error:", profileError);
-          throw profileError;
-        }
+  // Use the new unified hook
+  const { profile: profileData, isLoading, isError, error, refetch } = useArtistProfile();
 
-        console.log("Profile data:", profile);
+  if (!user) {
+    navigate("/sign-in");
+    return null;
+  }
 
-        // Then get artist details
-        const { data: artistDetails, error: artistError } = await supabase
-          .from("artist_details")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (artistError && artistError.code !== 'PGRST116') {
-          console.error("Artist details error:", artistError);
-        }
-
-        // Get projects - use user.id as artist_id since they should match
-        const { data: projects, error: projectsError } = await supabase
-          .from("projects")
-          .select("*")
-          .eq("artist_id", user.id);
-
-        if (projectsError) {
-          console.error("Projects error:", projectsError);
-        }
-
-        // Get education
-        const { data: education, error: educationError } = await supabase
-          .from("education_training")
-          .select("*")
-          .eq("artist_id", user.id);
-
-        if (educationError) {
-          console.error("Education error:", educationError);
-        }
-
-        // Get skills
-        const { data: specialSkills, error: skillsError } = await supabase
-          .from("special_skills")
-          .select("*")
-          .eq("artist_id", user.id);
-
-        if (skillsError) {
-          console.error("Skills error:", skillsError);
-        }
-
-        // Get languages
-        const { data: languageSkills, error: languagesError } = await supabase
-          .from("language_skills")
-          .select("*")
-          .eq("artist_id", user.id);
-
-        if (languagesError) {
-          console.error("Languages error:", languagesError);
-        }
-
-        // Get tools
-        const { data: toolsSoftware, error: toolsError } = await supabase
-          .from("tools_software")
-          .select("*")
-          .eq("artist_id", user.id);
-
-        if (toolsError) {
-          console.error("Tools error:", toolsError);
-        }
-
-        // Get media assets
-        const { data: mediaAssets, error: mediaError } = await supabase
-          .from("media_assets")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (mediaError) {
-          console.error("Media error:", mediaError);
-        }
-
-        // Combine all data
-        const combinedData = {
-          ...profile,
-          artist_details: artistDetails ? [artistDetails] : [],
-          projects: projects || [],
-          education_training: education || [],
-          special_skills: specialSkills || [],
-          language_skills: languageSkills || [],
-          tools_software: toolsSoftware || [],
-          media_assets: mediaAssets || []
-        };
-
-        console.log("Combined profile data:", combinedData);
-        setProfileData(combinedData);
-      } catch (error: any) {
-        console.error("Error fetching profile:", error.message);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchProfile();
-  }, [user, navigate, toast]);
+  if (isError) {
+    console.error("Error loading profile:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load profile data",
+      variant: "destructive",
+    });
+  }
 
   const handleViewPublicProfile = () => {
     navigate(`/artists/${user?.id}`);
   };
 
-  const refreshProfile = async () => {
-    if (!user) return;
-    
-    try {
-      console.log("Refreshing profile for user:", user.id);
-      
-      // First, get the basic profile data
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      
-      if (profileError) throw profileError;
-
-      // Then get artist details
-      const { data: artistDetails, error: artistError } = await supabase
-        .from("artist_details")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      // Get projects with proper artist_id filter
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("artist_id", user.id);
-
-      // Get education
-      const { data: education, error: educationError } = await supabase
-        .from("education_training")
-        .select("*")
-        .eq("artist_id", user.id);
-
-      // Get skills
-      const { data: specialSkills, error: skillsError } = await supabase
-        .from("special_skills")
-        .select("*")
-        .eq("artist_id", user.id);
-
-      // Get languages
-      const { data: languageSkills, error: languagesError } = await supabase
-        .from("language_skills")
-        .select("*")
-        .eq("artist_id", user.id);
-
-      // Get tools
-      const { data: toolsSoftware, error: toolsError } = await supabase
-        .from("tools_software")
-        .select("*")
-        .eq("artist_id", user.id);
-
-      // Get media assets
-      const { data: mediaAssets, error: mediaError } = await supabase
-        .from("media_assets")
-        .select("*")
-        .eq("user_id", user.id);
-
-      // Combine all data
-      const combinedData = {
-        ...profile,
-        artist_details: artistDetails ? [artistDetails] : [],
-        projects: projects || [],
-        education_training: education || [],
-        special_skills: specialSkills || [],
-        language_skills: languageSkills || [],
-        tools_software: toolsSoftware || [],
-        media_assets: mediaAssets || []
-      };
-
-      setProfileData(combinedData);
-    } catch (error: any) {
-      console.error("Error refreshing profile:", error.message);
-    }
-  };
-
   const handleProfilePictureUpdate = async (imageUrl: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ profile_picture_url: imageUrl })
-        .eq("id", user.id);
-      
-      if (error) throw error;
-      
-      setProfileData((prev: any) => ({ 
-        ...prev, 
-        profile_picture_url: imageUrl 
-      }));
-      
-    } catch (error: any) {
-      console.error("Error updating profile picture:", error.message);
-      toast({
-        title: "Error",
-        description: "Failed to update profile picture",
-        variant: "destructive",
-      });
-    }
+    // This will be handled by the ProfilePictureUpload component
+    refetch();
   };
 
   if (isLoading) {
@@ -336,10 +126,10 @@ const Profile = () => {
                         </Button>
                       </div>
                       
-                      {profileData?.artist_details?.[0]?.category && (
+                      {profileData?.category && (
                         <div className="flex justify-center lg:justify-start mb-4">
                           <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full">
-                            {profileData.artist_details[0].category}
+                            {profileData.category}
                           </Badge>
                         </div>
                       )}
@@ -501,7 +291,7 @@ const Profile = () => {
             <TabsContent value="projects">
               <ProjectsSection 
                 profileData={profileData} 
-                onUpdate={refreshProfile}
+                onUpdate={refetch}
                 userId={user?.id}
               />
             </TabsContent>
@@ -509,7 +299,7 @@ const Profile = () => {
             <TabsContent value="education">
               <EducationSection 
                 profileData={profileData} 
-                onUpdate={refreshProfile}
+                onUpdate={refetch}
                 userId={user?.id}
               />
             </TabsContent>
@@ -517,7 +307,7 @@ const Profile = () => {
             <TabsContent value="skills">
               <SkillsSection 
                 profileData={profileData} 
-                onUpdate={refreshProfile}
+                onUpdate={refetch}
                 userId={user?.id}
               />
             </TabsContent>
@@ -525,7 +315,7 @@ const Profile = () => {
             <TabsContent value="media">
               <MediaUploadSection 
                 profileData={profileData} 
-                onUpdate={refreshProfile}
+                onUpdate={refetch}
                 userId={user?.id}
               />
             </TabsContent>
@@ -533,7 +323,7 @@ const Profile = () => {
             <TabsContent value="social">
               <SocialLinksForm 
                 profileData={profileData} 
-                onUpdate={refreshProfile}
+                onUpdate={refetch}
                 userId={user?.id}
               />
             </TabsContent>
@@ -544,7 +334,7 @@ const Profile = () => {
           <ProfileEditForm
             profileData={profileData}
             onClose={() => setIsEditingProfile(false)}
-            onUpdate={refreshProfile}
+            onUpdate={refetch}
             userId={user?.id}
           />
         )}
