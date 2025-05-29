@@ -108,7 +108,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
 export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist | null> => {
   try {
     // Filter out nested objects that don't belong in the artist_details table
-    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, skills, verified, ...updateData } = profileData;
+    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, verified, ...updateData } = profileData;
     
     // Type cast the update data to match Supabase's expected types
     const dbUpdateData = updateData as any;
