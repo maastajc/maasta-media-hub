@@ -31,10 +31,15 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
       throw artistsError;
     }
 
-    // Format the artists data
-    const formattedArtists = artistsData ? artistsData.map(artist => ({
+    // Format the artists data with proper type handling
+    const formattedArtists: Artist[] = artistsData ? artistsData.map(artist => ({
       ...artist,
       skills: artist.special_skills ? artist.special_skills.map((s: any) => s.skill) : [],
+      special_skills: artist.special_skills ? artist.special_skills.map((s: any, index: number) => ({
+        id: `temp-${index}`, // Temporary ID for display purposes
+        artist_id: artist.id,
+        skill: s.skill
+      })) : [],
       verified: Math.random() > 0.5 // Random verification status for demo
     })) : [];
 
@@ -103,11 +108,14 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
 export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist | null> => {
   try {
     // Filter out nested objects that don't belong in the artist_details table
-    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, ...updateData } = profileData;
+    const { projects, education_training, special_skills, language_skills, tools_software, media_assets, skills, verified, ...updateData } = profileData;
+    
+    // Type cast the update data to match Supabase's expected types
+    const dbUpdateData = updateData as any;
     
     const { data, error } = await supabase
       .from('artist_details')
-      .update(updateData)
+      .update(dbUpdateData)
       .eq('id', artistId)
       .select()
       .single();
