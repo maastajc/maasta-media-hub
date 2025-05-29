@@ -38,8 +38,10 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
           url,
           file_name,
           file_type,
+          file_size,
           is_video,
-          description
+          description,
+          user_id
         )
       `)
       .eq('status', 'active');
@@ -76,7 +78,9 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
       })),
       media_assets: (artist.media_assets || []).map(media => ({
         ...media,
-        artist_id: artist.id
+        artist_id: artist.id,
+        user_id: media.user_id || artist.id,
+        file_size: media.file_size || 0
       })),
       // Ensure required fields have fallbacks
       full_name: artist.full_name || 'Unknown Artist',
@@ -141,7 +145,8 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
           is_video,
           is_embed,
           embed_source,
-          description
+          description,
+          user_id
         )
       `)
       .eq('id', artistId)
@@ -185,7 +190,8 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       media_assets: (artist.media_assets || []).map(media => ({
         ...media,
         artist_id: artist.id,
-        user_id: media.user_id || artist.id
+        user_id: media.user_id || artist.id,
+        file_size: media.file_size || 0
       })),
       // Ensure required fields have fallbacks
       full_name: artist.full_name || 'Unknown Artist',
@@ -225,9 +231,11 @@ export const updateArtistProfile = async (
       ...artistDetailsData
     } = profileData;
 
-    // Ensure category is properly typed
+    // Ensure category is properly typed and remove any non-database fields
     const updateData = {
       ...artistDetailsData,
+      // Ensure category is properly cast to the expected type
+      category: artistDetailsData.category as "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other" | undefined,
       updated_at: new Date().toISOString()
     };
 
