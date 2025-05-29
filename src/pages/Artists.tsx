@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,8 @@ interface Artist {
   skills?: string[];
   category?: string;
   verified?: boolean;
+  experience_level?: string;
+  years_of_experience?: number;
 }
 
 const Artists = () => {
@@ -41,7 +44,7 @@ const Artists = () => {
     try {
       console.log("Fetching artists from database...");
       
-      // Fetch artists directly from artist_details table
+      // Fetch artists from artist_details table with related skills
       const { data: artistsData, error: artistsError } = await supabase
         .from('artist_details')
         .select(`
@@ -54,11 +57,11 @@ const Artists = () => {
           country,
           instagram,
           linkedin,
-          special_skills (skill),
           category,
-          verified: role
-        `)
-        .eq('role', 'artist');
+          experience_level,
+          years_of_experience,
+          special_skills (skill)
+        `);
 
       if (artistsError) {
         console.error("Error fetching artists:", artistsError);
@@ -66,11 +69,11 @@ const Artists = () => {
         return;
       }
 
-      // Map the skills from the nested array to a simple array of strings
+      // Format the artists data
       const formattedArtistsData = artistsData ? artistsData.map(artist => ({
         ...artist,
-        skills: artist.special_skills ? artist.special_skills.map(s => s.skill) : [],
-        verified: Math.random() > 0.5 // setting random verification status for demo
+        skills: artist.special_skills ? artist.special_skills.map((s: any) => s.skill) : [],
+        verified: Math.random() > 0.5 // Random verification status for demo
       })) : [];
 
       console.log("Formatted artists data:", formattedArtistsData);
@@ -80,7 +83,7 @@ const Artists = () => {
       const allSkills = formattedArtistsData.flatMap(artist => artist.skills || []);
       const uniqueSkills = Array.from(new Set(allSkills)).sort();
       setUniqueTags(uniqueSkills);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching artists:", error);
       toast.error("Failed to load artists");
     } finally {
@@ -196,9 +199,9 @@ const Artists = () => {
             <Tabs defaultValue="all" className="mb-8" onValueChange={setCurrentTab}>
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all">All Artists</TabsTrigger>
-                <TabsTrigger value="performer">Performers</TabsTrigger>
-                <TabsTrigger value="creative">Creative</TabsTrigger>
-                <TabsTrigger value="technical">Technical</TabsTrigger>
+                <TabsTrigger value="actor">Actors</TabsTrigger>
+                <TabsTrigger value="director">Directors</TabsTrigger>
+                <TabsTrigger value="musician">Musicians</TabsTrigger>
               </TabsList>
             </Tabs>
             

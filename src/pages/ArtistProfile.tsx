@@ -47,11 +47,11 @@ const ArtistProfile = () => {
       try {
         setIsLoading(true);
         
+        // Fetch artist from artist_details table with all related data
         const { data, error } = await supabase
-          .from("profiles")
+          .from("artist_details")
           .select(`
             *,
-            artist_details (*),
             projects (*),
             education_training (*),
             special_skills (*),
@@ -60,7 +60,6 @@ const ArtistProfile = () => {
             media_assets (*)
           `)
           .eq("id", artistId)
-          .eq("role", "artist")
           .single();
         
         if (error) {
@@ -70,7 +69,7 @@ const ArtistProfile = () => {
               description: "The artist profile you're looking for doesn't exist.",
               variant: "destructive",
             });
-            navigate("/");
+            navigate("/artists");
             return;
           }
           throw error;
@@ -84,7 +83,7 @@ const ArtistProfile = () => {
           description: "Failed to load artist profile",
           variant: "destructive",
         });
-        navigate("/");
+        navigate("/artists");
       } finally {
         setIsLoading(false);
       }
@@ -163,10 +162,10 @@ const ArtistProfile = () => {
                     <div className="flex-1 text-center lg:text-left">
                       <h1 className="text-4xl font-bold text-gray-900 mb-4">{artistData.full_name}</h1>
                       
-                      {artistData.artist_details?.[0]?.category && (
+                      {artistData.category && (
                         <div className="flex justify-center lg:justify-start mb-4">
                           <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full capitalize">
-                            {artistData.artist_details[0].category.replace('_', ' ')}
+                            {artistData.category.replace('_', ' ')}
                           </Badge>
                         </div>
                       )}
@@ -180,15 +179,15 @@ const ArtistProfile = () => {
                         </div>
                       )}
 
-                      {artistData.artist_details?.[0]?.experience_level && (
+                      {artistData.experience_level && (
                         <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-4">
                           <Star size={20} className="mr-2" />
                           <span className="text-lg capitalize">
-                            {artistData.artist_details[0].experience_level} Level
+                            {artistData.experience_level} Level
                           </span>
-                          {artistData.artist_details[0].years_of_experience && (
+                          {artistData.years_of_experience && (
                             <span className="ml-2">
-                              ({artistData.artist_details[0].years_of_experience} years)
+                              ({artistData.years_of_experience} years)
                             </span>
                           )}
                         </div>
