@@ -36,6 +36,7 @@ export type Database = {
           state: string | null
           status: string | null
           updated_at: string | null
+          verified: boolean | null
           willing_to_relocate: boolean | null
           work_preference: string | null
           years_of_experience: number | null
@@ -67,6 +68,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
           years_of_experience?: number | null
@@ -98,6 +100,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
           years_of_experience?: number | null
@@ -502,6 +505,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_professional_references_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "professional_references_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -594,6 +604,7 @@ export type Database = {
           artist_id: string | null
           created_at: string | null
           director_producer: string | null
+          id: string
           link: string | null
           project_name: string
           project_type: Database["public"]["Enums"]["project_type"]
@@ -606,6 +617,7 @@ export type Database = {
           artist_id?: string | null
           created_at?: string | null
           director_producer?: string | null
+          id?: string
           link?: string | null
           project_name: string
           project_type: Database["public"]["Enums"]["project_type"]
@@ -618,6 +630,7 @@ export type Database = {
           artist_id?: string | null
           created_at?: string | null
           director_producer?: string | null
+          id?: string
           link?: string | null
           project_name?: string
           project_type?: Database["public"]["Enums"]["project_type"]

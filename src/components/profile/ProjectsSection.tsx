@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,13 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ExternalLink, Award } from "lucide-react";
+import type { Project } from "@/types/artist";
 
 // Define valid project types based on the database enum
 const PROJECT_TYPES = ["feature_film", "short_film", "web_series", "ad", "music_video", "other"] as const;
@@ -31,7 +30,9 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface ProjectsSectionProps {
-  profileData: any;
+  profileData: {
+    projects?: Project[];
+  } | null;
   onUpdate: () => void;
   userId?: string;
 }
@@ -39,7 +40,7 @@ interface ProjectsSectionProps {
 const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps) => {
   const { toast } = useToast();
   const [isAddingProject, setIsAddingProject] = useState(false);
-  const [editingProject, setEditingProject] = useState<any>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<ProjectFormValues>({
@@ -119,13 +120,13 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     }
   };
 
-  const handleEdit = (project: any) => {
+  const handleEdit = (project: Project) => {
     setEditingProject(project);
     form.reset({
       project_name: project.project_name,
-      project_type: project.project_type,
+      project_type: project.project_type as any,
       role_in_project: project.role_in_project,
-      year_of_release: project.year_of_release,
+      year_of_release: project.year_of_release || new Date().getFullYear(),
       director_producer: project.director_producer || "",
       streaming_platform: project.streaming_platform || "",
       link: project.link || "",
@@ -190,7 +191,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((project: any) => (
+          {projects.map((project: Project) => (
             <Card key={project.id} className="group hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
