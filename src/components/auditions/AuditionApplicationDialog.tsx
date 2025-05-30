@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { submitAuditionApplication } from "@/services/auditionApplicationService";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuditionApplicationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   auditionId: string;
   auditionTitle: string;
-  onApplicationSubmitted: () => void;
+  onSuccess: () => void;
 }
 
 const AuditionApplicationDialog: React.FC<AuditionApplicationDialogProps> = ({
@@ -26,10 +27,11 @@ const AuditionApplicationDialog: React.FC<AuditionApplicationDialogProps> = ({
   onClose,
   auditionId,
   auditionTitle,
-  onApplicationSubmitted,
+  onSuccess,
 }) => {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -37,9 +39,19 @@ const AuditionApplicationDialog: React.FC<AuditionApplicationDialogProps> = ({
     const success = await submitAuditionApplication(auditionId, notes);
     
     if (success) {
-      onApplicationSubmitted();
+      toast({
+        title: "Application submitted",
+        description: "Your application has been submitted successfully",
+      });
+      onSuccess();
       onClose();
       setNotes("");
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
     }
     
     setIsSubmitting(false);

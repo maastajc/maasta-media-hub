@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AuditionApplication {
@@ -27,6 +26,42 @@ export interface AuditionApplication {
     experience_level: string;
   };
 }
+
+export const submitAuditionApplication = async (
+  auditionId: string,
+  notes: string = ""
+): Promise<boolean> => {
+  try {
+    console.log('Submitting audition application:', auditionId, notes);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('User not authenticated');
+      return false;
+    }
+
+    const { error } = await supabase
+      .from('audition_applications')
+      .insert({
+        audition_id: auditionId,
+        artist_id: user.id,
+        status: 'pending',
+        notes: notes || null,
+        application_date: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error submitting application:', error);
+      return false;
+    }
+
+    console.log('Successfully submitted application');
+    return true;
+  } catch (error: any) {
+    console.error('Error in submitAuditionApplication:', error);
+    return false;
+  }
+};
 
 export const fetchApplicationsForCreator = async (creatorId: string): Promise<AuditionApplication[]> => {
   try {

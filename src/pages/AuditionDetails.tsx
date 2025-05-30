@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { AuditionApplicationDialog } from '@/components/auditions/AuditionApplicationDialog';
+import AuditionApplicationDialog from '@/components/auditions/AuditionApplicationDialog';
 
 interface Audition {
   id: string;
