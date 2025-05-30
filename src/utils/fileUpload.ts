@@ -26,23 +26,6 @@ export async function uploadFile(
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;
 
-    // Check if the bucket exists before uploading
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error("Error checking buckets:", bucketsError);
-      return { path: "", url: "", error: "Error accessing storage: " + bucketsError.message };
-    }
-    
-    // Check if the bucket exists in the list
-    const bucketExists = buckets.some(bucket => bucket.name === bucketName);
-    
-    // If bucket doesn't exist, return an error
-    if (!bucketExists) {
-      console.error(`Bucket "${bucketName}" does not exist`);
-      return { path: "", url: "", error: `Storage bucket "${bucketName}" does not exist` };
-    }
-
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -83,21 +66,16 @@ export async function uploadProfilePicture(
   file: File,
   userId: string
 ): Promise<FileUploadResult> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `profile.${fileExt}`;
   return uploadFile(file, 'profile-pictures', userId);
 }
 
 /**
- * Uploads an audition cover image using the standardized bucket
+ * Uploads an audition cover image using the photos bucket
  */
 export async function uploadAuditionCover(
-  file: File,
-  auditionId: string
+  file: File
 ): Promise<FileUploadResult> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `cover.${fileExt}`;
-  return uploadFile(file, 'audition-covers', auditionId);
+  return uploadFile(file, 'photos', 'audition-covers');
 }
 
 /**
@@ -105,23 +83,6 @@ export async function uploadAuditionCover(
  */
 export async function deleteFile(path: string, bucketName: string): Promise<boolean> {
   try {
-    // Check if the bucket exists before trying to delete
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error("Error checking buckets:", bucketsError);
-      return false;
-    }
-    
-    // Check if the bucket exists in the list
-    const bucketExists = buckets.some(bucket => bucket.name === bucketName);
-    
-    // If bucket doesn't exist, return an error
-    if (!bucketExists) {
-      console.error(`Bucket "${bucketName}" does not exist`);
-      return false;
-    }
-    
     const { error } = await supabase.storage
       .from(bucketName)
       .remove([path]);

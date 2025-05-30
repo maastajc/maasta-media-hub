@@ -106,15 +106,7 @@ export type Database = {
           years_of_experience?: number | null
           youtube_vimeo?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "artist_details_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       audition_applications: {
         Row: {

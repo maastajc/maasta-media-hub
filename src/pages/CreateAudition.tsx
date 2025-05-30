@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadFile } from '@/utils/fileUpload';
+import { uploadAuditionCover } from '@/utils/fileUpload';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,26 +89,14 @@ const CreateAudition = () => {
     try {
       console.log('Uploading cover image:', file.name);
       
-      // Upload to Supabase Storage using photos bucket (which should exist)
-      const fileExt = file.name.split('.').pop();
-      const fileName = `audition-covers/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('photos')
-        .upload(fileName, file);
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
+      const result = await uploadAuditionCover(file);
+      
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('photos')
-        .getPublicUrl(fileName);
-
-      console.log('Cover image uploaded successfully:', publicUrl);
-      setCoverImageUrl(publicUrl);
+      console.log('Cover image uploaded successfully:', result.url);
+      setCoverImageUrl(result.url);
       
       toast({
         title: "Success",

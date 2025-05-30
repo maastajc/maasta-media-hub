@@ -34,7 +34,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     try {
       setIsUploading(true);
 
-      // Upload file to Supabase Storage using standardized bucket names
+      // Upload file to Supabase Storage using correct bucket names
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       const bucketName = isVideo ? 'videos' : 'photos';
