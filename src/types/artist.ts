@@ -28,6 +28,7 @@ export interface Artist {
   rate_card?: any;
   created_at?: string;
   updated_at?: string;
+  skills?: string[]; // Added skills property
   
   // Related data
   projects?: Project[];

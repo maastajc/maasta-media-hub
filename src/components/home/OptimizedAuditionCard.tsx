@@ -5,20 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Users, Clock, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { Audition } from "@/types/audition";
 
 interface OptimizedAuditionCardProps {
-  audition: {
-    id: string;
-    title: string;
-    description: string;
-    location: string;
-    audition_date: string | null;
-    deadline: string | null;
-    category: string;
-    experience_level: string;
-    compensation?: string;
-    status: string;
-  };
+  audition: Audition;
 }
 
 const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
@@ -30,9 +20,9 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start mb-2">
           <Badge variant="secondary" className="bg-maasta-purple/10 text-maasta-purple">
-            {audition.category}
+            {audition.category || 'General'}
           </Badge>
-          {isUrgent && (
+          {(isUrgent || audition.urgent) && (
             <Badge variant="destructive" className="text-xs">
               Urgent
             </Badge>
@@ -41,9 +31,11 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
         <h3 className="font-bold text-lg leading-tight line-clamp-2">
           {audition.title}
         </h3>
-        <p className="text-gray-600 text-sm line-clamp-2">
-          {audition.description}
-        </p>
+        {audition.description && (
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {audition.description}
+          </p>
+        )}
       </CardHeader>
       
       <CardContent className="pt-0">
@@ -69,7 +61,7 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
           
           <div className="flex items-center text-sm text-gray-500">
             <Users className="w-4 h-4 mr-2 text-maasta-purple" />
-            <span className="capitalize">{audition.experience_level} level</span>
+            <span className="capitalize">{audition.experience_level || 'Any'} level</span>
           </div>
           
           {audition.compensation && (

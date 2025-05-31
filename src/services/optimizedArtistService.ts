@@ -11,6 +11,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       .select(`
         id,
         full_name,
+        email,
         bio,
         profile_picture_url,
         city,
@@ -30,7 +31,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       return [];
     }
 
-    return artists.map(artist => ({
+    return artists?.map(artist => ({
       ...artist,
       skills: artist.special_skills?.map((s: any) => s.skill) || []
     })) || [];
