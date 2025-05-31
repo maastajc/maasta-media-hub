@@ -31,10 +31,13 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       return [];
     }
 
-    return artists?.map(artist => ({
-      ...artist,
-      skills: artist.special_skills?.map((s: any) => s.skill) || []
-    })) || [];
+    return artists?.map(artist => {
+      const { special_skills, ...artistData } = artist;
+      return {
+        ...artistData,
+        skills: special_skills?.map((s: any) => s.skill) || []
+      };
+    }) || [];
   } catch (error) {
     console.error('Error in fetchFeaturedArtists:', error);
     return [];
@@ -62,9 +65,10 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       return null;
     }
 
+    const { special_skills, ...artistData } = artist;
     return {
-      ...artist,
-      skills: artist.special_skills?.map((s: any) => s.skill) || []
+      ...artistData,
+      skills: special_skills?.map((s: any) => s.skill) || []
     };
   } catch (error) {
     console.error('Error in fetchArtistById:', error);
