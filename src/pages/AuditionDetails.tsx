@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ import {
   Users,
   Award,
   Phone,
-  Mail
+  Mail,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +53,7 @@ const AuditionDetails = () => {
   const { auditionId } = useParams<{ auditionId: string }>();
   const [audition, setAudition] = useState<Audition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -59,39 +62,59 @@ const AuditionDetails = () => {
   useEffect(() => {
     if (auditionId) {
       fetchAudition();
+    } else {
+      setError('No audition ID provided');
+      setIsLoading(false);
     }
   }, [auditionId]);
 
   const fetchAudition = async () => {
     if (!auditionId) {
+      setError('Invalid audition ID');
       setIsLoading(false);
       return;
     }
 
     try {
+      setError(null);
       console.log('Fetching audition with ID:', auditionId);
       
-      const { data, error } = await supabase
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+
+      const fetchPromise = supabase
         .from('auditions')
         .select('*')
         .eq('id', auditionId)
         .single();
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      const { data, error: supabaseError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]) as any;
+
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        throw new Error(supabaseError.message || 'Failed to fetch audition');
       }
       
-      console.log('Audition data:', data);
+      if (!data) {
+        throw new Error('Audition not found');
+      }
+      
+      console.log('Audition data loaded:', data.title);
       setAudition(data);
     } catch (error: any) {
       console.error('Error fetching audition:', error);
+      const errorMessage = error?.message || 'Failed to load audition details';
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to load audition details",
+        description: errorMessage,
         variant: "destructive",
       });
-      navigate('/auditions');
     } finally {
       setIsLoading(false);
     }
@@ -99,42 +122,66 @@ const AuditionDetails = () => {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   const formatDateTime = (dateString: string | null) => {
     if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   const handleShare = async () => {
+    const url = window.location.href;
+    
     if (navigator.share) {
       try {
         await navigator.share({
           title: audition?.title,
           text: audition?.description,
-          url: window.location.href,
+          url,
         });
       } catch (error) {
         console.error('Error sharing:', error);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link copied",
-        description: "Audition link copied to clipboard",
-      });
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied",
+          description: "Audition link copied to clipboard",
+        });
+      } catch {
+        toast({
+          title: "Could not copy link",
+          description: "Please copy the URL manually",
+          variant: "destructive",
+        });
+      }
     }
+  };
+
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    fetchAudition();
   };
 
   if (isLoading) {
@@ -145,6 +192,7 @@ const AuditionDetails = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-maasta-purple mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900">Loading audition details...</h2>
+            <p className="text-gray-600 mt-2">Please wait while we fetch the information</p>
           </div>
         </main>
         <Footer />
@@ -152,18 +200,28 @@ const AuditionDetails = () => {
     );
   }
 
-  if (!audition) {
+  if (error || !audition) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Audition not found</h2>
-            <p className="text-gray-600 mb-4">The audition you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/auditions')}>
-              Back to Auditions
-            </Button>
-          </div>
+          <Card className="p-8 text-center max-w-md">
+            <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {error?.includes('not found') ? 'Audition Not Found' : 'Error Loading Audition'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {error || 'The audition you\'re looking for could not be loaded.'}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate('/auditions')} variant="outline">
+                Back to Auditions
+              </Button>
+              <Button onClick={handleRetry}>
+                Try Again
+              </Button>
+            </div>
+          </Card>
         </main>
         <Footer />
       </div>

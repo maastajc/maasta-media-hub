@@ -8,7 +8,12 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
     console.log("Fetching recent auditions...");
     
-    const { data, error } = await supabase
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 8000)
+    );
+
+    const fetchPromise = supabase
       .from('auditions')
       .select(`
         id,
@@ -29,33 +34,47 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       .order('created_at', { ascending: false })
       .limit(3);
 
+    const { data, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any;
+
     if (error) {
       console.error("Error fetching recent auditions:", error);
       throw error;
-    } else if (data) {
-      console.log("Recent auditions data:", data);
-      
-      return data.map(item => ({
-        id: item.id,
-        title: item.title,
-        location: item.location,
-        deadline: item.deadline,
-        requirements: item.requirements,
-        tags: item.tags || [],
-        urgent: item.deadline ? isUrgent(item.deadline) : false,
-        cover_image_url: item.cover_image_url,
-        company: item.profiles?.full_name || 'Unknown Company',
-        category: item.category,
-        age_range: item.age_range,
-        gender: item.gender,
-        experience_level: item.experience_level
-      }));
-    } else {
+    }
+    
+    if (!data) {
+      console.log("No recent auditions found");
       return [];
     }
-  } catch (error) {
+
+    console.log(`Successfully fetched ${data.length} recent auditions`);
+    
+    return data.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      location: item.location,
+      deadline: item.deadline,
+      requirements: item.requirements,
+      tags: item.tags || [],
+      urgent: item.deadline ? isUrgent(item.deadline) : false,
+      cover_image_url: item.cover_image_url,
+      company: item.profiles?.full_name || 'Unknown Company',
+      category: item.category,
+      age_range: item.age_range,
+      gender: item.gender,
+      experience_level: item.experience_level
+    }));
+  } catch (error: any) {
     console.error("Error fetching recent auditions:", error);
-    toast.error("Failed to load recent auditions");
+    
+    if (error.message?.includes('timeout')) {
+      toast.error("Request timed out. Please try again.");
+    } else {
+      toast.error("Failed to load recent auditions");
+    }
+    
     return [];
   }
 };

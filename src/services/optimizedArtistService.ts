@@ -6,7 +6,12 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
   try {
     console.log('Fetching featured artists...');
     
-    const { data: artists, error } = await supabase
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Featured artists fetch timeout')), 8000)
+    );
+
+    const fetchPromise = supabase
       .from('artist_details')
       .select(`
         id,
@@ -26,18 +31,30 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       .not('profile_picture_url', 'is', null)
       .limit(limit);
 
+    const { data: artists, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any;
+
     if (error) {
       console.error('Error fetching featured artists:', error);
       return [];
     }
 
-    return artists?.map(artist => {
+    if (!artists) {
+      console.log('No featured artists found');
+      return [];
+    }
+
+    console.log(`Successfully fetched ${artists.length} featured artists`);
+    
+    return artists.map((artist: any) => {
       const { special_skills, ...artistData } = artist;
       return {
         ...artistData,
         skills: special_skills?.map((s: any) => s.skill) || []
       };
-    }) || [];
+    });
   } catch (error) {
     console.error('Error in fetchFeaturedArtists:', error);
     return [];
@@ -48,7 +65,12 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
   try {
     console.log('Fetching artist by ID:', id);
     
-    const { data: artist, error } = await supabase
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Artist fetch timeout')), 10000)
+    );
+
+    const fetchPromise = supabase
       .from('artist_details')
       .select(`
         *,
@@ -60,18 +82,39 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       .eq('id', id)
       .single();
 
-    if (error || !artist) {
+    const { data: artist, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any;
+
+    if (error) {
       console.error('Error fetching artist:', error);
-      return null;
+      
+      if (error.code === 'PGRST116') {
+        throw new Error('Artist not found');
+      }
+      
+      throw new Error(error.message || 'Failed to fetch artist');
     }
+
+    if (!artist) {
+      throw new Error('Artist not found');
+    }
+
+    console.log(`Successfully fetched artist: ${artist.full_name}`);
 
     const { special_skills, ...artistData } = artist;
     return {
       ...artistData,
       skills: special_skills?.map((s: any) => s.skill) || []
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
-    return null;
+    
+    if (error.message?.includes('timeout')) {
+      throw new Error('Request timed out. Please try again.');
+    }
+    
+    throw error;
   }
 };

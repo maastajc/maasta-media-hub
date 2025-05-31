@@ -15,6 +15,24 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
   const isUrgent = audition.deadline ? 
     new Date(audition.deadline).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 : false;
 
+  const formatSafeDate = (dateString: string | undefined) => {
+    if (!dateString) return 'TBD';
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy');
+    } catch {
+      return 'Invalid Date';
+    }
+  };
+
+  const formatDeadline = (dateString: string | undefined) => {
+    if (!dateString) return 'No deadline';
+    try {
+      return `Apply by ${format(new Date(dateString), 'MMM dd')}`;
+    } catch {
+      return 'Invalid deadline';
+    }
+  };
+
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
       <CardHeader className="pb-4">
@@ -34,7 +52,7 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
           )}
         </div>
         <h3 className="font-bold text-xl leading-tight line-clamp-2 text-gray-900">
-          {audition.title}
+          {audition.title || 'Untitled Audition'}
         </h3>
         {audition.description && (
           <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
@@ -47,20 +65,20 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-gray-600">
             <MapPin className="w-4 h-4 mr-3 text-maasta-orange flex-shrink-0" />
-            <span className="truncate font-medium">{audition.location}</span>
+            <span className="truncate font-medium">{audition.location || 'Location TBD'}</span>
           </div>
           
           {audition.audition_date && (
             <div className="flex items-center text-sm text-gray-600">
               <Calendar className="w-4 h-4 mr-3 text-maasta-purple flex-shrink-0" />
-              <span className="font-medium">{format(new Date(audition.audition_date), 'MMM dd, yyyy')}</span>
+              <span className="font-medium">{formatSafeDate(audition.audition_date)}</span>
             </div>
           )}
           
           {audition.deadline && (
             <div className="flex items-center text-sm text-gray-600">
               <Clock className="w-4 h-4 mr-3 text-maasta-orange flex-shrink-0" />
-              <span className="font-medium">Apply by {format(new Date(audition.deadline), 'MMM dd')}</span>
+              <span className="font-medium">{formatDeadline(audition.deadline)}</span>
             </div>
           )}
           

@@ -24,7 +24,7 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 10 * 60 * 1000 // 10 minutes for better performance
+    staleTime = 5 * 60 * 1000 // Reduced to 5 minutes for better UX
   } = options;
   
   const profileQuery = useQuery({
@@ -36,7 +36,14 @@ export const useArtistProfile = (
       
       console.log('Fetching artist profile for ID:', targetId);
       
-      const profile = await fetchArtistById(targetId);
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
+      );
+
+      const fetchPromise = fetchArtistById(targetId);
+      
+      const profile = await Promise.race([fetchPromise, timeoutPromise]) as Artist | null;
       
       if (!profile) {
         throw new Error(`Artist profile not found for ID: ${targetId}`);
@@ -51,14 +58,15 @@ export const useArtistProfile = (
     retry: (failureCount, error) => {
       console.log(`Artist profile fetch attempt ${failureCount + 1} failed:`, error);
       
-      // Don't retry if it's a "not found" error
-      if (error?.message?.includes('not found')) {
+      // Don't retry if it's a "not found" error or timeout
+      if (error?.message?.includes('not found') || error?.message?.includes('timeout')) {
         return false;
       }
       // Retry up to 2 times for other errors
       return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Reduced max delay
+    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
   });
   
   const updateProfileMutation = useMutation({
@@ -101,14 +109,21 @@ export const useArtistProfile = (
     },
   });
   
-  // Helper function to refresh profile data
+  // Helper function to refresh profile data with timeout
   const refreshProfile = async () => {
     try {
       console.log('Refreshing profile data...');
-      await profileQuery.refetch();
+      const result = await Promise.race([
+        profileQuery.refetch(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Refresh timeout')), 10000)
+        )
+      ]);
+      return result;
     } catch (error) {
       console.error('Error refreshing profile:', error);
       toast.error('Failed to refresh profile data');
+      throw error;
     }
   };
   
