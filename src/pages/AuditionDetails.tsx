@@ -1,24 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Calendar, 
   MapPin, 
   Clock, 
   User, 
   Briefcase, 
-  Star, 
   Share2, 
-  ExternalLink,
   ChevronRight,
   Home,
   DollarSign,
   Users,
-  Award
+  Award,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +42,6 @@ interface Audition {
   gender: string | null;
   experience_level: string | null;
   tags: string[] | null;
-  cover_image_url: string | null;
   creator_id: string;
   status: string;
   created_at: string;
@@ -129,7 +128,7 @@ const AuditionDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -144,7 +143,7 @@ const AuditionDetails = () => {
 
   if (!audition) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -184,121 +183,111 @@ const AuditionDetails = () => {
         </div>
 
         {/* Hero Section */}
-        <div className="relative">
-          <div className="h-64 md:h-80 bg-gradient-to-r from-maasta-purple to-maasta-orange">
-            {audition.cover_image_url && (
-              <img
-                src={audition.cover_image_url}
-                alt={audition.title}
-                className="w-full h-full object-cover"
-              />
-            )}
-            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-          </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-end justify-between">
-                <div className="text-white">
-                  <div className="flex items-center space-x-3 mb-2">
-                    {audition.category && (
-                      <Badge className="bg-maasta-orange text-white border-0">
-                        {audition.category}
-                      </Badge>
-                    )}
-                    {audition.experience_level && (
-                      <Badge className="bg-white/20 text-white border-white/30">
-                        {audition.experience_level}
-                      </Badge>
-                    )}
+        <div className="bg-gradient-to-r from-maasta-purple to-maasta-orange py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between text-white">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-3 bg-white/20 rounded-lg">
+                    <Briefcase className="w-6 h-6" />
                   </div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{audition.title}</h1>
-                  <div className="flex items-center space-x-4 text-sm text-gray-200">
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {audition.location}
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Posted {formatDate(audition.created_at)}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <Button onClick={handleShare} variant="outline" size="sm" className="text-white border-white hover:bg-white hover:text-gray-900">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                  {user && user.id !== audition.creator_id && (
-                    <Button 
-                      onClick={() => setShowApplicationDialog(true)}
-                      className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-6"
-                    >
-                      Apply Now
-                    </Button>
+                  {audition.category && (
+                    <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2">
+                      {audition.category}
+                    </Badge>
+                  )}
+                  {audition.experience_level && (
+                    <Badge className="bg-white/10 text-white border-white/20 text-lg px-4 py-2">
+                      {audition.experience_level}
+                    </Badge>
                   )}
                 </div>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">{audition.title}</h1>
+                <div className="flex items-center space-x-6 text-lg text-gray-200">
+                  <div className="flex items-center">
+                    <MapPin className="w-5 h-5 mr-2" />
+                    {audition.location}
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Posted {formatDate(audition.created_at)}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex space-x-4">
+                <Button onClick={handleShare} variant="outline" className="text-white border-white hover:bg-white hover:text-gray-900">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                {user && user.id !== audition.creator_id && (
+                  <Button 
+                    onClick={() => setShowApplicationDialog(true)}
+                    className="bg-white text-maasta-purple hover:bg-gray-100 px-8 py-3 text-lg font-semibold"
+                  >
+                    Apply Now
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="overflow-hidden">
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">About This Opportunity</h2>
+            <div className="lg:col-span-2 space-y-8">
+              <Card className="overflow-hidden shadow-lg">
+                <CardContent className="p-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">About This Opportunity</h2>
                   <div className="prose prose-gray max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{audition.description}</p>
+                    <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">{audition.description}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden">
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Requirements</h2>
+              <Card className="overflow-hidden shadow-lg">
+                <CardContent className="p-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Requirements</h2>
                   <div className="prose prose-gray max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{audition.requirements}</p>
+                    <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">{audition.requirements}</p>
                   </div>
                 </CardContent>
               </Card>
 
               {audition.project_details && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Project Details</h2>
+                <Card className="overflow-hidden shadow-lg">
+                  <CardContent className="p-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Project Details</h2>
                     <div className="prose prose-gray max-w-none">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{audition.project_details}</p>
+                      <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">{audition.project_details}</p>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
               {audition.compensation && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-                      <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                <Card className="overflow-hidden shadow-lg border-l-4 border-l-green-500">
+                  <CardContent className="p-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                      <DollarSign className="w-6 h-6 mr-3 text-green-600" />
                       Compensation
                     </h2>
                     <div className="prose prose-gray max-w-none">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{audition.compensation}</p>
+                      <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">{audition.compensation}</p>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
               {audition.tags && audition.tags.length > 0 && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Tags</h2>
-                    <div className="flex flex-wrap gap-2">
+                <Card className="overflow-hidden shadow-lg">
+                  <CardContent className="p-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Skills & Tags</h2>
+                    <div className="flex flex-wrap gap-3">
                       {audition.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-sm">
+                        <Badge key={index} variant="secondary" className="text-base px-4 py-2 bg-maasta-purple/10 text-maasta-purple">
                           {tag}
                         </Badge>
                       ))}
@@ -310,75 +299,87 @@ const AuditionDetails = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <Card className="sticky top-6">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Key Information</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Calendar className="w-5 h-5 text-maasta-purple mt-0.5" />
+              <Card className="sticky top-6 shadow-lg">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Key Information</h3>
+                  <div className="space-y-6">
+                    <div className="flex items-start space-x-4">
+                      <Calendar className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900">Application Deadline</p>
-                        <p className="text-sm text-gray-600">{formatDateTime(audition.deadline)}</p>
+                        <p className="font-semibold text-gray-900">Application Deadline</p>
+                        <p className="text-gray-600">{formatDateTime(audition.deadline)}</p>
                       </div>
                     </div>
                     
-                    <div className="flex items-start space-x-3">
-                      <Clock className="w-5 h-5 text-maasta-purple mt-0.5" />
+                    <div className="flex items-start space-x-4">
+                      <Clock className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900">Audition Date</p>
-                        <p className="text-sm text-gray-600">{formatDateTime(audition.audition_date)}</p>
+                        <p className="font-semibold text-gray-900">Audition Date</p>
+                        <p className="text-gray-600">{formatDateTime(audition.audition_date)}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="w-5 h-5 text-maasta-purple mt-0.5" />
+                    <div className="flex items-start space-x-4">
+                      <MapPin className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900">Location</p>
-                        <p className="text-sm text-gray-600">{audition.location}</p>
+                        <p className="font-semibold text-gray-900">Location</p>
+                        <p className="text-gray-600">{audition.location}</p>
                       </div>
                     </div>
 
                     {audition.age_range && (
-                      <div className="flex items-start space-x-3">
-                        <Users className="w-5 h-5 text-maasta-purple mt-0.5" />
+                      <div className="flex items-start space-x-4">
+                        <Users className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Age Range</p>
-                          <p className="text-sm text-gray-600">{audition.age_range}</p>
+                          <p className="font-semibold text-gray-900">Age Range</p>
+                          <p className="text-gray-600">{audition.age_range}</p>
                         </div>
                       </div>
                     )}
 
                     {audition.gender && (
-                      <div className="flex items-start space-x-3">
-                        <User className="w-5 h-5 text-maasta-purple mt-0.5" />
+                      <div className="flex items-start space-x-4">
+                        <User className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Gender</p>
-                          <p className="text-sm text-gray-600">{audition.gender}</p>
+                          <p className="font-semibold text-gray-900">Gender</p>
+                          <p className="text-gray-600">{audition.gender}</p>
                         </div>
                       </div>
                     )}
 
                     {audition.experience_level && (
-                      <div className="flex items-start space-x-3">
-                        <Award className="w-5 h-5 text-maasta-purple mt-0.5" />
+                      <div className="flex items-start space-x-4">
+                        <Award className="w-6 h-6 text-maasta-purple mt-1 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Experience Level</p>
-                          <p className="text-sm text-gray-600">{audition.experience_level}</p>
+                          <p className="font-semibold text-gray-900">Experience Level</p>
+                          <p className="text-gray-600">{audition.experience_level}</p>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <Separator className="my-6" />
+                  <Separator className="my-8" />
 
                   {user && user.id !== audition.creator_id && (
-                    <Button 
-                      onClick={() => setShowApplicationDialog(true)}
-                      className="w-full bg-maasta-purple hover:bg-maasta-purple/90 text-white"
-                      size="lg"
-                    >
-                      Apply for This Audition
-                    </Button>
+                    <div className="space-y-4">
+                      <Button 
+                        onClick={() => setShowApplicationDialog(true)}
+                        className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-4 text-lg"
+                        size="lg"
+                      >
+                        Apply for This Audition
+                      </Button>
+                      <div className="flex space-x-3">
+                        <Button variant="outline" className="flex-1">
+                          <Phone className="w-4 h-4 mr-2" />
+                          Contact
+                        </Button>
+                        <Button variant="outline" className="flex-1">
+                          <Mail className="w-4 h-4 mr-2" />
+                          Email
+                        </Button>
+                      </div>
+                    </div>
                   )}
 
                   {user && user.id === audition.creator_id && (

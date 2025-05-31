@@ -8,20 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton"; 
+import { MapPin, Calendar, Clock, Users, DollarSign, Briefcase, Search, Filter } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Audition } from "@/types/audition";
-
-// A more realistic placeholder image
-const DEFAULT_COVER = "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?q=80&w=320";
+import { format } from "date-fns";
 
 // Audition categories
 const CATEGORIES = [
-  { value: "all", label: "All" },
+  { value: "all", label: "All Categories" },
   { value: "acting", label: "Acting" },
   { value: "voiceover", label: "Voiceover" },
   { value: "dancing", label: "Dancing" },
@@ -50,9 +48,7 @@ interface AuditionData {
   creator_profile: {
     full_name: string;
   };
-  // New fields that now exist in database
   tags?: string[] | null;
-  cover_image_url?: string | null;
   category?: string | null;
   age_range?: string | null;
   gender?: string | null;
@@ -90,13 +86,10 @@ const Auditions = () => {
           throw error;
         }
         
-        // Process the audition data
         if (data && data.length > 0) {
-          // Add default values for potentially missing fields
           const processedAuditions = data.map(item => ({
             ...item,
             tags: item.tags || [],
-            cover_image_url: item.cover_image_url || null,
             category: item.category || null,
             age_range: item.age_range || null,
             gender: item.gender || null,
@@ -105,10 +98,9 @@ const Auditions = () => {
           
           setAuditions(processedAuditions);
           
-          // Extract all tags to create a unique set
           const allTags = processedAuditions
             .flatMap(audition => audition.tags || [])
-            .filter(Boolean); // Filter out any undefined or null values
+            .filter(Boolean);
           
           const uniqueTagsSet = Array.from(new Set(allTags)).sort();
           setUniqueTags(uniqueTagsSet);
@@ -189,47 +181,41 @@ const Auditions = () => {
       return;
     }
     
-    // Navigate to details page with correct ID
     navigate(`/auditions/${auditionId}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-grow">
         {/* Header Section */}
-        <section className="bg-maasta-orange/10 py-12">
+        <section className="bg-gradient-to-r from-maasta-purple to-maasta-orange py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">Audition Calls</h1>
-                <p className="text-lg text-gray-600">
-                  Find genuine casting opportunities from verified production houses
-                </p>
-              </div>
+            <div className="text-center text-white mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Find Your Next Role</h1>
+              <p className="text-xl mb-8 opacity-90">
+                Discover genuine casting opportunities from verified production houses
+              </p>
               <Button 
-                className="bg-maasta-purple hover:bg-maasta-purple/90"
                 onClick={handlePostAudition}
+                variant="outline"
+                className="bg-white text-maasta-purple border-white hover:bg-gray-100 font-semibold px-8 py-3"
               >
                 Post an Audition
               </Button>
             </div>
             
-            {/* Search and filter */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
+            {/* Search */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   type="text"
-                  placeholder="Search auditions by title, description, or location..."
+                  placeholder="Search by title, description, or location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
+                  className="pl-12 py-4 text-lg bg-white border-0 shadow-lg rounded-xl"
                 />
-              </div>
-              <div className="hidden md:block">
-                <Button className="bg-maasta-orange hover:bg-maasta-orange/90">
-                  Search
-                </Button>
               </div>
             </div>
           </div>
@@ -239,209 +225,225 @@ const Auditions = () => {
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Category tabs */}
-            <Tabs defaultValue="all" className="mb-8" onValueChange={setCurrentTab}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
-                {CATEGORIES.map(category => (
-                  <TabsTrigger key={category.value} value={category.value}>
-                    {category.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <Tabs defaultValue="all" onValueChange={setCurrentTab}>
+                <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 h-auto p-1 bg-gray-100">
+                  {CATEGORIES.map(category => (
+                    <TabsTrigger 
+                      key={category.value} 
+                      value={category.value}
+                      className="data-[state=active]:bg-maasta-purple data-[state=active]:text-white py-3 px-4 text-sm"
+                    >
+                      {category.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
             
-            {/* Tags filter and sorting */}
-            <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
-              <div className="flex-1">
-                <h3 className="text-sm font-medium mb-2">Filter by tags:</h3>
-                <div className="flex flex-wrap gap-2">
-                  {isLoading ? (
-                    // Skeleton loading for tags
-                    Array(8).fill(0).map((_, i) => (
-                      <Skeleton key={i} className="h-8 w-20 rounded-full" />
-                    ))
-                  ) : uniqueTags.length > 0 ? (
-                    uniqueTags.map((tag) => (
-                      <Button
-                        key={tag}
-                        variant={selectedTags.includes(tag) ? "default" : "outline"}
-                        size="sm"
-                        className={selectedTags.includes(tag) 
-                          ? "bg-maasta-purple hover:bg-maasta-purple/90" 
-                          : "hover:bg-maasta-purple/10 hover:text-maasta-purple"
-                        }
-                        onClick={() => toggleTag(tag)}
-                      >
-                        {tag}
-                      </Button>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No tags found</p>
-                  )}
+            {/* Filters and sorting */}
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="flex flex-col lg:flex-row justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Filter className="w-4 h-4 text-gray-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">Filter by Skills:</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {isLoading ? (
+                      Array(8).fill(0).map((_, i) => (
+                        <Skeleton key={i} className="h-8 w-20 rounded-full" />
+                      ))
+                    ) : uniqueTags.length > 0 ? (
+                      uniqueTags.map((tag) => (
+                        <Button
+                          key={tag}
+                          variant={selectedTags.includes(tag) ? "default" : "outline"}
+                          size="sm"
+                          className={selectedTags.includes(tag) 
+                            ? "bg-maasta-purple hover:bg-maasta-purple/90 text-white" 
+                            : "hover:bg-maasta-purple/10 hover:text-maasta-purple hover:border-maasta-purple"
+                          }
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </Button>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No skills found</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="w-full md:w-48">
-                <h3 className="text-sm font-medium mb-2">Sort by:</h3>
-                <Select value={sortOption} onValueChange={setSortOption}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                    <SelectItem value="deadline">Closest Deadline</SelectItem>
-                  </SelectContent>
-                </Select>
+                
+                <div className="w-full lg:w-48">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Sort by:</h3>
+                  <Select value={sortOption} onValueChange={setSortOption}>
+                    <SelectTrigger className="border-gray-300">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="deadline">Closest Deadline</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             
-            {/* Results display */}
-            <div>
-              <p className="text-sm text-gray-500 mb-4">
+            {/* Results */}
+            <div className="mb-6">
+              <p className="text-lg font-medium text-gray-700">
                 {isLoading 
                   ? "Loading auditions..." 
-                  : `Showing ${filteredAuditions.length} audition call${filteredAuditions.length !== 1 ? 's' : ''}`
+                  : `${filteredAuditions.length} audition${filteredAuditions.length !== 1 ? 's' : ''} found`
                 }
               </p>
-              
-              {isLoading ? (
-                // Skeleton loading for audition cards
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Array(6).fill(0).map((_, i) => (
-                    <Card key={i} className="overflow-hidden">
-                      <Skeleton className="h-32 w-full" />
-                      <div className="p-5">
-                        <Skeleton className="h-6 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-1/2 mb-4" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                        </div>
-                        <div className="flex justify-between mt-4">
-                          <Skeleton className="h-4 w-1/3" />
-                          <Skeleton className="h-8 w-24" />
-                        </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array(6).fill(0).map((_, i) => (
+                  <Card key={i} className="overflow-hidden shadow-md">
+                    <div className="p-6">
+                      <Skeleton className="h-6 w-3/4 mb-3" />
+                      <Skeleton className="h-4 w-1/2 mb-4" />
+                      <div className="space-y-3">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-2/3" />
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAuditions.map((audition) => {
-                    // Calculate days remaining until deadline
-                    const today = new Date();
-                    const deadline = audition.deadline ? new Date(audition.deadline) : null;
-                    const daysRemaining = deadline 
-                      ? Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-                      : null;
-                    
-                    // Check if the deadline is urgent (5 days or less)
-                    const isDeadlineUrgent = daysRemaining !== null && daysRemaining <= 5;
-                    
-                    return (
-                      <Card 
-                        key={audition.id} 
-                        className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                      >
-                        {/* Cover image */}
-                        <div className="h-32 overflow-hidden relative">
-                          <img
-                            src={audition.cover_image_url || DEFAULT_COVER}
-                            alt={audition.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null;
-                              target.src = DEFAULT_COVER;
-                            }}
-                          />
-                          {/* Category badge */}
-                          {audition.category && (
-                            <Badge className="absolute top-2 left-2 bg-white/80 text-maasta-purple">
-                              {audition.category}
-                            </Badge>
+                      <Skeleton className="h-10 w-full mt-6" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAuditions.map((audition) => {
+                  const today = new Date();
+                  const deadline = audition.deadline ? new Date(audition.deadline) : null;
+                  const daysRemaining = deadline 
+                    ? Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                    : null;
+                  
+                  const isDeadlineUrgent = daysRemaining !== null && daysRemaining <= 5;
+                  
+                  return (
+                    <Card 
+                      key={audition.id} 
+                      className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white border-0 shadow-md"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-maasta-purple/10 rounded-lg">
+                              <Briefcase className="w-4 h-4 text-maasta-purple" />
+                            </div>
+                            {audition.category && (
+                              <Badge className="bg-maasta-purple/10 text-maasta-purple font-medium">
+                                {audition.category}
+                              </Badge>
+                            )}
+                          </div>
+                          {isDeadlineUrgent && (
+                            <Badge variant="destructive" className="animate-pulse">Urgent</Badge>
                           )}
                         </div>
                         
-                        <CardContent className="p-5">
-                          <div className="flex justify-between items-start">
-                            <h3 className="font-semibold text-lg">{audition.title}</h3>
-                            {isDeadlineUrgent && (
-                              <Badge variant="destructive">Urgent</Badge>
+                        <h3 className="font-bold text-xl mb-2 line-clamp-2 text-gray-900">{audition.title}</h3>
+                        
+                        {audition.creator_profile && (
+                          <p className="text-maasta-purple font-medium text-sm mb-4">
+                            by {audition.creator_profile.full_name}
+                          </p>
+                        )}
+                        
+                        <div className="space-y-3 mb-6">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 mr-3 text-maasta-orange flex-shrink-0" />
+                            <span className="font-medium">{audition.location}</span>
+                          </div>
+                          
+                          {audition.audition_date && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="w-4 h-4 mr-3 text-maasta-purple flex-shrink-0" />
+                              <span className="font-medium">{format(new Date(audition.audition_date), 'MMM dd, yyyy')}</span>
+                            </div>
+                          )}
+                          
+                          {audition.experience_level && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Users className="w-4 h-4 mr-3 text-maasta-purple flex-shrink-0" />
+                              <span className="capitalize font-medium">{audition.experience_level} level</span>
+                            </div>
+                          )}
+                          
+                          {audition.compensation && (
+                            <div className="flex items-center text-sm text-green-700">
+                              <DollarSign className="w-4 h-4 mr-3 text-green-600 flex-shrink-0" />
+                              <span className="font-medium">{audition.compensation}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {audition.requirements && (
+                          <div className="mb-4">
+                            <p className="text-sm text-gray-600 line-clamp-2">{audition.requirements}</p>
+                          </div>
+                        )}
+                        
+                        {audition.tags && audition.tags.length > 0 && (
+                          <div className="mb-6 flex flex-wrap gap-1">
+                            {audition.tags.slice(0, 3).map((tag, idx) => (
+                              <span 
+                                key={idx} 
+                                className="inline-block bg-gray-100 rounded-full px-3 py-1 text-xs font-medium text-gray-700"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {audition.tags.length > 3 && (
+                              <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-xs font-medium text-gray-700">
+                                +{audition.tags.length - 3}
+                              </span>
                             )}
                           </div>
-                          
-                          {/* Creator info if available */}
-                          {audition.creator_profile && (
-                            <p className="text-maasta-purple font-medium text-sm mt-1">
-                              {audition.creator_profile.full_name}
-                            </p>
-                          )}
-                          
-                          <div className="mt-3 flex items-center text-sm text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                            </svg>
-                            {audition.location}
-                          </div>
-                          
-                          {audition.requirements && (
-                            <div className="mt-2 text-sm">
-                              <p className="font-medium">Requirements:</p>
-                              <p className="text-gray-600 line-clamp-2">{audition.requirements}</p>
-                            </div>
-                          )}
-                          
-                          {audition.tags && audition.tags.length > 0 && (
-                            <div className="mt-4 flex flex-wrap gap-1">
-                              {audition.tags.slice(0, 3).map((tag, idx) => (
-                                <span 
-                                  key={idx} 
-                                  className="inline-block bg-gray-100 rounded-full px-2 py-1 text-xs font-medium text-gray-700"
-                                >
-                                  {tag}
+                        )}
+                        
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="text-sm">
+                            {deadline ? (
+                              <div className="flex items-center">
+                                <Clock className="w-4 h-4 mr-2 text-maasta-orange" />
+                                <span className={`font-medium ${isDeadlineUrgent ? "text-red-600" : "text-gray-600"}`}>
+                                  {daysRemaining} days left
                                 </span>
-                              ))}
-                              {audition.tags.length > 3 && (
-                                <span className="inline-block bg-gray-100 rounded-full px-2 py-1 text-xs font-medium text-gray-700">
-                                  +{audition.tags.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          
-                          <div className="mt-4 flex items-center justify-between">
-                            <div className="text-sm">
-                              {deadline ? (
-                                <>
-                                  <span className="font-medium">Deadline:</span> 
-                                  <span className={`ml-1 ${isDeadlineUrgent ? "text-red-500" : "text-gray-600"}`}>
-                                    {daysRemaining} days left
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-gray-600">Open until filled</span>
-                              )}
-                            </div>
-                            <Button 
-                              size="sm" 
-                              className="bg-maasta-purple hover:bg-maasta-purple/90"
-                              onClick={() => handleApplyNow(audition.id)}
-                            >
-                              View Details
-                            </Button>
+                              </div>
+                            ) : (
+                              <span className="text-gray-600">Open until filled</span>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-              
-              {!isLoading && filteredAuditions.length === 0 && (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-medium mb-2">No audition calls found</h3>
-                  <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
+                        </div>
+                        
+                        <Button 
+                          onClick={() => handleApplyNow(audition.id)}
+                          className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+                        >
+                          View Details & Apply
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+            
+            {!isLoading && filteredAuditions.length === 0 && (
+              <div className="text-center py-16 bg-white rounded-xl shadow-md">
+                <div className="p-8">
+                  <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900">No auditions found</h3>
+                  <p className="text-gray-500 mb-6">Try adjusting your search criteria or filters</p>
                   <Button 
                     variant="outline"
                     onClick={() => {
@@ -449,12 +451,19 @@ const Auditions = () => {
                       setSelectedTags([]);
                       setCurrentTab("all");
                     }}
+                    className="mr-4"
                   >
                     Clear filters
                   </Button>
+                  <Button 
+                    onClick={handlePostAudition}
+                    className="bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90"
+                  >
+                    Post an Audition
+                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </section>
       </main>

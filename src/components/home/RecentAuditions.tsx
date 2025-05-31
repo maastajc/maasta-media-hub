@@ -27,7 +27,6 @@ const RecentAuditions = () => {
           requirements: audition.requirements,
           tags: audition.tags,
           urgent: audition.urgent || false,
-          cover_image_url: audition.cover_image_url,
           company: audition.profiles?.full_name || '',
           category: audition.category,
           age_range: audition.age_range,
@@ -48,18 +47,19 @@ const RecentAuditions = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-20 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Recent Audition Calls</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Latest Audition Opportunities</h2>
+          <p className="text-lg text-gray-600 mb-8">Discover genuine casting calls from verified production houses</p>
           <Link to="/auditions">
-            <Button variant="ghost" className="text-maasta-purple hover:text-maasta-purple/90 hover:bg-maasta-purple/10">
-              View all auditions
+            <Button variant="outline" className="text-maasta-purple border-maasta-purple hover:bg-maasta-purple hover:text-white transition-all duration-300">
+              View all auditions →
             </Button>
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {loading ? (
             // Skeleton loading states
             Array(3).fill(0).map((_, i) => (
@@ -70,11 +70,11 @@ const RecentAuditions = () => {
               <OptimizedAuditionCard key={audition.id} audition={audition} />
             ))
           ) : (
-            <div className="col-span-3 text-center py-12">
-              <h3 className="text-lg font-medium mb-1">No auditions available</h3>
-              <p className="text-gray-500 mb-4">Check back soon for new opportunities</p>
+            <div className="col-span-3 text-center py-16 bg-white rounded-2xl shadow-lg">
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">No auditions available</h3>
+              <p className="text-gray-500 mb-6">Check back soon for new opportunities</p>
               <Link to="/auditions">
-                <Button className="bg-maasta-purple hover:bg-maasta-purple/90">
+                <Button className="bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white px-8 py-3">
                   Post an Audition
                 </Button>
               </Link>
