@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadProfileImage } from "@/utils/profileImageUpload";
+import { uploadProfileImage } from "@/utils/optimizedProfileImageUpload";
 
 interface ProfilePictureUploadProps {
   currentImageUrl?: string;
@@ -65,6 +65,7 @@ const ProfilePictureUpload = ({
       
       const imageUrl = await uploadProfileImage(file, userId);
       
+      // Update parent component immediately
       onImageUpdate(imageUrl);
       setPreviewImage(null);
       
@@ -72,6 +73,12 @@ const ProfilePictureUpload = ({
         title: "Profile picture updated",
         description: "Your profile picture has been successfully updated"
       });
+      
+      // Force a small delay to ensure the image loads with new URL
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error: any) {
       toast({
         title: "Upload failed",

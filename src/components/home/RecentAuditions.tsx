@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import AuditionCard from "./AuditionCard";
+import OptimizedAuditionCard from "./OptimizedAuditionCard";
 import AuditionCardSkeleton from "./AuditionCardSkeleton";
 import { fetchRecentAuditions } from "@/services/auditionService";
 import { Audition } from "@/types/audition";
@@ -16,7 +16,7 @@ const RecentAuditions = () => {
       setLoading(true);
       try {
         const auditionData = await fetchRecentAuditions();
-        setAuditions(auditionData);
+        setAuditions(auditionData.slice(0, 3)); // Limit to 3 for better performance
       } catch (error) {
         console.error("Failed to fetch auditions:", error);
       } finally {
@@ -47,12 +47,17 @@ const RecentAuditions = () => {
             ))
           ) : auditions.length > 0 ? (
             auditions.map((audition) => (
-              <AuditionCard key={audition.id} audition={audition} />
+              <OptimizedAuditionCard key={audition.id} audition={audition} />
             ))
           ) : (
             <div className="col-span-3 text-center py-12">
               <h3 className="text-lg font-medium mb-1">No auditions available</h3>
               <p className="text-gray-500 mb-4">Check back soon for new opportunities</p>
+              <Link to="/auditions">
+                <Button className="bg-maasta-purple hover:bg-maasta-purple/90">
+                  Post an Audition
+                </Button>
+              </Link>
             </div>
           )}
         </div>

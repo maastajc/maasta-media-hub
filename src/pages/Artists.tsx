@@ -38,9 +38,9 @@ const Artists = () => {
   const fetchArtists = async () => {
     setLoading(true);
     try {
-      console.log("Fetching artists from unified artist_details table...");
+      console.log("Fetching artists with optimized query...");
       
-      // Fetch artists directly from artist_details table with skills
+      // Optimized query with selective columns and proper joins
       const { data: artistsData, error: artistsError } = await supabase
         .from('artist_details')
         .select(`
@@ -56,8 +56,12 @@ const Artists = () => {
           category,
           experience_level,
           years_of_experience,
+          verified,
           special_skills!fk_special_skills_artist_details (skill)
-        `);
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit for better performance
 
       if (artistsError) {
         console.error("Error fetching artists:", artistsError);
@@ -65,14 +69,13 @@ const Artists = () => {
         return;
       }
 
-      // Format the artists data
+      // Format the artists data efficiently
       const formattedArtistsData = artistsData ? artistsData.map(artist => ({
         ...artist,
         skills: artist.special_skills ? artist.special_skills.map((s: any) => s.skill) : [],
-        verified: Math.random() > 0.5 // Random verification status for demo
       })) : [];
 
-      console.log("Formatted artists data:", formattedArtistsData);
+      console.log(`Successfully fetched ${formattedArtistsData.length} artists`);
       setArtists(formattedArtistsData || []);
 
       // Extract unique skills for filtering
@@ -89,16 +92,6 @@ const Artists = () => {
 
   useEffect(() => {
     fetchArtists();
-  }, []);
-
-  // Refresh artists when we come back to this page
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchArtists();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
   }, []);
   
   // Filter artists based on search term, selected tags, and current tab
@@ -158,19 +151,13 @@ const Artists = () => {
               isLoading={loading}
             />
             
-            {/* Results display */}
-            <div>
-              <p className="text-sm text-gray-500 mb-4">
-                Showing {filteredArtists.length} artists
-              </p>
-              
-              <ArtistsGrid
-                artists={filteredArtists}
-                isLoading={loading}
-                onViewProfile={handleViewProfile}
-                onClearFilters={handleClearFilters}
-              />
-            </div>
+            <ArtistsGrid
+              artists={filteredArtists}
+              isLoading={loading}
+              onViewProfile={handleViewProfile}
+              onClearFilters={handleClearFilters}
+              onRetry={fetchArtists}
+            />
           </div>
         </section>
       </main>

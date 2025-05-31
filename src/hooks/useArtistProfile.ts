@@ -24,7 +24,7 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 5 * 60 * 1000 // 5 minutes
+    staleTime = 10 * 60 * 1000 // 10 minutes for better performance
   } = options;
   
   const profileQuery = useQuery({
@@ -87,7 +87,7 @@ export const useArtistProfile = (
       
       // Invalidate related queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['artists'] });
-      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
       
       console.log('Profile updated successfully:', updatedProfile.full_name);
       toast.success('Profile updated successfully');
