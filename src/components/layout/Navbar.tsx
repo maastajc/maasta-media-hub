@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ const Navbar = () => {
               <img 
                 src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
                 alt="Maasta Logo" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
             </Link>
           </div>

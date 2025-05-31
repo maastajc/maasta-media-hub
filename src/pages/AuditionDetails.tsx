@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -64,14 +63,26 @@ const AuditionDetails = () => {
   }, [auditionId]);
 
   const fetchAudition = async () => {
+    if (!auditionId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      console.log('Fetching audition with ID:', auditionId);
+      
       const { data, error } = await supabase
         .from('auditions')
         .select('*')
         .eq('id', auditionId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Audition data:', data);
       setAudition(data);
     } catch (error: any) {
       console.error('Error fetching audition:', error);

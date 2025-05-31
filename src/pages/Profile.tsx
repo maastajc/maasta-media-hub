@@ -24,7 +24,10 @@ import {
   Youtube,
   Plus,
   Camera,
-  Settings
+  Settings,
+  Share2,
+  TrendingUp,
+  CheckCircle
 } from "lucide-react";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
 import ProjectsSection from "@/components/profile/ProjectsSection";
@@ -64,10 +67,52 @@ const Profile = () => {
     navigate(`/artists/${user?.id}`);
   };
 
+  const handleShare = async () => {
+    const profileUrl = `${window.location.origin}/artists/${user?.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${profileData?.full_name || 'My'} Profile - Maasta`,
+          text: `Check out my profile on Maasta`,
+          url: profileUrl,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(profileUrl);
+      toast({
+        title: "Link copied",
+        description: "Profile link copied to clipboard",
+      });
+    }
+  };
+
   const handleProfilePictureUpdate = async (imageUrl: string) => {
     // This will be handled by the ProfilePictureUpload component
     refetch();
   };
+
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!profileData) return 0;
+    
+    const factors = [
+      profileData.full_name,
+      profileData.bio,
+      profileData.category,
+      profileData.projects?.length,
+      profileData.special_skills?.length,
+      profileData.media_assets?.length,
+      profileData.education_training?.length
+    ];
+    
+    const completed = factors.filter(Boolean).length;
+    return Math.round((completed / factors.length) * 100);
+  };
+
+  const completionPercentage = calculateProfileCompletion();
 
   if (isLoading) {
     return (
@@ -156,8 +201,16 @@ const Profile = () => {
                           View Public Profile
                         </Button>
                         <Button 
+                          onClick={handleShare}
                           variant="outline" 
                           className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium"
+                        >
+                          <Share2 className="w-5 h-5 mr-2" />
+                          Share Profile
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 px-8 py-3 rounded-full font-medium"
                         >
                           <Settings className="w-5 h-5 mr-2" />
                           Settings
@@ -183,6 +236,61 @@ const Profile = () => {
                         })}
                       </div>
                     )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Profile Strength Card */}
+            <Card className="mt-8 border-0 shadow-md">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-50 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Profile Strength</h3>
+                      <p className="text-sm text-gray-600">Complete your profile to attract more opportunities</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600">{completionPercentage}%</div>
+                    <div className="text-xs text-gray-500">Complete</div>
+                  </div>
+                </div>
+                
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 ${profileData?.full_name ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className={`text-sm ${profileData?.full_name ? 'text-gray-900' : 'text-gray-500'}`}>
+                      Basic Info
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 ${profileData?.projects?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className={`text-sm ${profileData?.projects?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                      Projects
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 ${profileData?.special_skills?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className={`text-sm ${profileData?.special_skills?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                      Skills
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 ${profileData?.media_assets?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className={`text-sm ${profileData?.media_assets?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                      Portfolio
+                    </span>
                   </div>
                 </div>
               </CardContent>

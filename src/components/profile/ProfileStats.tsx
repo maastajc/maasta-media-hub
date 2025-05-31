@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Award, 
   Camera, 
@@ -9,15 +10,19 @@ import {
   TrendingUp,
   Users,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Share2
 } from "lucide-react";
 import { Artist } from "@/types/artist";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileStatsProps {
   artist: Artist;
 }
 
 const ProfileStats = ({ artist }: ProfileStatsProps) => {
+  const { toast } = useToast();
+
   const stats = [
     {
       icon: Award,
@@ -52,6 +57,28 @@ const ProfileStats = ({ artist }: ProfileStatsProps) => {
   const completionPercentage = Math.round(
     (stats.reduce((acc, stat) => acc + (stat.value > 0 ? 1 : 0), 0) / stats.length) * 100
   );
+
+  const handleShare = async () => {
+    const profileUrl = `${window.location.origin}/artists/${artist.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${artist.full_name} - Artist Profile`,
+          text: `Check out ${artist.full_name}'s profile on Maasta`,
+          url: profileUrl,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(profileUrl);
+      toast({
+        title: "Link copied",
+        description: "Profile link copied to clipboard",
+      });
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -89,9 +116,19 @@ const ProfileStats = ({ artist }: ProfileStatsProps) => {
                 <p className="text-sm text-gray-600">Complete your profile to attract more opportunities</p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">{completionPercentage}%</div>
-              <div className="text-xs text-gray-500">Complete</div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-green-600">{completionPercentage}%</div>
+                <div className="text-xs text-gray-500">Complete</div>
+              </div>
+              <Button 
+                onClick={handleShare}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share Profile
+              </Button>
             </div>
           </div>
           
