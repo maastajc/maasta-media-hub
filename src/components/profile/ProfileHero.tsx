@@ -31,54 +31,47 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
     { icon: Film, url: artist.imdb_profile, label: 'IMDB' },
   ].filter(link => link.url);
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${artist.full_name} - Maasta Profile`,
+          text: `Check out ${artist.full_name}'s profile on Maasta`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        // You could add a toast notification here
+      } catch (error) {
+        console.log('Error copying to clipboard:', error);
+      }
+    }
+  };
+
   return (
-    <div className="relative">
-      {/* Cover Background */}
-      <div className="h-80 bg-gradient-to-br from-maasta-purple via-maasta-orange to-purple-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        {/* Decorative Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 border border-white/30 rounded-full"></div>
-          <div className="absolute top-32 right-20 w-20 h-20 border border-white/20 rounded-full"></div>
-          <div className="absolute bottom-20 left-1/3 w-16 h-16 border border-white/25 rounded-full"></div>
+    <div className="bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Navigation */}
+        <div className="mb-8">
+          {onBack && (
+            <Button
+              variant="ghost"
+              onClick={onBack}
+              className="hover:bg-white/80"
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              Back
+            </Button>
+          )}
         </div>
-      </div>
 
-      {/* Navigation */}
-      <div className="absolute top-6 left-6 z-20">
-        {onBack && (
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="text-white hover:bg-white/20 backdrop-blur-sm"
-          >
-            <ArrowLeft size={20} className="mr-2" />
-            Back
-          </Button>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="absolute top-6 right-6 z-20 flex gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:bg-white/20 backdrop-blur-sm rounded-full"
-        >
-          <Share size={20} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:bg-white/20 backdrop-blur-sm rounded-full"
-        >
-          <Heart size={20} />
-        </Button>
-      </div>
-
-      {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+        {/* Profile Content */}
+        <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
             
             {/* Profile Picture */}
@@ -158,8 +151,10 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
                 <Button 
                   variant="outline" 
                   className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium text-lg"
+                  onClick={handleShare}
                 >
-                  View Portfolio
+                  <Share className="w-5 h-5 mr-2" />
+                  Share Profile
                 </Button>
               </div>
 

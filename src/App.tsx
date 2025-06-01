@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import ArtistProfile from "./pages/ArtistProfile";
 import Auditions from "./pages/Auditions";
@@ -33,6 +34,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/artists/:artistId" element={<ArtistProfile />} />
