@@ -129,23 +129,34 @@ export const SignInForm = () => {
 
     setIsResetLoading(true);
     try {
+      // Get the current application URL (not localhost)
+      const currentUrl = window.location.origin;
+      const redirectUrl = currentUrl.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/reset-password'
+        : `${currentUrl}/reset-password`;
+
+      console.log('Sending password reset to:', redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: redirectUrl
       });
 
       if (error) {
         if (error.message.includes('rate limit')) {
           toast.error('Too many password reset requests. Please wait a few minutes before trying again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Please confirm your email address before requesting a password reset.');
         } else {
           toast.error(error.message);
         }
       } else {
-        toast.success('Password reset email sent! Check your inbox.');
+        toast.success('Password reset email sent! Check your inbox and spam folder.');
         setShowForgotPassword(false);
         setResetEmail('');
         setResetEmailError('');
       }
     } catch (error: any) {
+      console.error('Password reset error:', error);
       toast.error('Failed to send reset email. Please try again later.');
     } finally {
       setIsResetLoading(false);
