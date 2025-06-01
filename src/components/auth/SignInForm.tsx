@@ -24,18 +24,77 @@ export const SignInForm = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [resetEmailError, setResetEmailError] = useState('');
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateSignInForm = () => {
+    let isValid = true;
+    
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    } else {
+      setEmailError('');
+    }
+
+    if (!password.trim()) {
+      setPasswordError('Password is required');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      isValid = false;
+    } else {
+      setPasswordError('');
+    }
+
+    return isValid;
+  };
+
+  const validateResetEmail = () => {
+    if (!resetEmail.trim()) {
+      setResetEmailError('Email is required');
+      return false;
+    } else if (!validateEmail(resetEmail)) {
+      setResetEmailError('Please enter a valid email address');
+      return false;
+    } else {
+      setResetEmailError('');
+      return true;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateSignInForm()) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      await signIn(email, password);
-      navigate('/'); // Redirect to home page after successful login
-    } catch (error) {
+      await signIn(email.trim(), password);
+      navigate('/');
+    } catch (error: any) {
       console.error('Login error:', error);
+      if (error.message.includes('Invalid login credentials')) {
+        toast.error('Invalid email or password. Please check your credentials and try again.');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Please check your email and confirm your account before signing in.');
+      } else {
+        toast.error(error.message || 'Failed to sign in. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,26 +122,31 @@ export const SignInForm = () => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resetEmail) {
-      toast.error('Please enter your email address');
+    
+    if (!validateResetEmail()) {
       return;
     }
 
     setIsResetLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: `${window.location.origin}/reset-password`
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes('rate limit')) {
+          toast.error('Too many password reset requests. Please wait a few minutes before trying again.');
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.success('Password reset email sent! Check your inbox.');
         setShowForgotPassword(false);
         setResetEmail('');
+        setResetEmailError('');
       }
     } catch (error: any) {
-      toast.error('Failed to send reset email');
+      toast.error('Failed to send reset email. Please try again later.');
     } finally {
       setIsResetLoading(false);
     }
@@ -103,9 +167,14 @@ export const SignInForm = () => {
               type="email"
               placeholder="Your email address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError('');
+              }}
               required
+              className={emailError ? 'border-red-500' : ''}
             />
+            {emailError && <p className="text-sm text-red-500">{emailError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -114,9 +183,14 @@ export const SignInForm = () => {
               type="password"
               placeholder="Your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (passwordError) setPasswordError('');
+              }}
               required
+              className={passwordError ? 'border-red-500' : ''}
             />
+            {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
@@ -173,9 +247,14 @@ export const SignInForm = () => {
                       type="email"
                       placeholder="Your email address"
                       value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
+                      onChange={(e) => {
+                        setResetEmail(e.target.value);
+                        if (resetEmailError) setResetEmailError('');
+                      }}
                       required
+                      className={resetEmailError ? 'border-red-500' : ''}
                     />
+                    {resetEmailError && <p className="text-sm text-red-500">{resetEmailError}</p>}
                   </div>
                   <Button type="submit" className="w-full" disabled={isResetLoading}>
                     {isResetLoading ? 'Sending...' : 'Send Reset Link'}

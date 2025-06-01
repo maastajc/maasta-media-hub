@@ -119,10 +119,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userData?: { full_name: string; role?: string }
   ): Promise<void> => {
     try {
+      // Validate inputs
+      if (!email.trim() || !password.trim()) {
+        throw new Error('Email and password are required');
+      }
+
+      if (!email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
       setLoading(true);
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: userData,
@@ -142,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         await ensureProfileExists(
           data.user.id, 
-          email, 
+          email.trim(), 
           userData?.full_name
         );
       }
@@ -161,10 +174,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string): Promise<void> => {
     try {
+      // Validate inputs
+      if (!email.trim() || !password.trim()) {
+        throw new Error('Email and password are required');
+      }
+
+      if (!email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+
       setLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -181,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         await ensureProfileExists(
           data.user.id, 
-          email, 
+          email.trim(), 
           data.user.user_metadata?.full_name
         );
       }
