@@ -11,11 +11,10 @@ import {
   Youtube,
   Film,
   ArrowLeft,
-  Share,
-  MessageCircle,
-  Heart
+  MessageCircle
 } from "lucide-react";
 import { Artist } from "@/types/artist";
+import ShareProfileDialog from "./ShareProfileDialog";
 
 interface ProfileHeroProps {
   artist: Artist;
@@ -31,27 +30,7 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
     { icon: Film, url: artist.imdb_profile, label: 'IMDB' },
   ].filter(link => link.url);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${artist.full_name} - Maasta Profile`,
-          text: `Check out ${artist.full_name}'s profile on Maasta`,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        // You could add a toast notification here
-      } catch (error) {
-        console.log('Error copying to clipboard:', error);
-      }
-    }
-  };
+  const profileUrl = window.location.href;
 
   return (
     <div className="bg-gray-50 py-12">
@@ -148,14 +127,10 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
                   <MessageCircle className="w-5 h-5 mr-2" />
                   Contact Artist
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium text-lg"
-                  onClick={handleShare}
-                >
-                  <Share className="w-5 h-5 mr-2" />
-                  Share Profile
-                </Button>
+                <ShareProfileDialog 
+                  artistName={artist.full_name || 'Artist'}
+                  profileUrl={profileUrl}
+                />
               </div>
 
               {/* Work Preferences */}
