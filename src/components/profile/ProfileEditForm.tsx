@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +44,7 @@ interface ProfileEditFormProps {
 
 const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEditFormProps) => {
   const { toast: useToastHook } = useToast();
+  const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
 
@@ -69,8 +72,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
-    if (!userId) {
-      toast.error("User ID is required to update profile");
+    if (!userId || !user?.email) {
+      toast.error("User information is required to update profile");
       return;
     }
 
@@ -79,15 +82,32 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
       console.log('Updating profile with values:', values);
 
-      // Update artist details with all profile fields
+      // Prepare data for artist_details table with all required fields
+      const artistDetailsData = {
+        id: userId,
+        full_name: values.full_name,
+        email: user.email, // Include required email field
+        bio: values.bio || null,
+        city: values.city || null,
+        state: values.state || null,
+        country: values.country || null,
+        phone_number: values.phone_number || null,
+        date_of_birth: values.date_of_birth || null,
+        gender: values.gender || null,
+        willing_to_relocate: values.willing_to_relocate,
+        work_preference: values.work_preference,
+        category: values.category,
+        experience_level: values.experience_level,
+        years_of_experience: values.years_of_experience || 0,
+        association_membership: values.association_membership || null,
+        profile_picture_url: profilePictureUrl || null,
+        updated_at: new Date().toISOString()
+      };
+
+      // Update artist details
       const { error: artistError } = await supabase
         .from("artist_details")
-        .upsert({
-          id: userId,
-          ...values,
-          profile_picture_url: profilePictureUrl,
-          updated_at: new Date().toISOString()
-        }, {
+        .upsert(artistDetailsData, {
           onConflict: 'id'
         });
 
