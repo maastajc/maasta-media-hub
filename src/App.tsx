@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -31,19 +32,23 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              {/* Public routes - no authentication required */}
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/artists/:artistId" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
-              <Route path="/auditions/create" element={<CreateAudition />} />
               <Route path="/events" element={<Events />} />
-              <Route path="/events/create" element={<CreateEvent />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Protected routes - authentication required */}
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/auditions/create" element={<ProtectedRoute><CreateAudition /></ProtectedRoute>} />
+              <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

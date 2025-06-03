@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -170,17 +169,7 @@ const Auditions = () => {
     navigate("/auditions/create");
   };
 
-  const handleApplyNow = (auditionId: string) => {
-    if (!user) {
-      uiToast({
-        title: "Sign in required",
-        description: "You need to sign in to apply for auditions",
-        variant: "default",
-      });
-      navigate("/sign-in");
-      return;
-    }
-    
+  const handleViewDetails = (auditionId: string) => {
     navigate(`/auditions/${auditionId}`);
   };
 
@@ -426,7 +415,7 @@ const Auditions = () => {
                         </div>
                         
                         <Button 
-                          onClick={() => handleApplyNow(audition.id)}
+                          onClick={() => handleViewDetails(audition.id)}
                           className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-3 rounded-lg transition-all duration-300"
                         >
                           View Details & Apply

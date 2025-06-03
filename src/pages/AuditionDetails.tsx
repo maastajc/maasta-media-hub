@@ -50,7 +50,7 @@ interface Audition {
 }
 
 const AuditionDetails = () => {
-  const { auditionId } = useParams<{ auditionId: string }>();
+  const { id } = useParams<{ id: string }>();
   const [audition, setAudition] = useState<Audition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,16 +60,16 @@ const AuditionDetails = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (auditionId) {
+    if (id) {
       fetchAudition();
     } else {
       setError('No audition ID provided');
       setIsLoading(false);
     }
-  }, [auditionId]);
+  }, [id]);
 
   const fetchAudition = async () => {
-    if (!auditionId) {
+    if (!id) {
       setError('Invalid audition ID');
       setIsLoading(false);
       return;
@@ -77,23 +77,13 @@ const AuditionDetails = () => {
 
     try {
       setError(null);
-      console.log('Fetching audition with ID:', auditionId);
+      console.log('Fetching audition with ID:', id);
       
-      // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 10000)
-      );
-
-      const fetchPromise = supabase
+      const { data, error: supabaseError } = await supabase
         .from('auditions')
         .select('*')
-        .eq('id', auditionId)
+        .eq('id', id)
         .single();
-
-      const { data, error: supabaseError } = await Promise.race([
-        fetchPromise,
-        timeoutPromise
-      ]) as any;
 
       if (supabaseError) {
         console.error('Supabase error:', supabaseError);
@@ -182,6 +172,19 @@ const AuditionDetails = () => {
     setIsLoading(true);
     setError(null);
     fetchAudition();
+  };
+
+  const handleApplyNow = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to apply for this audition",
+        variant: "default",
+      });
+      navigate('/sign-in');
+      return;
+    }
+    setShowApplicationDialog(true);
   };
 
   if (isLoading) {
@@ -291,10 +294,18 @@ const AuditionDetails = () => {
                 </Button>
                 {user && user.id !== audition.creator_id && (
                   <Button 
-                    onClick={() => setShowApplicationDialog(true)}
+                    onClick={handleApplyNow}
                     className="bg-white text-maasta-purple hover:bg-gray-100 px-8 py-3 text-lg font-semibold"
                   >
                     Apply Now
+                  </Button>
+                )}
+                {!user && (
+                  <Button 
+                    onClick={handleApplyNow}
+                    className="bg-white text-maasta-purple hover:bg-gray-100 px-8 py-3 text-lg font-semibold"
+                  >
+                    Sign in to Apply
                   </Button>
                 )}
               </div>
@@ -432,7 +443,7 @@ const AuditionDetails = () => {
                   {user && user.id !== audition.creator_id && (
                     <div className="space-y-4">
                       <Button 
-                        onClick={() => setShowApplicationDialog(true)}
+                        onClick={handleApplyNow}
                         className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-4 text-lg"
                         size="lg"
                       >
@@ -448,6 +459,21 @@ const AuditionDetails = () => {
                           Email
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {!user && (
+                    <div className="space-y-4">
+                      <Button 
+                        onClick={handleApplyNow}
+                        className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-4 text-lg"
+                        size="lg"
+                      >
+                        Sign in to Apply
+                      </Button>
+                      <p className="text-sm text-gray-600 text-center">
+                        Create an account to apply for this audition and manage your applications
+                      </p>
                     </div>
                   )}
 
@@ -477,7 +503,7 @@ const AuditionDetails = () => {
 
       <Footer />
 
-      {showApplicationDialog && (
+      {showApplicationDialog && user && (
         <AuditionApplicationDialog
           auditionId={audition.id}
           auditionTitle={audition.title}
