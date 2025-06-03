@@ -25,7 +25,6 @@ const profileSchema = z.object({
   gender: z.string().optional(),
   willing_to_relocate: z.boolean().default(false),
   work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
-  // Artist details
   category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
   experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).default("beginner"),
   years_of_experience: z.number().min(0).optional(),
@@ -46,43 +45,56 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const [isSaving, setIsSaving] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
 
+  // Safe default values for new users
+  const defaultValues = {
+    full_name: profileData?.full_name === 'New User' ? '' : (profileData?.full_name || ""),
+    bio: profileData?.bio || "",
+    city: profileData?.city || "",
+    state: profileData?.state || "",
+    country: profileData?.country || "",
+    phone_number: profileData?.phone_number || "",
+    date_of_birth: profileData?.date_of_birth || "",
+    gender: profileData?.gender || "",
+    willing_to_relocate: profileData?.willing_to_relocate || false,
+    work_preference: profileData?.work_preference || "any",
+    category: profileData?.category || "actor",
+    experience_level: profileData?.experience_level || "beginner",
+    years_of_experience: profileData?.years_of_experience || 0,
+    association_membership: profileData?.association_membership || "",
+  };
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      full_name: profileData?.full_name || "",
-      bio: profileData?.bio || "",
-      city: profileData?.city || "",
-      state: profileData?.state || "",
-      country: profileData?.country || "",
-      phone_number: profileData?.phone_number || "",
-      date_of_birth: profileData?.date_of_birth || "",
-      gender: profileData?.gender || "",
-      willing_to_relocate: profileData?.willing_to_relocate || false,
-      work_preference: profileData?.work_preference || "any",
-      category: profileData?.category || "actor",
-      experience_level: profileData?.experience_level || "beginner",
-      years_of_experience: profileData?.years_of_experience || 0,
-      association_membership: profileData?.association_membership || "",
-    },
+    defaultValues,
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
-    if (!userId) return;
+    if (!userId) {
+      toast.error("User ID is required to update profile");
+      return;
+    }
 
     try {
       setIsSaving(true);
 
+      console.log('Updating profile with values:', values);
+
       // Update artist details with all profile fields
       const { error: artistError } = await supabase
         .from("artist_details")
-        .update({
+        .upsert({
+          id: userId,
           ...values,
           profile_picture_url: profilePictureUrl,
           updated_at: new Date().toISOString()
-        })
-        .eq("id", userId);
+        }, {
+          onConflict: 'id'
+        });
 
-      if (artistError) throw artistError;
+      if (artistError) {
+        console.error('Error updating artist_details:', artistError);
+        throw artistError;
+      }
 
       toast.success("Profile updated successfully!");
       useToastHook({
@@ -94,10 +106,11 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       onClose();
     } catch (error: any) {
       console.error("Error updating profile:", error.message);
-      toast.error(error.message || "Failed to update profile");
+      const errorMessage = error.message || "Failed to update profile";
+      toast.error(errorMessage);
       useToastHook({
         title: "Error",
-        description: error.message || "Failed to update profile",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -109,7 +122,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>
+            {profileData?.full_name === 'New User' || !profileData?.full_name ? 'Set Up Your Profile' : 'Edit Profile'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8">
@@ -119,7 +134,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               currentImageUrl={profilePictureUrl}
               userId={userId || ""}
               onImageUpdate={setProfilePictureUrl}
-              fullName={form.watch("full_name")}
+              fullName={form.watch("full_name") || "New User"}
             />
           </div>
 

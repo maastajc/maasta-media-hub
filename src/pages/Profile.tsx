@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Eye, 
   Edit, 
@@ -37,7 +36,10 @@ import MediaSection from "@/components/profile/MediaSection";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import MediaUploadSection from "@/components/profile/MediaUploadSection";
+import { ProfileErrorBoundary } from "@/components/profile/ProfileErrorBoundary";
+import NewUserWelcome from "@/components/profile/NewUserWelcome";
 import { useArtistProfile } from "@/hooks/useArtistProfile";
+import { useSafeProfile } from "@/hooks/useSafeProfile";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -45,30 +47,87 @@ const Profile = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Use the new unified hook
-  const { profile: profileData, isLoading, isError, error, refetch } = useArtistProfile();
+  // Use the unified hook with better error handling
+  const { profile: rawProfileData, isLoading, isError, error, refetch } = useArtistProfile();
+
+  // Get safe profile data with defaults
+  const profileData = useSafeProfile(rawProfileData, user?.id);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/sign-in");
+      return;
+    }
+
+    // Check if this is a new user (no profile data after loading)
+    if (!isLoading && !isError && (!rawProfileData || !rawProfileData.full_name || rawProfileData.full_name === 'New User')) {
+      console.log('New user detected, showing welcome flow');
+      setShowWelcome(true);
+    }
+    
+    setIsInitializing(false);
+  }, [user, navigate, isLoading, isError, rawProfileData]);
+
+  // Handle profile loading errors
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Error loading profile:", error);
+      toast({
+        title: "Profile Loading Error",
+        description: "We had trouble loading your profile. Please try refreshing the page.",
+        variant: "destructive",
+      });
+    }
+  }, [isError, error, toast]);
 
   if (!user) {
-    navigate("/sign-in");
     return null;
   }
 
-  if (isError) {
-    console.error("Error loading profile:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load profile data",
-      variant: "destructive",
-    });
+  // Show welcome flow for new users
+  if (showWelcome && !isLoading && !isInitializing) {
+    return (
+      <NewUserWelcome
+        userName={user.email?.split('@')[0] || 'New User'}
+        onGetStarted={() => {
+          setShowWelcome(false);
+          setIsEditingProfile(true);
+        }}
+      />
+    );
   }
 
+  // Loading state with better UX
+  if (isLoading || isInitializing) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <LoadingSpinner size="lg" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Loading Your Profile</h3>
+              <p className="text-gray-600">Setting up your workspace...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error boundary wrapper for profile components
   const handleViewPublicProfile = () => {
-    navigate(`/artists/${user?.id}`);
+    if (profileData?.id) {
+      navigate(`/artists/${profileData.id}`);
+    }
   };
 
   const handleShare = async () => {
-    const profileUrl = `${window.location.origin}/artists/${user?.id}`;
+    const profileUrl = `${window.location.origin}/artists/${profileData?.id}`;
     
     if (navigator.share) {
       try {
@@ -90,22 +149,21 @@ const Profile = () => {
   };
 
   const handleProfilePictureUpdate = async (imageUrl: string) => {
-    // This will be handled by the ProfilePictureUpload component
     refetch();
   };
 
-  // Calculate profile completion percentage
+  // Calculate profile completion percentage safely
   const calculateProfileCompletion = () => {
     if (!profileData) return 0;
     
     const factors = [
-      profileData.full_name,
+      profileData.full_name && profileData.full_name !== 'New User',
       profileData.bio,
       profileData.category,
-      profileData.projects?.length,
-      profileData.special_skills?.length,
-      profileData.media_assets?.length,
-      profileData.education_training?.length
+      profileData.projects?.length > 0,
+      profileData.special_skills?.length > 0,
+      profileData.media_assets?.length > 0,
+      profileData.education_training?.length > 0
     ];
     
     const completed = factors.filter(Boolean).length;
@@ -113,23 +171,6 @@ const Profile = () => {
   };
 
   const completionPercentage = calculateProfileCompletion();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow py-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="animate-pulse space-y-8">
-              <div className="h-80 bg-gray-200 rounded-2xl"></div>
-              <div className="h-64 bg-gray-200 rounded-2xl"></div>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   const socialLinks = [
     { icon: Globe, url: profileData?.personal_website, label: 'Website' },
@@ -139,316 +180,320 @@ const Profile = () => {
   ].filter(link => link.url);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-grow">
-        <div className="relative">
-          <div className="h-64 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
-          
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
-            <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative bg-white p-8">
-                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
-                    
-                    <ProfilePictureUpload
-                      currentImageUrl={profileData?.profile_picture_url}
-                      userId={user?.id || ""}
-                      onImageUpdate={handleProfilePictureUpdate}
-                      fullName={profileData?.full_name}
-                    />
-
-                    <div className="flex-1 text-center lg:text-left">
-                      <div className="flex items-center gap-4 mb-4">
-                        <h1 className="text-4xl font-bold text-gray-900">{profileData?.full_name || 'Your Name'}</h1>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsEditingProfile(true)}
-                          className="text-gray-500 hover:text-maasta-purple"
-                        >
-                          <Edit size={16} />
-                        </Button>
-                      </div>
+    <ProfileErrorBoundary onRetry={refetch}>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar />
+        <main className="flex-grow">
+          <div className="relative">
+            <div className="h-64 bg-gradient-to-r from-maasta-purple via-maasta-orange to-purple-600"></div>
+            
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+              <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="relative bg-white p-8">
+                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
                       
-                      {profileData?.category && (
-                        <div className="flex justify-center lg:justify-start mb-4">
-                          <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full">
-                            {profileData.category}
-                          </Badge>
+                      <ProfilePictureUpload
+                        currentImageUrl={profileData?.profile_picture_url}
+                        userId={user?.id || ""}
+                        onImageUpdate={handleProfilePictureUpdate}
+                        fullName={profileData?.full_name}
+                      />
+
+                      <div className="flex-1 text-center lg:text-left">
+                        <div className="flex items-center gap-4 mb-4">
+                          <h1 className="text-4xl font-bold text-gray-900">
+                            {profileData?.full_name === 'New User' ? 'Complete Your Profile' : profileData?.full_name}
+                          </h1>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsEditingProfile(true)}
+                            className="text-gray-500 hover:text-maasta-purple"
+                          >
+                            <Edit size={16} />
+                          </Button>
+                        </div>
+                        
+                        {profileData?.category && (
+                          <div className="flex justify-center lg:justify-start mb-4">
+                            <Badge className="bg-maasta-purple text-white px-4 py-2 text-lg font-medium rounded-full">
+                              {profileData.category}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {(profileData?.city || profileData?.state || profileData?.country) && (
+                          <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-4">
+                            <MapPin size={20} className="mr-2" />
+                            <span className="text-lg">
+                              {[profileData?.city, profileData?.state, profileData?.country].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+
+                        {profileData?.bio && (
+                          <p className="text-gray-700 mb-6 max-w-2xl">{profileData.bio}</p>
+                        )}
+
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                          <Button 
+                            onClick={handleViewPublicProfile}
+                            className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium"
+                          >
+                            <Eye className="w-5 h-5 mr-2" />
+                            View Public Profile
+                          </Button>
+                          <Button 
+                            onClick={handleShare}
+                            variant="outline" 
+                            className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium"
+                          >
+                            <Share2 className="w-5 h-5 mr-2" />
+                            Share Profile
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 px-8 py-3 rounded-full font-medium"
+                          >
+                            <Settings className="w-5 h-5 mr-2" />
+                            Settings
+                          </Button>
+                        </div>
+                      </div>
+
+                      {socialLinks.length > 0 && (
+                        <div className="flex lg:flex-col gap-4">
+                          {socialLinks.map((link, index) => {
+                            const Icon = link.icon;
+                            return (
+                              <a
+                                key={`social-${index}`}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-maasta-purple hover:text-white transition-all duration-300"
+                              >
+                                <Icon size={20} />
+                              </a>
+                            );
+                          })}
                         </div>
                       )}
-
-                      {(profileData?.city || profileData?.state || profileData?.country) && (
-                        <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-4">
-                          <MapPin size={20} className="mr-2" />
-                          <span className="text-lg">
-                            {[profileData?.city, profileData?.state, profileData?.country].filter(Boolean).join(', ')}
-                          </span>
-                        </div>
-                      )}
-
-                      {profileData?.bio && (
-                        <p className="text-gray-700 mb-6 max-w-2xl">{profileData.bio}</p>
-                      )}
-
-                      <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                        <Button 
-                          onClick={handleViewPublicProfile}
-                          className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium"
-                        >
-                          <Eye className="w-5 h-5 mr-2" />
-                          View Public Profile
-                        </Button>
-                        <Button 
-                          onClick={handleShare}
-                          variant="outline" 
-                          className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white px-8 py-3 rounded-full font-medium"
-                        >
-                          <Share2 className="w-5 h-5 mr-2" />
-                          Share Profile
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 px-8 py-3 rounded-full font-medium"
-                        >
-                          <Settings className="w-5 h-5 mr-2" />
-                          Settings
-                        </Button>
-                      </div>
-                    </div>
-
-                    {socialLinks.length > 0 && (
-                      <div className="flex lg:flex-col gap-4">
-                        {socialLinks.map((link, index) => {
-                          const Icon = link.icon;
-                          return (
-                            <a
-                              key={index}
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-maasta-purple hover:text-white transition-all duration-300"
-                            >
-                              <Icon size={20} />
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Profile Strength Card */}
-            <Card className="mt-8 border-0 shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-50 rounded-lg">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Profile Strength</h3>
-                      <p className="text-sm text-gray-600">Complete your profile to attract more opportunities</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600">{completionPercentage}%</div>
-                    <div className="text-xs text-gray-500">Complete</div>
-                  </div>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                  <div 
-                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${completionPercentage}%` }}
-                  ></div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 ${profileData?.full_name ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${profileData?.full_name ? 'text-gray-900' : 'text-gray-500'}`}>
-                      Basic Info
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 ${profileData?.projects?.length ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${profileData?.projects?.length ? 'text-gray-900' : 'text-gray-500'}`}>
-                      Projects
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 ${profileData?.special_skills?.length ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${profileData?.special_skills?.length ? 'text-gray-900' : 'text-gray-500'}`}>
-                      Skills
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 ${profileData?.media_assets?.length ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${profileData?.media_assets?.length ? 'text-gray-900' : 'text-gray-500'}`}>
-                      Portfolio
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid grid-cols-6 bg-white rounded-xl shadow-sm border">
-              <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
-              <TabsTrigger value="projects" className="rounded-lg">Projects</TabsTrigger>
-              <TabsTrigger value="education" className="rounded-lg">Education</TabsTrigger>
-              <TabsTrigger value="skills" className="rounded-lg">Skills</TabsTrigger>
-              <TabsTrigger value="media" className="rounded-lg">Media</TabsTrigger>
-              <TabsTrigger value="social" className="rounded-lg">Social</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-1">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Profile Stats</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Projects</span>
-                      <span className="font-semibold">{profileData?.projects?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Skills</span>
-                      <span className="font-semibold">{profileData?.special_skills?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Education</span>
-                      <span className="font-semibold">{profileData?.education_training?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Media Assets</span>
-                      <span className="font-semibold">{profileData?.media_assets?.length || 0}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Recent Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 bg-maasta-orange rounded-full mt-2"></div>
-                        <div>
-                          <p className="font-medium">Profile updated</p>
-                          <p className="text-sm text-gray-600">2 hours ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <div>
-                          <p className="font-medium">New project added</p>
-                          <p className="text-sm text-gray-600">1 day ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                        <div>
-                          <p className="font-medium">Portfolio viewed</p>
-                          <p className="text-sm text-gray-600">2 days ago</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Profile Completion</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Basic Info</span>
-                      <Badge variant={profileData?.full_name ? "default" : "secondary"}>
-                        {profileData?.full_name ? "Complete" : "Incomplete"}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Projects</span>
-                      <Badge variant={profileData?.projects?.length ? "default" : "secondary"}>
-                        {profileData?.projects?.length ? "Complete" : "Add Projects"}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Skills</span>
-                      <Badge variant={profileData?.special_skills?.length ? "default" : "secondary"}>
-                        {profileData?.special_skills?.length ? "Complete" : "Add Skills"}
-                      </Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            <TabsContent value="projects">
-              <ProjectsSection 
-                profileData={profileData} 
-                onUpdate={refetch}
-                userId={user?.id}
-              />
-            </TabsContent>
+              {/* Profile Strength Card */}
+              <Card className="mt-8 border-0 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-50 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Profile Strength</h3>
+                        <p className="text-sm text-gray-600">Complete your profile to attract more opportunities</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">{completionPercentage}%</div>
+                      <div className="text-xs text-gray-500">Complete</div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    ></div>
+                  </div>
 
-            <TabsContent value="education">
-              <EducationSection 
-                profileData={profileData} 
-                onUpdate={refetch}
-                userId={user?.id}
-              />
-            </TabsContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 ${profileData?.full_name ? 'text-green-500' : 'text-gray-300'}`} />
+                      <span className={`text-sm ${profileData?.full_name ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Basic Info
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 ${profileData?.projects?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                      <span className={`text-sm ${profileData?.projects?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Projects
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 ${profileData?.special_skills?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                      <span className={`text-sm ${profileData?.special_skills?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Skills
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 ${profileData?.media_assets?.length ? 'text-green-500' : 'text-gray-300'}`} />
+                      <span className={`text-sm ${profileData?.media_assets?.length ? 'text-gray-900' : 'text-gray-500'}`}>
+                        Portfolio
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
-            <TabsContent value="skills">
-              <SkillsSection 
-                profileData={profileData} 
-                onUpdate={refetch}
-                userId={user?.id}
-              />
-            </TabsContent>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+              <TabsList className="grid grid-cols-6 bg-white rounded-xl shadow-sm border">
+                <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
+                <TabsTrigger value="projects" className="rounded-lg">Projects</TabsTrigger>
+                <TabsTrigger value="education" className="rounded-lg">Education</TabsTrigger>
+                <TabsTrigger value="skills" className="rounded-lg">Skills</TabsTrigger>
+                <TabsTrigger value="media" className="rounded-lg">Media</TabsTrigger>
+                <TabsTrigger value="social" className="rounded-lg">Social</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="media">
-              <MediaUploadSection 
-                profileData={profileData} 
-                onUpdate={refetch}
-                userId={user?.id}
-              />
-            </TabsContent>
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Card className="lg:col-span-1">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Profile Stats</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Projects</span>
+                        <span className="font-semibold">{profileData?.projects?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Skills</span>
+                        <span className="font-semibold">{profileData?.special_skills?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Education</span>
+                        <span className="font-semibold">{profileData?.education_training?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Media Assets</span>
+                        <span className="font-semibold">{profileData?.media_assets?.length || 0}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            <TabsContent value="social">
-              <SocialLinksForm 
-                profileData={profileData} 
-                onUpdate={refetch}
-                userId={user?.id}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-4">
+                          <div className="w-2 h-2 bg-maasta-orange rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium">Profile updated</p>
+                            <p className="text-sm text-gray-600">2 hours ago</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium">New project added</p>
+                            <p className="text-sm text-gray-600">1 day ago</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium">Portfolio viewed</p>
+                            <p className="text-sm text-gray-600">2 days ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-        {isEditingProfile && (
-          <ProfileEditForm
-            profileData={profileData}
-            onClose={() => setIsEditingProfile(false)}
-            onUpdate={refetch}
-            userId={user?.id}
-          />
-        )}
-      </main>
-      <Footer />
-    </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Profile Completion</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span>Basic Info</span>
+                        <Badge variant={profileData?.full_name ? "default" : "secondary"}>
+                          {profileData?.full_name ? "Complete" : "Incomplete"}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Projects</span>
+                        <Badge variant={profileData?.projects?.length ? "default" : "secondary"}>
+                          {profileData?.projects?.length ? "Complete" : "Add Projects"}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Skills</span>
+                        <Badge variant={profileData?.special_skills?.length ? "default" : "secondary"}>
+                          {profileData?.special_skills?.length ? "Complete" : "Add Skills"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="projects">
+                <ProjectsSection 
+                  profileData={profileData} 
+                  onUpdate={refetch}
+                  userId={user?.id}
+                />
+              </TabsContent>
+
+              <TabsContent value="education">
+                <EducationSection 
+                  profileData={profileData} 
+                  onUpdate={refetch}
+                  userId={user?.id}
+                />
+              </TabsContent>
+
+              <TabsContent value="skills">
+                <SkillsSection 
+                  profileData={profileData} 
+                  onUpdate={refetch}
+                  userId={user?.id}
+                />
+              </TabsContent>
+
+              <TabsContent value="media">
+                <MediaUploadSection 
+                  profileData={profileData} 
+                  onUpdate={refetch}
+                  userId={user?.id}
+                />
+              </TabsContent>
+
+              <TabsContent value="social">
+                <SocialLinksForm 
+                  profileData={profileData} 
+                  onUpdate={refetch}
+                  userId={user?.id}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {isEditingProfile && profileData && (
+            <ProfileEditForm
+              profileData={profileData}
+              onClose={() => setIsEditingProfile(false)}
+              onUpdate={refetch}
+              userId={user?.id}
+            />
+          )}
+        </main>
+        <Footer />
+      </div>
+    </ProfileErrorBoundary>
   );
 };
 
