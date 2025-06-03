@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,9 +47,28 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const [isSaving, setIsSaving] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
 
+  // Get signup data from user metadata or existing profile
+  const getSignupFullName = () => {
+    // First try user metadata from signup
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    // Fallback to existing profile data
+    if (profileData?.full_name && profileData.full_name !== 'New User') {
+      return profileData.full_name;
+    }
+    // Last fallback to empty string for new input
+    return '';
+  };
+
+  const getSignupEmail = () => {
+    // Always use the user's email from auth
+    return user?.email || '';
+  };
+
   // Safe default values for new users
   const defaultValues = {
-    full_name: profileData?.full_name === 'New User' ? '' : (profileData?.full_name || ""),
+    full_name: getSignupFullName(),
     bio: profileData?.bio || "",
     city: profileData?.city || "",
     state: profileData?.state || "",
@@ -86,7 +104,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       const artistDetailsData = {
         id: userId,
         full_name: values.full_name,
-        email: user.email, // Include required email field
+        email: getSignupEmail(), // Use signup email
         bio: values.bio || null,
         city: values.city || null,
         state: values.state || null,
@@ -143,7 +161,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {profileData?.full_name === 'New User' || !profileData?.full_name ? 'Set Up Your Profile' : 'Edit Profile'}
+            {!profileData?.full_name || profileData?.full_name === 'New User' ? 'Set Up Your Profile' : 'Edit Profile'}
           </DialogTitle>
         </DialogHeader>
 
@@ -154,7 +172,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               currentImageUrl={profilePictureUrl}
               userId={userId || ""}
               onImageUpdate={setProfilePictureUrl}
-              fullName={form.watch("full_name") || "New User"}
+              fullName={form.watch("full_name") || getSignupFullName()}
             />
           </div>
 
@@ -175,6 +193,17 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     </FormItem>
                   )}
                 />
+
+                {/* Email Display (Read-only) */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">Email</label>
+                  <Input 
+                    value={getSignupEmail()} 
+                    disabled 
+                    className="bg-gray-50 text-gray-600"
+                  />
+                  <p className="text-xs text-gray-500">Email cannot be changed</p>
+                </div>
 
                 <FormField
                   control={form.control}

@@ -102,6 +102,34 @@ const ProfilePictureUpload = ({
     }
   };
 
+  // Show only upload button if no image is set
+  if (!currentImageUrl && !previewImage) {
+    return (
+      <div className="w-48 h-48 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" onClick={triggerFileSelect}>
+        {isUploading ? (
+          <div className="text-gray-600 text-center">
+            <Upload className="w-8 h-8 mx-auto mb-2 animate-spin" />
+            <span className="text-sm">Uploading...</span>
+          </div>
+        ) : (
+          <div className="text-gray-600 text-center">
+            <Camera className="w-8 h-8 mx-auto mb-2" />
+            <span className="text-sm font-medium">Add Photo</span>
+            <span className="text-xs text-gray-500 block mt-1">Click to upload</span>
+          </div>
+        )}
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative group">
       <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
@@ -110,9 +138,6 @@ const ProfilePictureUpload = ({
           alt={fullName}
           className="object-cover"
         />
-        <AvatarFallback className="text-4xl font-bold bg-maasta-purple text-white">
-          {fullName?.charAt(0) || 'U'}
-        </AvatarFallback>
       </Avatar>
       
       {/* Upload overlay */}
