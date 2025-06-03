@@ -102,22 +102,43 @@ const ProfilePictureUpload = ({
     }
   };
 
+  // Get the first letter of the name for avatar fallback
+  const getAvatarLetter = () => {
+    if (fullName && fullName !== 'New User') {
+      return fullName.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   // Show only upload button if no image is set
   if (!currentImageUrl && !previewImage) {
     return (
-      <div className="w-48 h-48 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" onClick={triggerFileSelect}>
-        {isUploading ? (
-          <div className="text-gray-600 text-center">
-            <Upload className="w-8 h-8 mx-auto mb-2 animate-spin" />
-            <span className="text-sm">Uploading...</span>
-          </div>
-        ) : (
-          <div className="text-gray-600 text-center">
-            <Camera className="w-8 h-8 mx-auto mb-2" />
-            <span className="text-sm font-medium">Add Photo</span>
-            <span className="text-xs text-gray-500 block mt-1">Click to upload</span>
-          </div>
-        )}
+      <div className="flex flex-col items-center">
+        {/* Avatar with first letter */}
+        <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white mb-4">
+          <AvatarFallback className="text-6xl font-bold bg-maasta-purple text-white rounded-2xl">
+            {getAvatarLetter()}
+          </AvatarFallback>
+        </Avatar>
+        
+        {/* Upload button */}
+        <Button
+          onClick={triggerFileSelect}
+          disabled={isUploading}
+          className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-6 py-2 rounded-full"
+        >
+          {isUploading ? (
+            <>
+              <Upload className="w-4 h-4 mr-2 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Camera className="w-4 h-4 mr-2" />
+              Add Photo
+            </>
+          )}
+        </Button>
         
         <input
           ref={fileInputRef}
@@ -138,6 +159,9 @@ const ProfilePictureUpload = ({
           alt={fullName}
           className="object-cover"
         />
+        <AvatarFallback className="text-6xl font-bold bg-maasta-purple text-white rounded-2xl">
+          {getAvatarLetter()}
+        </AvatarFallback>
       </Avatar>
       
       {/* Upload overlay */}
