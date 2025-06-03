@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,13 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img 
                 src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
                 alt="Maasta Logo" 
-                className="h-12 w-auto"
+                className="h-16 w-auto"
               />
             </Link>
           </div>
