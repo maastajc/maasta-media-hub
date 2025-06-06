@@ -12,7 +12,8 @@ import {
   Award,
   User,
   Camera,
-  GraduationCap
+  GraduationCap,
+  RefreshCw
 } from "lucide-react";
 import { useArtistProfile } from "@/hooks/useArtistProfile";
 
@@ -29,7 +30,12 @@ const ArtistProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Use the unified hook for data fetching
+  // Add debug logging
+  console.log('ArtistProfile component loaded');
+  console.log('URL artistId:', artistId);
+  console.log('Current location:', window.location.href);
+
+  // Use the unified hook for data fetching with enhanced error handling
   const { 
     profile: artistData, 
     isLoading, 
@@ -39,22 +45,38 @@ const ArtistProfile = () => {
   } = useArtistProfile(artistId, {
     enabled: !!artistId,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000 // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error) => {
+      console.log(`Artist profile fetch attempt ${failureCount + 1} failed:`, error);
+      
+      // Don't retry if it's a "not found" error
+      if (error?.message?.includes('not found') || error?.message?.includes('NOT_FOUND')) {
+        return false;
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    }
   });
 
   // Handle missing artist ID
   if (!artistId) {
+    console.error('No artistId found in URL params');
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center max-w-md">
             <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
-            <h2 className="text-2xl font-bold mb-2">Invalid Artist ID</h2>
+            <h2 className="text-2xl font-bold mb-2">Invalid Artist URL</h2>
             <p className="text-gray-600 mb-4">No artist ID was provided in the URL.</p>
-            <Button onClick={() => navigate("/artists")}>
-              Browse Artists
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate("/artists")}>
+                Browse Artists
+              </Button>
+              <Button onClick={() => navigate("/")} variant="outline">
+                Go Home
+              </Button>
+            </div>
           </Card>
         </main>
         <Footer />
@@ -64,46 +86,75 @@ const ArtistProfile = () => {
 
   // Loading state
   if (isLoading) {
+    console.log('Loading artist profile...');
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <LoadingSpinner size="lg" />
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">Loading artist profile...</p>
+          </div>
         </main>
         <Footer />
       </div>
     );
   }
 
-  // Error state with retry option
+  // Enhanced error handling with detailed error information
   if (isError || !artistData) {
     const errorMessage = error?.message || "Artist profile not found";
-    const isNotFound = errorMessage.includes('not found') || !artistData;
+    const isNotFound = errorMessage.includes('not found') || 
+                       errorMessage.includes('NOT_FOUND') || 
+                       !artistData;
+    
+    console.error('Artist profile error:', {
+      error: errorMessage,
+      artistId,
+      isNotFound,
+      currentUrl: window.location.href
+    });
     
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Card className="p-8 text-center max-w-md">
+        <main className="flex-grow flex items-center justify-center p-4">
+          <Card className="p-8 text-center max-w-lg">
             <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
             <h2 className="text-2xl font-bold mb-2">
               {isNotFound ? "Artist Not Found" : "Error Loading Profile"}
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               {isNotFound 
-                ? "The artist profile you're looking for doesn't exist or may have been removed."
-                : errorMessage
+                ? `We couldn't find an artist with ID: ${artistId}. The profile may have been removed or the link might be incorrect.`
+                : `Error: ${errorMessage}`
               }
             </p>
-            <div className="flex gap-3 justify-center">
+            
+            {/* Debug information for development */}
+            <details className="mb-6 text-left bg-gray-100 p-3 rounded text-sm">
+              <summary className="cursor-pointer font-medium">Debug Information</summary>
+              <div className="mt-2 space-y-1 text-xs">
+                <p><strong>Artist ID:</strong> {artistId}</p>
+                <p><strong>Current URL:</strong> {window.location.href}</p>
+                <p><strong>Error:</strong> {errorMessage}</p>
+                <p><strong>Is Not Found:</strong> {isNotFound ? 'Yes' : 'No'}</p>
+              </div>
+            </details>
+            
+            <div className="flex gap-3 justify-center flex-wrap">
               <Button onClick={() => navigate("/artists")} variant="outline">
-                Browse Artists
+                Browse All Artists
               </Button>
               {!isNotFound && (
-                <Button onClick={() => refetch()}>
+                <Button onClick={() => refetch()} className="flex items-center gap-2">
+                  <RefreshCw size={16} />
                   Try Again
                 </Button>
               )}
+              <Button onClick={() => navigate("/")} variant="secondary">
+                Go Home
+              </Button>
             </div>
           </Card>
         </main>
@@ -111,6 +162,9 @@ const ArtistProfile = () => {
       </div>
     );
   }
+
+  // Success state - render the profile
+  console.log('Successfully loaded artist profile:', artistData.full_name);
 
   const projects = artistData.projects || [];
   const education = artistData.education_training || [];

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -138,11 +137,22 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
 
 export const fetchArtistById = async (artistId: string): Promise<Artist | null> => {
   try {
-    console.log('Fetching artist by ID:', artistId);
+    console.log('fetchArtistById called with ID:', artistId);
+    console.log('Current URL:', window.location.href);
+    console.log('Supabase client initialized:', !!supabase);
     
     if (!artistId) {
       throw new Error('Artist ID is required');
     }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(artistId)) {
+      console.error('Invalid UUID format:', artistId);
+      throw new Error(`Invalid artist ID format: ${artistId}`);
+    }
+
+    console.log('Making Supabase query for artist:', artistId);
 
     const { data: artist, error } = await supabase
       .from('artist_details')
@@ -194,17 +204,40 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       .eq('id', artistId)
       .maybeSingle();
 
+    console.log('Supabase query completed:', { data: !!artist, error });
+
     if (error) {
-      console.error('Error fetching artist:', error);
-      throw new Error(`Failed to fetch artist: ${error.message}`);
+      console.error('Supabase error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw new Error(`Database error: ${error.message}`);
     }
 
     if (!artist) {
-      console.log('Artist not found:', artistId);
-      return null;
+      console.log('No artist found for ID:', artistId);
+      // Try to check if the artist exists but is inactive
+      const { data: inactiveArtist, error: inactiveError } = await supabase
+        .from('artist_details')
+        .select('id, status, full_name')
+        .eq('id', artistId)
+        .maybeSingle();
+      
+      if (inactiveArtist) {
+        console.log('Found inactive artist:', inactiveArtist);
+        throw new Error(`Artist profile is ${inactiveArtist.status || 'inactive'}`);
+      }
+      
+      throw new Error('Artist not found');
     }
 
-    console.log('Successfully fetched artist:', artist.full_name);
+    console.log('Successfully fetched artist:', {
+      id: artist.id,
+      name: artist.full_name,
+      status: artist.status
+    });
     
     // Return artist with proper fallbacks for all nested data and add missing artist_id fields
     return {
@@ -286,7 +319,12 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       }))
     } as Artist;
   } catch (error: any) {
-    console.error('Error in fetchArtistById:', error);
+    console.error('Error in fetchArtistById:', {
+      error: error.message,
+      artistId,
+      stack: error.stack,
+      url: window.location.href
+    });
     throw error;
   }
 };
