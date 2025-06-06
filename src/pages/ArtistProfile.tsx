@@ -45,17 +45,7 @@ const ArtistProfile = () => {
   } = useArtistProfile(artistId, {
     enabled: !!artistId,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
-      console.log(`Artist profile fetch attempt ${failureCount + 1} failed:`, error);
-      
-      // Don't retry if it's a "not found" error
-      if (error?.message?.includes('not found') || error?.message?.includes('NOT_FOUND')) {
-        return false;
-      }
-      // Retry up to 3 times for other errors
-      return failureCount < 3;
-    }
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 
   // Handle missing artist ID
