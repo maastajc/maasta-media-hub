@@ -72,10 +72,19 @@ export const SignUpForm = () => {
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
+      
+      // Use the current domain instead of localhost for redirect
+      const currentDomain = window.location.origin;
+      const redirectUrl = currentDomain.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/'
+        : `${currentDomain}/`;
+
+      console.log('Google sign-up redirect URL:', redirectUrl);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: redirectUrl
         }
       });
       
@@ -83,6 +92,7 @@ export const SignUpForm = () => {
         toast.error(error.message);
       }
     } catch (error: any) {
+      console.error('Google sign-up error:', error);
       toast.error('Failed to sign up with Google');
     } finally {
       setIsLoading(false);
