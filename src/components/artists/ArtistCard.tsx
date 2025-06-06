@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Artist {
   id: string;
@@ -25,14 +26,33 @@ const ArtistCard = ({ artist, onViewProfile }: ArtistCardProps) => {
     return parts.length > 0 ? parts.join(', ') : 'Location not specified';
   };
 
+  // Get the first letter of the name for avatar fallback
+  const getAvatarLetter = () => {
+    if (artist.full_name && artist.full_name !== 'New User') {
+      return artist.full_name.charAt(0).toUpperCase();
+    }
+    return 'A';
+  };
+
   return (
     <Card className="overflow-hidden card-hover">
       <div className="relative h-64">
-        <img
-          src={artist.profile_picture_url || `https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3`}
-          alt={artist.full_name}
-          className="w-full h-full object-cover"
-        />
+        {artist.profile_picture_url ? (
+          <img
+            src={artist.profile_picture_url}
+            alt={artist.full_name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <Avatar className="w-32 h-32">
+              <AvatarImage src="" alt={artist.full_name} />
+              <AvatarFallback className="text-4xl font-bold bg-maasta-purple text-white">
+                {getAvatarLetter()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        )}
         {artist.verified && (
           <div className="absolute top-2 right-2 bg-maasta-purple text-white text-xs p-1 px-2 rounded-full flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
