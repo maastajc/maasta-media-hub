@@ -12,7 +12,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
     );
 
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .select(`
         id,
         full_name,
@@ -71,7 +71,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     );
 
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .select(`
         *,
         special_skills!fk_special_skills_artist_details (skill),

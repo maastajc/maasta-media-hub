@@ -260,7 +260,7 @@ export type Database = {
             foreignKeyName: "education_training_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -398,7 +398,7 @@ export type Database = {
             foreignKeyName: "language_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -458,7 +458,7 @@ export type Database = {
             foreignKeyName: "media_assets_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -507,7 +507,7 @@ export type Database = {
             foreignKeyName: "professional_references_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -643,7 +643,7 @@ export type Database = {
             foreignKeyName: "projects_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -676,7 +676,7 @@ export type Database = {
             foreignKeyName: "special_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -709,10 +709,103 @@ export type Database = {
             foreignKeyName: "tools_software_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "artist_details"
+            referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      unified_profiles: {
+        Row: {
+          association_membership: string | null
+          bio: string | null
+          category: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string
+          experience_level: string | null
+          full_name: string
+          gender: string | null
+          id: string
+          imdb_profile: string | null
+          instagram: string | null
+          linkedin: string | null
+          personal_website: string | null
+          phone_number: string | null
+          profile_picture_url: string | null
+          rate_card: Json | null
+          role: string | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+          verified: boolean | null
+          willing_to_relocate: boolean | null
+          work_preference: string | null
+          years_of_experience: number | null
+          youtube_vimeo: string | null
+        }
+        Insert: {
+          association_membership?: string | null
+          bio?: string | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email: string
+          experience_level?: string | null
+          full_name?: string
+          gender?: string | null
+          id: string
+          imdb_profile?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          personal_website?: string | null
+          phone_number?: string | null
+          profile_picture_url?: string | null
+          rate_card?: Json | null
+          role?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          willing_to_relocate?: boolean | null
+          work_preference?: string | null
+          years_of_experience?: number | null
+          youtube_vimeo?: string | null
+        }
+        Update: {
+          association_membership?: string | null
+          bio?: string | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string
+          experience_level?: string | null
+          full_name?: string
+          gender?: string | null
+          id?: string
+          imdb_profile?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          personal_website?: string | null
+          phone_number?: string | null
+          profile_picture_url?: string | null
+          rate_card?: Json | null
+          role?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          willing_to_relocate?: boolean | null
+          work_preference?: string | null
+          years_of_experience?: number | null
+          youtube_vimeo?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

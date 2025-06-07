@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -6,7 +7,7 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
     console.log('Fetching all artists...');
     
     const { data: artists, error } = await supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .select(`
         *,
         special_skills!fk_special_skills_artist_details (
@@ -138,8 +139,6 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
 export const fetchArtistById = async (artistId: string): Promise<Artist | null> => {
   try {
     console.log('fetchArtistById called with ID:', artistId);
-    console.log('Current URL:', window.location.href);
-    console.log('Supabase client initialized:', !!supabase);
     
     if (!artistId) {
       throw new Error('Artist ID is required');
@@ -155,7 +154,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
     console.log('Making Supabase query for artist:', artistId);
 
     const { data: artist, error } = await supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .select(`
         *,
         special_skills!fk_special_skills_artist_details (
@@ -207,29 +206,12 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
     console.log('Supabase query completed:', { data: !!artist, error });
 
     if (error) {
-      console.error('Supabase error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      console.error('Supabase error details:', error);
       throw new Error(`Database error: ${error.message}`);
     }
 
     if (!artist) {
       console.log('No artist found for ID:', artistId);
-      // Try to check if the artist exists but is inactive
-      const { data: inactiveArtist, error: inactiveError } = await supabase
-        .from('artist_details')
-        .select('id, status, full_name')
-        .eq('id', artistId)
-        .maybeSingle();
-      
-      if (inactiveArtist) {
-        console.log('Found inactive artist:', inactiveArtist);
-        throw new Error(`Artist profile is ${inactiveArtist.status || 'inactive'}`);
-      }
-      
       throw new Error('Artist not found');
     }
 
@@ -319,12 +301,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       }))
     } as Artist;
   } catch (error: any) {
-    console.error('Error in fetchArtistById:', {
-      error: error.message,
-      artistId,
-      stack: error.stack,
-      url: window.location.href
-    });
+    console.error('Error in fetchArtistById:', error);
     throw error;
   }
 };
@@ -344,7 +321,7 @@ export const updateArtistProfile = async (
       throw new Error('Profile data is required');
     }
 
-    // Extract only the fields that belong to artist_details table
+    // Extract only the fields that belong to unified_profiles table
     const {
       special_skills,
       projects,
@@ -353,21 +330,45 @@ export const updateArtistProfile = async (
       tools_software,
       media_assets,
       professional_references,
-      ...artistDetailsData
+      ...unifiedProfileData
     } = profileData;
 
-    // Ensure category and experience_level are properly typed and remove any non-database fields
+    // Validate the data before updating
+    const validateProfileData = (data: any) => {
+      const errors: string[] = [];
+      
+      if (data.email && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(data.email)) {
+        errors.push('Invalid email format');
+      }
+      
+      if (data.phone_number && !/^\+?[\d\s\-\(\)\.]{10,}$/.test(data.phone_number)) {
+        errors.push('Invalid phone number format');
+      }
+      
+      if (data.date_of_birth && new Date(data.date_of_birth) > new Date()) {
+        errors.push('Date of birth cannot be in the future');
+      }
+      
+      if (data.years_of_experience !== undefined && (data.years_of_experience < 0 || data.years_of_experience > 100)) {
+        errors.push('Years of experience must be between 0 and 100');
+      }
+      
+      if (errors.length > 0) {
+        throw new Error(`Validation errors: ${errors.join(', ')}`);
+      }
+      
+      return data;
+    };
+
+    const validatedData = validateProfileData(unifiedProfileData);
+
     const updateData = {
-      ...artistDetailsData,
-      // Ensure category is properly cast to the expected type
-      category: artistDetailsData.category as "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other" | undefined,
-      // Ensure experience_level is properly cast to the expected type
-      experience_level: artistDetailsData.experience_level as "beginner" | "fresher" | "intermediate" | "expert" | "veteran" | undefined,
+      ...validatedData,
       updated_at: new Date().toISOString()
     };
 
     const { data: updatedArtist, error } = await supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .update(updateData)
       .eq('id', artistId)
       .select()
@@ -396,7 +397,7 @@ export const updateArtistProfile = async (
 export const checkArtistExists = async (artistId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from('artist_details')
+      .from('unified_profiles')
       .select('id')
       .eq('id', artistId)
       .maybeSingle();
