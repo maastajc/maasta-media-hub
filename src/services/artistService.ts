@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -89,45 +88,55 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
         rate_card: artist.rate_card,
         created_at: artist.created_at,
         updated_at: artist.updated_at,
-        // Map related data and add missing artist_id fields
-        special_skills: (artist.special_skills || []).map(skill => ({
-          id: skill.id,
-          skill: skill.skill,
-          artist_id: artist.id
-        })),
-        projects: (artist.projects || []).map(project => ({
-          id: project.id,
-          project_name: project.project_name,
-          role_in_project: project.role_in_project,
-          project_type: project.project_type,
-          year_of_release: project.year_of_release,
-          artist_id: artist.id
-        })),
-        education_training: (artist.education_training || []).map(edu => ({
-          id: edu.id,
-          qualification_name: edu.qualification_name,
-          institution: edu.institution,
-          year_completed: edu.year_completed,
-          is_academic: edu.is_academic,
-          artist_id: artist.id
-        })),
-        language_skills: (artist.language_skills || []).map(lang => ({
-          id: lang.id,
-          language: lang.language,
-          proficiency: lang.proficiency,
-          artist_id: artist.id
-        })),
-        media_assets: (artist.media_assets || []).map(media => ({
-          id: media.id,
-          url: media.url,
-          file_name: media.file_name,
-          file_type: media.file_type,
-          file_size: media.file_size || 0,
-          is_video: media.is_video,
-          description: media.description,
-          user_id: media.user_id || artist.id,
-          artist_id: artist.id
-        }))
+        // Map related data with proper fallbacks and type checking
+        special_skills: Array.isArray(artist.special_skills) 
+          ? artist.special_skills.map(skill => ({
+              id: skill.id,
+              skill: skill.skill,
+              artist_id: artist.id
+            }))
+          : [],
+        projects: Array.isArray(artist.projects) 
+          ? artist.projects.map(project => ({
+              id: project.id,
+              project_name: project.project_name,
+              role_in_project: project.role_in_project,
+              project_type: project.project_type,
+              year_of_release: project.year_of_release,
+              artist_id: artist.id
+            }))
+          : [],
+        education_training: Array.isArray(artist.education_training) 
+          ? artist.education_training.map(edu => ({
+              id: edu.id,
+              qualification_name: edu.qualification_name,
+              institution: edu.institution,
+              year_completed: edu.year_completed,
+              is_academic: edu.is_academic,
+              artist_id: artist.id
+            }))
+          : [],
+        language_skills: Array.isArray(artist.language_skills) 
+          ? artist.language_skills.map(lang => ({
+              id: lang.id,
+              language: lang.language,
+              proficiency: lang.proficiency,
+              artist_id: artist.id
+            }))
+          : [],
+        media_assets: Array.isArray(artist.media_assets) 
+          ? artist.media_assets.map(media => ({
+              id: media.id,
+              url: media.url,
+              file_name: media.file_name,
+              file_type: media.file_type,
+              file_size: media.file_size || 0,
+              is_video: media.is_video,
+              description: media.description,
+              user_id: media.user_id || artist.id,
+              artist_id: artist.id
+            }))
+          : []
       } as Artist;
     }).filter(Boolean) as Artist[];
   } catch (error: any) {
@@ -221,7 +230,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       status: artist.status
     });
     
-    // Return artist with proper fallbacks for all nested data and add missing artist_id fields
+    // Return artist with proper fallbacks for all nested data and type checking
     return {
       id: artist.id,
       full_name: artist.full_name || 'Unknown Artist',
@@ -251,54 +260,66 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       rate_card: artist.rate_card,
       created_at: artist.created_at,
       updated_at: artist.updated_at,
-      special_skills: (artist.special_skills || []).map(skill => ({
-        id: skill.id,
-        skill: skill.skill,
-        artist_id: artist.id
-      })),
-      projects: (artist.projects || []).map(project => ({
-        id: project.id,
-        project_name: project.project_name,
-        role_in_project: project.role_in_project,
-        project_type: project.project_type,
-        year_of_release: project.year_of_release,
-        director_producer: project.director_producer,
-        streaming_platform: project.streaming_platform,
-        link: project.link,
-        artist_id: artist.id
-      })),
-      education_training: (artist.education_training || []).map(edu => ({
-        id: edu.id,
-        qualification_name: edu.qualification_name,
-        institution: edu.institution,
-        year_completed: edu.year_completed,
-        is_academic: edu.is_academic,
-        artist_id: artist.id
-      })),
-      language_skills: (artist.language_skills || []).map(lang => ({
-        id: lang.id,
-        language: lang.language,
-        proficiency: lang.proficiency,
-        artist_id: artist.id
-      })),
-      tools_software: (artist.tools_software || []).map(tool => ({
-        id: tool.id,
-        tool_name: tool.tool_name,
-        artist_id: artist.id
-      })),
-      media_assets: (artist.media_assets || []).map(media => ({
-        id: media.id,
-        url: media.url,
-        file_name: media.file_name,
-        file_type: media.file_type,
-        file_size: media.file_size || 0,
-        is_video: media.is_video,
-        is_embed: media.is_embed,
-        embed_source: media.embed_source,
-        description: media.description,
-        user_id: media.user_id || artist.id,
-        artist_id: artist.id
-      }))
+      special_skills: Array.isArray(artist.special_skills) 
+        ? artist.special_skills.map(skill => ({
+            id: skill.id,
+            skill: skill.skill,
+            artist_id: artist.id
+          }))
+        : [],
+      projects: Array.isArray(artist.projects) 
+        ? artist.projects.map(project => ({
+            id: project.id,
+            project_name: project.project_name,
+            role_in_project: project.role_in_project,
+            project_type: project.project_type,
+            year_of_release: project.year_of_release,
+            director_producer: project.director_producer,
+            streaming_platform: project.streaming_platform,
+            link: project.link,
+            artist_id: artist.id
+          }))
+        : [],
+      education_training: Array.isArray(artist.education_training) 
+        ? artist.education_training.map(edu => ({
+            id: edu.id,
+            qualification_name: edu.qualification_name,
+            institution: edu.institution,
+            year_completed: edu.year_completed,
+            is_academic: edu.is_academic,
+            artist_id: artist.id
+          }))
+        : [],
+      language_skills: Array.isArray(artist.language_skills) 
+        ? artist.language_skills.map(lang => ({
+            id: lang.id,
+            language: lang.language,
+            proficiency: lang.proficiency,
+            artist_id: artist.id
+          }))
+        : [],
+      tools_software: Array.isArray(artist.tools_software) 
+        ? artist.tools_software.map(tool => ({
+            id: tool.id,
+            tool_name: tool.tool_name,
+            artist_id: artist.id
+          }))
+        : [],
+      media_assets: Array.isArray(artist.media_assets) 
+        ? artist.media_assets.map(media => ({
+            id: media.id,
+            url: media.url,
+            file_name: media.file_name,
+            file_type: media.file_type,
+            file_size: media.file_size || 0,
+            is_video: media.is_video,
+            is_embed: media.is_embed,
+            embed_source: media.embed_source,
+            description: media.description,
+            user_id: media.user_id || artist.id,
+            artist_id: artist.id
+          }))
+        : []
     } as Artist;
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
