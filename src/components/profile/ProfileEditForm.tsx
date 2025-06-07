@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,53 +15,21 @@ import { Switch } from "@/components/ui/switch";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import { toast } from "sonner";
 
-// Enhanced validation schema with comprehensive rules
 const profileSchema = z.object({
-  full_name: z.string()
-    .min(2, "Full name must be at least 2 characters")
-    .max(100, "Full name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s'-]+$/, "Full name can only contain letters, spaces, hyphens, and apostrophes"),
-  bio: z.string()
-    .max(1000, "Bio must be less than 1000 characters")
-    .optional(),
-  city: z.string()
-    .max(100, "City name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s'-]*$/, "City can only contain letters, spaces, hyphens, and apostrophes")
-    .optional(),
-  state: z.string()
-    .max(100, "State name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s'-]*$/, "State can only contain letters, spaces, hyphens, and apostrophes")
-    .optional(),
-  country: z.string()
-    .max(100, "Country name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s'-]*$/, "Country can only contain letters, spaces, hyphens, and apostrophes")
-    .optional(),
-  phone_number: z.string()
-    .regex(/^\+?[\d\s\-\(\)\.]{10,}$/, "Please enter a valid phone number with at least 10 digits")
-    .optional()
-    .or(z.literal("")),
-  date_of_birth: z.string()
-    .refine((date) => {
-      if (!date) return true;
-      const birthDate = new Date(date);
-      const today = new Date();
-      const minAge = new Date();
-      minAge.setFullYear(today.getFullYear() - 120);
-      return birthDate <= today && birthDate >= minAge;
-    }, "Please enter a valid date of birth")
-    .optional(),
+  full_name: z.string().min(1, "Full name is required"),
+  bio: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  phone_number: z.string().optional(),
+  date_of_birth: z.string().optional(),
   gender: z.string().optional(),
   willing_to_relocate: z.boolean().default(false),
   work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
   category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
   experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).default("beginner"),
-  years_of_experience: z.number()
-    .min(0, "Years of experience cannot be negative")
-    .max(100, "Years of experience cannot exceed 100")
-    .optional(),
-  association_membership: z.string()
-    .max(200, "Association membership must be less than 200 characters")
-    .optional(),
+  years_of_experience: z.number().min(0).optional(),
+  association_membership: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -120,7 +87,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues,
-    mode: "onChange", // Enable real-time validation
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
@@ -134,20 +100,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
       console.log('Updating profile with values:', values);
 
-      // Additional server-side validation
-      if (values.phone_number && !/^\+?[\d\s\-\(\)\.]{10,}$/.test(values.phone_number)) {
-        throw new Error("Invalid phone number format. Please use a valid phone number with at least 10 digits.");
-      }
-
-      if (values.date_of_birth) {
-        const birthDate = new Date(values.date_of_birth);
-        if (birthDate > new Date()) {
-          throw new Error("Date of birth cannot be in the future.");
-        }
-      }
-
-      // Prepare data for unified_profiles table with all required fields
-      const unifiedProfileData = {
+      // Prepare data for artist_details table with all required fields
+      const artistDetailsData = {
         id: userId,
         full_name: values.full_name,
         email: getSignupEmail(), // Use signup email
@@ -168,31 +122,16 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         updated_at: new Date().toISOString()
       };
 
-      // Update unified_profiles
-      const { error: profileError } = await supabase
-        .from("unified_profiles")
-        .upsert(unifiedProfileData, {
+      // Update artist details
+      const { error: artistError } = await supabase
+        .from("artist_details")
+        .upsert(artistDetailsData, {
           onConflict: 'id'
         });
 
-      if (profileError) {
-        console.error('Error updating unified_profiles:', profileError);
-        
-        // Handle specific database constraint violations
-        if (profileError.message.includes('valid_email')) {
-          throw new Error("Please enter a valid email address.");
-        }
-        if (profileError.message.includes('valid_phone')) {
-          throw new Error("Please enter a valid phone number with at least 10 digits.");
-        }
-        if (profileError.message.includes('valid_experience_years')) {
-          throw new Error("Years of experience must be between 0 and 100.");
-        }
-        if (profileError.message.includes('valid_date_of_birth')) {
-          throw new Error("Date of birth cannot be in the future.");
-        }
-        
-        throw profileError;
+      if (artistError) {
+        console.error('Error updating artist_details:', artistError);
+        throw artistError;
       }
 
       toast.success("Profile updated successfully!");
@@ -248,11 +187,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Full Name*</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your full name" 
-                          {...field}
-                          className={form.formState.errors.full_name ? "border-red-500" : ""}
-                        />
+                        <Input placeholder="Enter your full name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -277,14 +212,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your phone number (e.g., +1234567890)" 
-                          {...field}
-                          className={form.formState.errors.phone_number ? "border-red-500" : ""}
-                        />
+                        <Input placeholder="Enter your phone number" {...field} />
                       </FormControl>
                       <FormMessage />
-                      <p className="text-xs text-gray-500">Format: +1234567890 or (123) 456-7890</p>
                     </FormItem>
                   )}
                 />
@@ -296,12 +226,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Date of Birth</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="date" 
-                          {...field}
-                          max={new Date().toISOString().split('T')[0]}
-                          className={form.formState.errors.date_of_birth ? "border-red-500" : ""}
-                        />
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -342,11 +267,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your city" 
-                          {...field}
-                          className={form.formState.errors.city ? "border-red-500" : ""}
-                        />
+                        <Input placeholder="Enter your city" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -360,11 +281,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>State</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your state" 
-                          {...field}
-                          className={form.formState.errors.state ? "border-red-500" : ""}
-                        />
+                        <Input placeholder="Enter your state" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -378,11 +295,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Country</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your country" 
-                          {...field}
-                          className={form.formState.errors.country ? "border-red-500" : ""}
-                        />
+                        <Input placeholder="Enter your country" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -400,12 +313,11 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us about yourself..." 
-                        className={`min-h-24 ${form.formState.errors.bio ? "border-red-500" : ""}`}
+                        className="min-h-24"
                         {...field} 
                       />
                     </FormControl>
                     <FormMessage />
-                    <p className="text-xs text-gray-500">Maximum 1000 characters</p>
                   </FormItem>
                 )}
               />
@@ -480,15 +392,12 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                           <Input 
                             type="number" 
                             min="0"
-                            max="100"
                             placeholder="0"
                             {...field}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                            className={form.formState.errors.years_of_experience ? "border-red-500" : ""}
                           />
                         </FormControl>
                         <FormMessage />
-                        <p className="text-xs text-gray-500">Must be between 0 and 100</p>
                       </FormItem>
                     )}
                   />
@@ -500,11 +409,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                       <FormItem>
                         <FormLabel>Association Membership</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., SAG-AFTRA, DGA" 
-                            {...field}
-                            className={form.formState.errors.association_membership ? "border-red-500" : ""}
-                          />
+                          <Input placeholder="e.g., SAG-AFTRA, DGA" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -570,11 +475,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isSaving || !form.formState.isValid} 
-                  className="bg-maasta-orange hover:bg-maasta-orange/90"
-                >
+                <Button type="submit" disabled={isSaving} className="bg-maasta-orange hover:bg-maasta-orange/90">
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>

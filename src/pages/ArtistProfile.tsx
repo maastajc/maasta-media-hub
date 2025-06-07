@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
@@ -133,7 +134,7 @@ const ArtistProfile = () => {
   }
 
   // Success state - render the profile
-  console.log('Successfully loaded artist profile:', artistData?.full_name);
+  console.log('Successfully loaded artist profile:', artistData.full_name);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

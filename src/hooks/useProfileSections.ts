@@ -1,241 +1,107 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  saveProject, 
-  deleteProject,
-  saveSkill,
-  deleteSkill,
-  saveEducation,
-  deleteEducation,
-  saveLanguage,
-  deleteLanguage,
-  saveTool,
-  deleteTool,
-  saveMediaAsset,
-  deleteMediaAsset
-} from '@/services/profileService';
+import { saveRelatedData, deleteRelatedData } from '@/services/profileService';
 
 export const useProfileSections = (userId?: string) => {
   const queryClient = useQueryClient();
   
-  // Project mutations
-  const saveProjectMutation = useMutation({
-    mutationFn: async (data: any) => {
+  // Generic mutation for saving data to any profile section
+  const saveDataMutation = useMutation({
+    mutationFn: async ({ table, data }: { table: string; data: any }) => {
       if (!userId) throw new Error('User ID is required');
-      return saveProject(data, userId);
+      return saveRelatedData(table, data, userId);
     },
-    onSuccess: () => {
+    onSuccess: (_, { table }) => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project updated successfully');
+      toast.success(`${table.replace('_', ' ')} updated successfully`);
     },
     onError: (error: any) => {
-      console.error('Error saving project:', error);
-      toast.error(error.message || 'Failed to save project');
+      console.error('Error saving data:', error);
+      toast.error(error.message || 'Failed to save data');
     },
   });
 
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (id: string) => {
+  // Generic mutation for deleting data
+  const deleteDataMutation = useMutation({
+    mutationFn: async ({ table, id }: { table: string; id: string }) => {
       if (!userId) throw new Error('User ID is required');
-      return deleteProject(id, userId);
+      return deleteRelatedData(table, id, userId);
     },
-    onSuccess: () => {
+    onSuccess: (_, { table }) => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project deleted successfully');
+      toast.success(`${table.replace('_', ' ')} deleted successfully`);
     },
     onError: (error: any) => {
-      console.error('Error deleting project:', error);
-      toast.error(error.message || 'Failed to delete project');
+      console.error('Error deleting data:', error);
+      toast.error(error.message || 'Failed to delete data');
     },
   });
 
-  // Skill mutations
-  const saveSkillMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (!userId) throw new Error('User ID is required');
-      return saveSkill(data, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error saving skill:', error);
-      toast.error(error.message || 'Failed to save skill');
-    },
-  });
+  // Specific functions for each section
+  const saveProject = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'projects', data });
 
-  const deleteSkillMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!userId) throw new Error('User ID is required');
-      return deleteSkill(id, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill deleted successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error deleting skill:', error);
-      toast.error(error.message || 'Failed to delete skill');
-    },
-  });
+  const deleteProject = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'projects', id });
 
-  // Education mutations
-  const saveEducationMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (!userId) throw new Error('User ID is required');
-      return saveEducation(data, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error saving education:', error);
-      toast.error(error.message || 'Failed to save education');
-    },
-  });
+  const saveSkill = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'special_skills', data });
 
-  const deleteEducationMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!userId) throw new Error('User ID is required');
-      return deleteEducation(id, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education deleted successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error deleting education:', error);
-      toast.error(error.message || 'Failed to delete education');
-    },
-  });
+  const deleteSkill = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'special_skills', id });
 
-  // Language mutations
-  const saveLanguageMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (!userId) throw new Error('User ID is required');
-      return saveLanguage(data, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error saving language:', error);
-      toast.error(error.message || 'Failed to save language');
-    },
-  });
+  const saveEducation = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'education_training', data });
 
-  const deleteLanguageMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!userId) throw new Error('User ID is required');
-      return deleteLanguage(id, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language deleted successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error deleting language:', error);
-      toast.error(error.message || 'Failed to delete language');
-    },
-  });
+  const deleteEducation = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'education_training', id });
 
-  // Tool mutations
-  const saveToolMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (!userId) throw new Error('User ID is required');
-      return saveTool(data, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error saving tool:', error);
-      toast.error(error.message || 'Failed to save tool');
-    },
-  });
+  const saveLanguage = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'language_skills', data });
 
-  const deleteToolMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!userId) throw new Error('User ID is required');
-      return deleteTool(id, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool deleted successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error deleting tool:', error);
-      toast.error(error.message || 'Failed to delete tool');
-    },
-  });
+  const deleteLanguage = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'language_skills', id });
 
-  // Media mutations
-  const saveMediaAssetMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (!userId) throw new Error('User ID is required');
-      return saveMediaAsset(data, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media asset updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error saving media asset:', error);
-      toast.error(error.message || 'Failed to save media asset');
-    },
-  });
+  const saveTool = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'tools_software', data });
 
-  const deleteMediaAssetMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!userId) throw new Error('User ID is required');
-      return deleteMediaAsset(id, userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media asset deleted successfully');
-    },
-    onError: (error: any) => {
-      console.error('Error deleting media asset:', error);
-      toast.error(error.message || 'Failed to delete media asset');
-    },
-  });
+  const deleteTool = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'tools_software', id });
+
+  const saveMediaAsset = (data: any) => 
+    saveDataMutation.mutateAsync({ table: 'media_assets', data });
+
+  const deleteMediaAsset = (id: string) => 
+    deleteDataMutation.mutateAsync({ table: 'media_assets', id });
 
   return {
     // State
-    isSaving: saveProjectMutation.isPending || saveSkillMutation.isPending || 
-              saveEducationMutation.isPending || saveLanguageMutation.isPending || 
-              saveToolMutation.isPending || saveMediaAssetMutation.isPending,
-    isDeleting: deleteProjectMutation.isPending || deleteSkillMutation.isPending || 
-                deleteEducationMutation.isPending || deleteLanguageMutation.isPending || 
-                deleteToolMutation.isPending || deleteMediaAssetMutation.isPending,
+    isSaving: saveDataMutation.isPending,
+    isDeleting: deleteDataMutation.isPending,
     
     // Project functions
-    saveProject: saveProjectMutation.mutate,
-    deleteProject: deleteProjectMutation.mutate,
+    saveProject,
+    deleteProject,
     
     // Skills functions
-    saveSkill: saveSkillMutation.mutate,
-    deleteSkill: deleteSkillMutation.mutate,
+    saveSkill,
+    deleteSkill,
     
     // Education functions
-    saveEducation: saveEducationMutation.mutate,
-    deleteEducation: deleteEducationMutation.mutate,
+    saveEducation,
+    deleteEducation,
     
     // Language functions
-    saveLanguage: saveLanguageMutation.mutate,
-    deleteLanguage: deleteLanguageMutation.mutate,
+    saveLanguage,
+    deleteLanguage,
     
     // Tools functions
-    saveTool: saveToolMutation.mutate,
-    deleteTool: deleteToolMutation.mutate,
+    saveTool,
+    deleteTool,
     
     // Media functions
-    saveMediaAsset: saveMediaAssetMutation.mutate,
-    deleteMediaAsset: deleteMediaAssetMutation.mutate,
+    saveMediaAsset,
+    deleteMediaAsset,
   };
 };

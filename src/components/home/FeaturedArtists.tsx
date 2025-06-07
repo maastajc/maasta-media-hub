@@ -19,8 +19,6 @@ const FeaturedArtists = () => {
         setArtists(featuredArtists);
       } catch (error) {
         console.error('Failed to load featured artists:', error);
-        // fetchFeaturedArtists already handles fallbacks
-        setArtists([]);
       } finally {
         setLoading(false);
       }

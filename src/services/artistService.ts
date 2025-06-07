@@ -6,7 +6,7 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
     console.log('Fetching all artists...');
     
     const { data: artists, error } = await supabase
-      .from('unified_profiles')
+      .from('artist_details')
       .select(`
         *,
         special_skills!fk_special_skills_artist_details (
@@ -88,55 +88,45 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
         rate_card: artist.rate_card,
         created_at: artist.created_at,
         updated_at: artist.updated_at,
-        // Map related data with proper fallbacks and type checking
-        special_skills: Array.isArray(artist.special_skills) 
-          ? artist.special_skills.map(skill => ({
-              id: skill.id,
-              skill: skill.skill,
-              artist_id: artist.id
-            }))
-          : [],
-        projects: Array.isArray(artist.projects) 
-          ? artist.projects.map(project => ({
-              id: project.id,
-              project_name: project.project_name,
-              role_in_project: project.role_in_project,
-              project_type: project.project_type,
-              year_of_release: project.year_of_release,
-              artist_id: artist.id
-            }))
-          : [],
-        education_training: Array.isArray(artist.education_training) 
-          ? artist.education_training.map(edu => ({
-              id: edu.id,
-              qualification_name: edu.qualification_name,
-              institution: edu.institution,
-              year_completed: edu.year_completed,
-              is_academic: edu.is_academic,
-              artist_id: artist.id
-            }))
-          : [],
-        language_skills: Array.isArray(artist.language_skills) 
-          ? artist.language_skills.map(lang => ({
-              id: lang.id,
-              language: lang.language,
-              proficiency: lang.proficiency,
-              artist_id: artist.id
-            }))
-          : [],
-        media_assets: Array.isArray(artist.media_assets) 
-          ? artist.media_assets.map(media => ({
-              id: media.id,
-              url: media.url,
-              file_name: media.file_name,
-              file_type: media.file_type,
-              file_size: media.file_size || 0,
-              is_video: media.is_video,
-              description: media.description,
-              user_id: media.user_id || artist.id,
-              artist_id: artist.id
-            }))
-          : []
+        // Map related data and add missing artist_id fields
+        special_skills: (artist.special_skills || []).map(skill => ({
+          id: skill.id,
+          skill: skill.skill,
+          artist_id: artist.id
+        })),
+        projects: (artist.projects || []).map(project => ({
+          id: project.id,
+          project_name: project.project_name,
+          role_in_project: project.role_in_project,
+          project_type: project.project_type,
+          year_of_release: project.year_of_release,
+          artist_id: artist.id
+        })),
+        education_training: (artist.education_training || []).map(edu => ({
+          id: edu.id,
+          qualification_name: edu.qualification_name,
+          institution: edu.institution,
+          year_completed: edu.year_completed,
+          is_academic: edu.is_academic,
+          artist_id: artist.id
+        })),
+        language_skills: (artist.language_skills || []).map(lang => ({
+          id: lang.id,
+          language: lang.language,
+          proficiency: lang.proficiency,
+          artist_id: artist.id
+        })),
+        media_assets: (artist.media_assets || []).map(media => ({
+          id: media.id,
+          url: media.url,
+          file_name: media.file_name,
+          file_type: media.file_type,
+          file_size: media.file_size || 0,
+          is_video: media.is_video,
+          description: media.description,
+          user_id: media.user_id || artist.id,
+          artist_id: artist.id
+        }))
       } as Artist;
     }).filter(Boolean) as Artist[];
   } catch (error: any) {
@@ -148,6 +138,8 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
 export const fetchArtistById = async (artistId: string): Promise<Artist | null> => {
   try {
     console.log('fetchArtistById called with ID:', artistId);
+    console.log('Current URL:', window.location.href);
+    console.log('Supabase client initialized:', !!supabase);
     
     if (!artistId) {
       throw new Error('Artist ID is required');
@@ -163,7 +155,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
     console.log('Making Supabase query for artist:', artistId);
 
     const { data: artist, error } = await supabase
-      .from('unified_profiles')
+      .from('artist_details')
       .select(`
         *,
         special_skills!fk_special_skills_artist_details (
@@ -215,12 +207,29 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
     console.log('Supabase query completed:', { data: !!artist, error });
 
     if (error) {
-      console.error('Supabase error details:', error);
+      console.error('Supabase error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       throw new Error(`Database error: ${error.message}`);
     }
 
     if (!artist) {
       console.log('No artist found for ID:', artistId);
+      // Try to check if the artist exists but is inactive
+      const { data: inactiveArtist, error: inactiveError } = await supabase
+        .from('artist_details')
+        .select('id, status, full_name')
+        .eq('id', artistId)
+        .maybeSingle();
+      
+      if (inactiveArtist) {
+        console.log('Found inactive artist:', inactiveArtist);
+        throw new Error(`Artist profile is ${inactiveArtist.status || 'inactive'}`);
+      }
+      
       throw new Error('Artist not found');
     }
 
@@ -230,7 +239,7 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       status: artist.status
     });
     
-    // Return artist with proper fallbacks for all nested data and type checking
+    // Return artist with proper fallbacks for all nested data and add missing artist_id fields
     return {
       id: artist.id,
       full_name: artist.full_name || 'Unknown Artist',
@@ -260,69 +269,62 @@ export const fetchArtistById = async (artistId: string): Promise<Artist | null> 
       rate_card: artist.rate_card,
       created_at: artist.created_at,
       updated_at: artist.updated_at,
-      special_skills: Array.isArray(artist.special_skills) 
-        ? artist.special_skills.map(skill => ({
-            id: skill.id,
-            skill: skill.skill,
-            artist_id: artist.id
-          }))
-        : [],
-      projects: Array.isArray(artist.projects) 
-        ? artist.projects.map(project => ({
-            id: project.id,
-            project_name: project.project_name,
-            role_in_project: project.role_in_project,
-            project_type: project.project_type,
-            year_of_release: project.year_of_release,
-            director_producer: project.director_producer,
-            streaming_platform: project.streaming_platform,
-            link: project.link,
-            artist_id: artist.id
-          }))
-        : [],
-      education_training: Array.isArray(artist.education_training) 
-        ? artist.education_training.map(edu => ({
-            id: edu.id,
-            qualification_name: edu.qualification_name,
-            institution: edu.institution,
-            year_completed: edu.year_completed,
-            is_academic: edu.is_academic,
-            artist_id: artist.id
-          }))
-        : [],
-      language_skills: Array.isArray(artist.language_skills) 
-        ? artist.language_skills.map(lang => ({
-            id: lang.id,
-            language: lang.language,
-            proficiency: lang.proficiency,
-            artist_id: artist.id
-          }))
-        : [],
-      tools_software: Array.isArray(artist.tools_software) 
-        ? artist.tools_software.map(tool => ({
-            id: tool.id,
-            tool_name: tool.tool_name,
-            artist_id: artist.id
-          }))
-        : [],
-      media_assets: Array.isArray(artist.media_assets) 
-        ? artist.media_assets.map(media => ({
-            id: media.id,
-            url: media.url,
-            file_name: media.file_name,
-            file_type: media.file_type,
-            file_size: media.file_size || 0,
-            is_video: media.is_video,
-            is_embed: media.is_embed,
-            embed_source: media.embed_source,
-            description: media.description,
-            user_id: media.user_id || artist.id,
-            artist_id: artist.id
-          }))
-        : []
+      special_skills: (artist.special_skills || []).map(skill => ({
+        id: skill.id,
+        skill: skill.skill,
+        artist_id: artist.id
+      })),
+      projects: (artist.projects || []).map(project => ({
+        id: project.id,
+        project_name: project.project_name,
+        role_in_project: project.role_in_project,
+        project_type: project.project_type,
+        year_of_release: project.year_of_release,
+        director_producer: project.director_producer,
+        streaming_platform: project.streaming_platform,
+        link: project.link,
+        artist_id: artist.id
+      })),
+      education_training: (artist.education_training || []).map(edu => ({
+        id: edu.id,
+        qualification_name: edu.qualification_name,
+        institution: edu.institution,
+        year_completed: edu.year_completed,
+        is_academic: edu.is_academic,
+        artist_id: artist.id
+      })),
+      language_skills: (artist.language_skills || []).map(lang => ({
+        id: lang.id,
+        language: lang.language,
+        proficiency: lang.proficiency,
+        artist_id: artist.id
+      })),
+      tools_software: (artist.tools_software || []).map(tool => ({
+        id: tool.id,
+        tool_name: tool.tool_name,
+        artist_id: artist.id
+      })),
+      media_assets: (artist.media_assets || []).map(media => ({
+        id: media.id,
+        url: media.url,
+        file_name: media.file_name,
+        file_type: media.file_type,
+        file_size: media.file_size || 0,
+        is_video: media.is_video,
+        is_embed: media.is_embed,
+        embed_source: media.embed_source,
+        description: media.description,
+        user_id: media.user_id || artist.id,
+        artist_id: artist.id
+      }))
     } as Artist;
   } catch (error: any) {
-    console.error('Error in fetchArtistById:', error);
+    console.error('Error in fetchArtistById:', {
+      error: error.message,
+      artistId,
+      stack: error.stack,
+      url: window.location.href
+    });
     throw error;
   }
 };
@@ -342,7 +344,7 @@ export const updateArtistProfile = async (
       throw new Error('Profile data is required');
     }
 
-    // Extract only the fields that belong to unified_profiles table
+    // Extract only the fields that belong to artist_details table
     const {
       special_skills,
       projects,
@@ -351,45 +353,21 @@ export const updateArtistProfile = async (
       tools_software,
       media_assets,
       professional_references,
-      ...unifiedProfileData
+      ...artistDetailsData
     } = profileData;
 
-    // Validate the data before updating
-    const validateProfileData = (data: any) => {
-      const errors: string[] = [];
-      
-      if (data.email && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(data.email)) {
-        errors.push('Invalid email format');
-      }
-      
-      if (data.phone_number && !/^\+?[\d\s\-\(\)\.]{10,}$/.test(data.phone_number)) {
-        errors.push('Invalid phone number format');
-      }
-      
-      if (data.date_of_birth && new Date(data.date_of_birth) > new Date()) {
-        errors.push('Date of birth cannot be in the future');
-      }
-      
-      if (data.years_of_experience !== undefined && (data.years_of_experience < 0 || data.years_of_experience > 100)) {
-        errors.push('Years of experience must be between 0 and 100');
-      }
-      
-      if (errors.length > 0) {
-        throw new Error(`Validation errors: ${errors.join(', ')}`);
-      }
-      
-      return data;
-    };
-
-    const validatedData = validateProfileData(unifiedProfileData);
-
+    // Ensure category and experience_level are properly typed and remove any non-database fields
     const updateData = {
-      ...validatedData,
+      ...artistDetailsData,
+      // Ensure category is properly cast to the expected type
+      category: artistDetailsData.category as "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other" | undefined,
+      // Ensure experience_level is properly cast to the expected type
+      experience_level: artistDetailsData.experience_level as "beginner" | "fresher" | "intermediate" | "expert" | "veteran" | undefined,
       updated_at: new Date().toISOString()
     };
 
     const { data: updatedArtist, error } = await supabase
-      .from('unified_profiles')
+      .from('artist_details')
       .update(updateData)
       .eq('id', artistId)
       .select()
@@ -418,7 +396,7 @@ export const updateArtistProfile = async (
 export const checkArtistExists = async (artistId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from('unified_profiles')
+      .from('artist_details')
       .select('id')
       .eq('id', artistId)
       .maybeSingle();

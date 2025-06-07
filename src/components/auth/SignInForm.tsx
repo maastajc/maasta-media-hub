@@ -104,22 +104,27 @@ export const SignInForm = () => {
     try {
       setIsLoading(true);
       
-      console.log('Starting Google sign-in...');
+      // Use the current domain instead of localhost for redirect
+      const currentDomain = window.location.origin;
+      const redirectUrl = currentDomain.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/'
+        : `${currentDomain}/`;
+
+      console.log('Google sign-in redirect URL:', redirectUrl);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: redirectUrl
         }
       });
       
       if (error) {
-        console.error('Google sign-in error:', error);
-        toast.error(`Google sign-in failed: ${error.message}`);
+        toast.error(error.message);
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      toast.error('Failed to sign in with Google. Please try again.');
+      toast.error('Failed to sign in with Google');
     } finally {
       setIsLoading(false);
     }
@@ -134,8 +139,16 @@ export const SignInForm = () => {
 
     setIsResetLoading(true);
     try {
+      // Get the current application URL (not localhost)
+      const currentUrl = window.location.origin;
+      const redirectUrl = currentUrl.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/reset-password'
+        : `${currentUrl}/reset-password`;
+
+      console.log('Sending password reset to:', redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: redirectUrl
       });
 
       if (error) {

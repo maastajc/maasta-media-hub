@@ -16,11 +16,28 @@ const RecentAuditions = () => {
       setLoading(true);
       try {
         const auditionData = await fetchRecentAuditions();
-        setAuditions(auditionData.slice(0, 3));
+        // Map the data to match our Audition interface
+        const mappedAuditions = auditionData.slice(0, 3).map((audition: any) => ({
+          id: audition.id,
+          title: audition.title,
+          description: audition.description || audition.requirements || '',
+          location: audition.location,
+          audition_date: audition.audition_date,
+          deadline: audition.deadline,
+          requirements: audition.requirements,
+          tags: audition.tags,
+          urgent: audition.urgent || false,
+          company: audition.profiles?.full_name || '',
+          category: audition.category,
+          age_range: audition.age_range,
+          gender: audition.gender,
+          experience_level: audition.experience_level,
+          compensation: audition.compensation,
+          status: audition.status || 'open'
+        }));
+        setAuditions(mappedAuditions);
       } catch (error) {
         console.error("Failed to fetch auditions:", error);
-        // fetchRecentAuditions already handles fallbacks, so this shouldn't happen
-        setAuditions([]);
       } finally {
         setLoading(false);
       }
