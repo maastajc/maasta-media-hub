@@ -5,25 +5,16 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   AlertCircle,
-  Award,
-  User,
-  Camera,
-  GraduationCap,
   RefreshCw
 } from "lucide-react";
 import { useArtistProfile } from "@/hooks/useArtistProfile";
 
 // Import our new components
 import ProfileHero from "@/components/profile/ProfileHero";
-import ProfileStats from "@/components/profile/ProfileStats";
-import ProfileAbout from "@/components/profile/ProfileAbout";
-import ProjectsSection from "@/components/profile/ProjectsSection";
-import EducationSection from "@/components/profile/EducationSection";
-import MediaUploadSection from "@/components/profile/MediaUploadSection";
+import UnifiedProfileView from "@/components/profile/UnifiedProfileView";
 
 const ArtistProfile = () => {
   const { artistId } = useParams();
@@ -121,17 +112,6 @@ const ArtistProfile = () => {
               }
             </p>
             
-            {/* Debug information for development */}
-            <details className="mb-6 text-left bg-gray-100 p-3 rounded text-sm">
-              <summary className="cursor-pointer font-medium">Debug Information</summary>
-              <div className="mt-2 space-y-1 text-xs">
-                <p><strong>Artist ID:</strong> {artistId}</p>
-                <p><strong>Current URL:</strong> {window.location.href}</p>
-                <p><strong>Error:</strong> {errorMessage}</p>
-                <p><strong>Is Not Found:</strong> {isNotFound ? 'Yes' : 'No'}</p>
-              </div>
-            </details>
-            
             <div className="flex gap-3 justify-center flex-wrap">
               <Button onClick={() => navigate("/artists")} variant="outline">
                 Browse All Artists
@@ -156,12 +136,6 @@ const ArtistProfile = () => {
   // Success state - render the profile
   console.log('Successfully loaded artist profile:', artistData.full_name);
 
-  const projects = artistData.projects || [];
-  const education = artistData.education_training || [];
-  const hasContent = projects.length > 0 || education.length > 0 || 
-                    (artistData.special_skills?.length || 0) > 0 || 
-                    (artistData.media_assets?.length || 0) > 0;
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -173,78 +147,9 @@ const ArtistProfile = () => {
           onBack={() => navigate(-1)} 
         />
 
-        {/* Stats Section */}
-        <ProfileStats artist={artistData} />
-
-        {/* Content Tabs */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-          <Tabs defaultValue="about" className="space-y-8">
-            <TabsList className="grid grid-cols-4 bg-white rounded-xl shadow-sm border w-full max-w-md mx-auto">
-              <TabsTrigger value="about" className="rounded-lg flex items-center gap-2">
-                <User size={16} />
-                About
-              </TabsTrigger>
-              <TabsTrigger value="projects" className="rounded-lg flex items-center gap-2">
-                <Award size={16} />
-                Projects
-              </TabsTrigger>
-              <TabsTrigger value="media" className="rounded-lg flex items-center gap-2">
-                <Camera size={16} />
-                Portfolio
-              </TabsTrigger>
-              <TabsTrigger value="education" className="rounded-lg flex items-center gap-2">
-                <GraduationCap size={16} />
-                Education
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="about">
-              <ProfileAbout artist={artistData} />
-            </TabsContent>
-
-            <TabsContent value="projects">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <ProjectsSection 
-                  profileData={artistData} 
-                  onUpdate={refetch}
-                  userId={artistData.id}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="media">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <MediaUploadSection 
-                  profileData={artistData} 
-                  onUpdate={refetch}
-                  userId={artistData.id}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="education">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <EducationSection 
-                  profileData={artistData} 
-                  onUpdate={refetch}
-                  userId={artistData.id}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Empty State */}
-          {!hasContent && (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <AlertCircle className="mx-auto mb-4 text-gray-400" size={48} />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Portfolio Coming Soon</h3>
-                <p className="text-gray-600">
-                  This artist is still building their profile. Check back later for updates!
-                </p>
-              </div>
-            </div>
-          )}
+        {/* Unified Profile Content */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <UnifiedProfileView artist={artistData} />
         </div>
       </main>
       <Footer />

@@ -3,13 +3,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Globe, Instagram, Linkedin, Youtube, Film } from "lucide-react";
+import { updateArtistProfile } from "@/services/artistService";
 
 const socialLinksSchema = z.object({
   imdb_profile: z.string().optional(),
@@ -48,18 +48,7 @@ const SocialLinksForm = ({ profileData, onUpdate, userId }: SocialLinksFormProps
     try {
       setIsSaving(true);
       
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          imdb_profile: values.imdb_profile,
-          youtube_vimeo: values.youtube_vimeo,
-          instagram: values.instagram,
-          linkedin: values.linkedin,
-          personal_website: values.personal_website,
-        })
-        .eq("id", userId);
-      
-      if (error) throw error;
+      await updateArtistProfile(userId, values);
       
       toast({
         title: "Social links updated",
