@@ -27,7 +27,7 @@ const RecentAuditions = () => {
           requirements: audition.requirements,
           tags: audition.tags,
           urgent: audition.urgent || false,
-          company: audition.profiles?.full_name || '',
+          company: audition.company || 'Company Name',
           category: audition.category,
           age_range: audition.age_range,
           gender: audition.gender,

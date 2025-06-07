@@ -8,9 +8,9 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
     console.log("Fetching recent auditions...");
     
-    // Add timeout to prevent hanging requests
+    // Shorter timeout and simplified query
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 8000)
+      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 5000)
     );
 
     const fetchPromise = supabase
@@ -27,8 +27,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         category,
         age_range,
         gender,
-        experience_level,
-        profiles!auditions_creator_id_fkey(full_name)
+        experience_level
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -60,7 +59,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       tags: item.tags || [],
       urgent: item.deadline ? isUrgent(item.deadline) : false,
       cover_image_url: item.cover_image_url,
-      company: item.profiles?.full_name || 'Unknown Company',
+      company: 'Company Name', // Simplified for now
       category: item.category,
       age_range: item.age_range,
       gender: item.gender,

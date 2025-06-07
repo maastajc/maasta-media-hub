@@ -6,9 +6,9 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
   try {
     console.log('Fetching featured artists...');
     
-    // Add timeout to prevent hanging requests
+    // Simplified query with shorter timeout
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Featured artists fetch timeout')), 8000)
+      setTimeout(() => reject(new Error('Featured artists fetch timeout')), 5000)
     );
 
     const fetchPromise = supabase
@@ -24,8 +24,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
         country,
         category,
         experience_level,
-        verified,
-        special_skills!fk_special_skills_artist_details (skill)
+        verified
       `)
       .eq('status', 'active')
       .not('profile_picture_url', 'is', null)
@@ -48,13 +47,11 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
 
     console.log(`Successfully fetched ${artists.length} featured artists`);
     
-    return artists.map((artist: any) => {
-      const { special_skills, ...artistData } = artist;
-      return {
-        ...artistData,
-        skills: special_skills?.map((s: any) => s.skill) || []
-      };
-    });
+    // Return simplified artist data without complex joins
+    return artists.map((artist: any) => ({
+      ...artist,
+      skills: [] // We'll load skills separately if needed
+    }));
   } catch (error) {
     console.error('Error in fetchFeaturedArtists:', error);
     return [];
@@ -65,20 +62,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
   try {
     console.log('Fetching artist by ID:', id);
     
-    // Add timeout to prevent hanging requests
+    // Shorter timeout for single artist fetch
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Artist fetch timeout')), 10000)
+      setTimeout(() => reject(new Error('Artist fetch timeout')), 8000)
     );
 
     const fetchPromise = supabase
       .from('unified_profiles')
-      .select(`
-        *,
-        special_skills!fk_special_skills_artist_details (skill),
-        projects!fk_projects_artist_details (*),
-        education_training!fk_education_training_artist_details (*),
-        media_assets!fk_media_assets_artist_details (*)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -103,10 +94,9 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
 
     console.log(`Successfully fetched artist: ${artist.full_name}`);
 
-    const { special_skills, ...artistData } = artist;
     return {
-      ...artistData,
-      skills: special_skills?.map((s: any) => s.skill) || []
+      ...artist,
+      skills: [] // Simplified for now
     };
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
