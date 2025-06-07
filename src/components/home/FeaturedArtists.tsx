@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ const FeaturedArtists = () => {
         setArtists(featuredArtists);
       } catch (error) {
         console.error('Failed to load featured artists:', error);
+        // fetchFeaturedArtists already handles fallbacks
+        setArtists([]);
       } finally {
         setLoading(false);
       }

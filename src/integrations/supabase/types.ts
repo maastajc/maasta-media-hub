@@ -135,13 +135,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "audition_applications_artist_id_fkey"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "audition_applications_audition_id_fkey"
             columns: ["audition_id"]
             isOneToOne: false
@@ -217,15 +210,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "auditions_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       education_training: {
         Row: {
@@ -302,13 +287,6 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "event_attendees_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       events: {
@@ -357,15 +335,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "events_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       language_skills: {
         Row: {
@@ -461,13 +431,6 @@ export type Database = {
             referencedRelation: "unified_profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "media_assets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       professional_references: {
@@ -511,85 +474,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      profiles: {
-        Row: {
-          bio: string | null
-          city: string | null
-          country: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          email: string
-          full_name: string
-          gender: string | null
-          id: string
-          imdb_profile: string | null
-          instagram: string | null
-          linkedin: string | null
-          personal_website: string | null
-          phone_number: string | null
-          profile_picture_url: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          state: string | null
-          status: Database["public"]["Enums"]["profile_status"] | null
-          updated_at: string | null
-          willing_to_relocate: boolean | null
-          work_preference: Database["public"]["Enums"]["work_preference"] | null
-          youtube_vimeo: string | null
-        }
-        Insert: {
-          bio?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email: string
-          full_name: string
-          gender?: string | null
-          id: string
-          imdb_profile?: string | null
-          instagram?: string | null
-          linkedin?: string | null
-          personal_website?: string | null
-          phone_number?: string | null
-          profile_picture_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          state?: string | null
-          status?: Database["public"]["Enums"]["profile_status"] | null
-          updated_at?: string | null
-          willing_to_relocate?: boolean | null
-          work_preference?:
-            | Database["public"]["Enums"]["work_preference"]
-            | null
-          youtube_vimeo?: string | null
-        }
-        Update: {
-          bio?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email?: string
-          full_name?: string
-          gender?: string | null
-          id?: string
-          imdb_profile?: string | null
-          instagram?: string | null
-          linkedin?: string | null
-          personal_website?: string | null
-          phone_number?: string | null
-          profile_picture_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          state?: string | null
-          status?: Database["public"]["Enums"]["profile_status"] | null
-          updated_at?: string | null
-          willing_to_relocate?: boolean | null
-          work_preference?:
-            | Database["public"]["Enums"]["work_preference"]
-            | null
-          youtube_vimeo?: string | null
-        }
-        Relationships: []
       }
       projects: {
         Row: {

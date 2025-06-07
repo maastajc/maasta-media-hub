@@ -22,7 +22,15 @@ import CreateEvent from "./pages/CreateEvent";
 import CreateAudition from "./pages/CreateAudition";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1, // Reduce retries to prevent long loading times
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    },
+  },
+});
 
 function App() {
   return (
