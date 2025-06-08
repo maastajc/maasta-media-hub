@@ -2,6 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
+// Define the valid table names as a union type
+type ValidTableName = 
+  | "projects" 
+  | "special_skills" 
+  | "education_training" 
+  | "language_skills" 
+  | "tools_software" 
+  | "media_assets";
+
 // Helper function to ensure artist_details record exists
 export const ensureArtistDetailsExists = async (userId: string): Promise<void> => {
   try {
@@ -51,27 +60,19 @@ export const ensureArtistDetailsExists = async (userId: string): Promise<void> =
   }
 };
 
-// Generic function to save related data (projects, skills, etc.)
-export const saveRelatedData = async (
-  table: string,
-  data: any,
-  userId: string
-): Promise<any> => {
+// Specific functions for each table to avoid TypeScript issues
+export const saveProject = async (data: any, userId: string): Promise<any> => {
   try {
-    // Ensure artist_details record exists first
     await ensureArtistDetailsExists(userId);
 
-    // Add artist_id to the data
     const dataWithArtistId = {
       ...data,
       artist_id: userId
     };
 
-    let result;
     if (data.id) {
-      // Update existing record
       const { data: updatedData, error } = await supabase
-        .from(table)
+        .from('projects')
         .update(dataWithArtistId)
         .eq('id', data.id)
         .eq('artist_id', userId)
@@ -79,42 +80,337 @@ export const saveRelatedData = async (
         .single();
       
       if (error) throw error;
-      result = updatedData;
+      return updatedData;
     } else {
-      // Insert new record
       const { data: newData, error } = await supabase
-        .from(table)
+        .from('projects')
         .insert(dataWithArtistId)
         .select()
         .single();
       
       if (error) throw error;
-      result = newData;
+      return newData;
     }
-
-    return result;
   } catch (error: any) {
-    console.error(`Error saving ${table} data:`, error);
+    console.error('Error saving project:', error);
     throw error;
   }
 };
 
-// Function to delete related data
-export const deleteRelatedData = async (
-  table: string,
-  id: string,
-  userId: string
-): Promise<void> => {
+export const saveSkill = async (data: any, userId: string): Promise<any> => {
+  try {
+    await ensureArtistDetailsExists(userId);
+
+    const dataWithArtistId = {
+      ...data,
+      artist_id: userId
+    };
+
+    if (data.id) {
+      const { data: updatedData, error } = await supabase
+        .from('special_skills')
+        .update(dataWithArtistId)
+        .eq('id', data.id)
+        .eq('artist_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updatedData;
+    } else {
+      const { data: newData, error } = await supabase
+        .from('special_skills')
+        .insert(dataWithArtistId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newData;
+    }
+  } catch (error: any) {
+    console.error('Error saving skill:', error);
+    throw error;
+  }
+};
+
+export const saveEducation = async (data: any, userId: string): Promise<any> => {
+  try {
+    await ensureArtistDetailsExists(userId);
+
+    const dataWithArtistId = {
+      ...data,
+      artist_id: userId
+    };
+
+    if (data.id) {
+      const { data: updatedData, error } = await supabase
+        .from('education_training')
+        .update(dataWithArtistId)
+        .eq('id', data.id)
+        .eq('artist_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updatedData;
+    } else {
+      const { data: newData, error } = await supabase
+        .from('education_training')
+        .insert(dataWithArtistId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newData;
+    }
+  } catch (error: any) {
+    console.error('Error saving education:', error);
+    throw error;
+  }
+};
+
+export const saveLanguage = async (data: any, userId: string): Promise<any> => {
+  try {
+    await ensureArtistDetailsExists(userId);
+
+    const dataWithArtistId = {
+      ...data,
+      artist_id: userId
+    };
+
+    if (data.id) {
+      const { data: updatedData, error } = await supabase
+        .from('language_skills')
+        .update(dataWithArtistId)
+        .eq('id', data.id)
+        .eq('artist_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updatedData;
+    } else {
+      const { data: newData, error } = await supabase
+        .from('language_skills')
+        .insert(dataWithArtistId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newData;
+    }
+  } catch (error: any) {
+    console.error('Error saving language:', error);
+    throw error;
+  }
+};
+
+export const saveTool = async (data: any, userId: string): Promise<any> => {
+  try {
+    await ensureArtistDetailsExists(userId);
+
+    const dataWithArtistId = {
+      ...data,
+      artist_id: userId
+    };
+
+    if (data.id) {
+      const { data: updatedData, error } = await supabase
+        .from('tools_software')
+        .update(dataWithArtistId)
+        .eq('id', data.id)
+        .eq('artist_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updatedData;
+    } else {
+      const { data: newData, error } = await supabase
+        .from('tools_software')
+        .insert(dataWithArtistId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newData;
+    }
+  } catch (error: any) {
+    console.error('Error saving tool:', error);
+    throw error;
+  }
+};
+
+export const saveMediaAsset = async (data: any, userId: string): Promise<any> => {
+  try {
+    await ensureArtistDetailsExists(userId);
+
+    const dataWithArtistId = {
+      ...data,
+      artist_id: userId
+    };
+
+    if (data.id) {
+      const { data: updatedData, error } = await supabase
+        .from('media_assets')
+        .update(dataWithArtistId)
+        .eq('id', data.id)
+        .eq('artist_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updatedData;
+    } else {
+      const { data: newData, error } = await supabase
+        .from('media_assets')
+        .insert(dataWithArtistId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newData;
+    }
+  } catch (error: any) {
+    console.error('Error saving media asset:', error);
+    throw error;
+  }
+};
+
+// Delete functions for each table
+export const deleteProject = async (id: string, userId: string): Promise<void> => {
   try {
     const { error } = await supabase
-      .from(table)
+      .from('projects')
       .delete()
       .eq('id', id)
       .eq('artist_id', userId);
 
     if (error) throw error;
   } catch (error: any) {
-    console.error(`Error deleting ${table} data:`, error);
+    console.error('Error deleting project:', error);
     throw error;
+  }
+};
+
+export const deleteSkill = async (id: string, userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('special_skills')
+      .delete()
+      .eq('id', id)
+      .eq('artist_id', userId);
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error deleting skill:', error);
+    throw error;
+  }
+};
+
+export const deleteEducation = async (id: string, userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('education_training')
+      .delete()
+      .eq('id', id)
+      .eq('artist_id', userId);
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error deleting education:', error);
+    throw error;
+  }
+};
+
+export const deleteLanguage = async (id: string, userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('language_skills')
+      .delete()
+      .eq('id', id)
+      .eq('artist_id', userId);
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error deleting language:', error);
+    throw error;
+  }
+};
+
+export const deleteTool = async (id: string, userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('tools_software')
+      .delete()
+      .eq('id', id)
+      .eq('artist_id', userId);
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error deleting tool:', error);
+    throw error;
+  }
+};
+
+export const deleteMediaAsset = async (id: string, userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('media_assets')
+      .delete()
+      .eq('id', id)
+      .eq('artist_id', userId);
+
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Error deleting media asset:', error);
+    throw error;
+  }
+};
+
+// Generic function kept for backward compatibility but now uses specific functions
+export const saveRelatedData = async (
+  table: ValidTableName,
+  data: any,
+  userId: string
+): Promise<any> => {
+  switch (table) {
+    case 'projects':
+      return saveProject(data, userId);
+    case 'special_skills':
+      return saveSkill(data, userId);
+    case 'education_training':
+      return saveEducation(data, userId);
+    case 'language_skills':
+      return saveLanguage(data, userId);
+    case 'tools_software':
+      return saveTool(data, userId);
+    case 'media_assets':
+      return saveMediaAsset(data, userId);
+    default:
+      throw new Error(`Unsupported table: ${table}`);
+  }
+};
+
+export const deleteRelatedData = async (
+  table: ValidTableName,
+  id: string,
+  userId: string
+): Promise<void> => {
+  switch (table) {
+    case 'projects':
+      return deleteProject(id, userId);
+    case 'special_skills':
+      return deleteSkill(id, userId);
+    case 'education_training':
+      return deleteEducation(id, userId);
+    case 'language_skills':
+      return deleteLanguage(id, userId);
+    case 'tools_software':
+      return deleteTool(id, userId);
+    case 'media_assets':
+      return deleteMediaAsset(id, userId);
+    default:
+      throw new Error(`Unsupported table: ${table}`);
   }
 };
