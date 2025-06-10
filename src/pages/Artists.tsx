@@ -42,9 +42,9 @@ const Artists = () => {
     try {
       console.log("Fetching artists with optimized query...");
       
-      // Reduced timeout and better error handling
+      // Reduced timeout for faster feedback
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Artists loading timeout - please check your connection')), 8000)
+        setTimeout(() => reject(new Error('Artists loading timeout - please check your connection')), 5000)
       );
 
       const fetchPromise = supabase
@@ -80,17 +80,20 @@ const Artists = () => {
         return;
       }
 
-      // Format the artists data efficiently
-      const formattedArtistsData = artistsData ? artistsData.map(artist => ({
+      // Format the artists data efficiently with proper typing
+      const formattedArtistsData = artistsData ? artistsData.map((artist: any) => ({
         ...artist,
-        skills: artist.special_skills ? artist.special_skills.map((s: any) => s.skill) : [],
+        skills: artist.special_skills ? artist.special_skills.map((s: any) => String(s.skill || '')) : [],
       })) : [];
 
       console.log(`Successfully fetched ${formattedArtistsData.length} artists`);
       setArtists(formattedArtistsData || []);
 
-      // Extract unique skills for filtering
-      const allSkills = formattedArtistsData.flatMap(artist => artist.skills || []);
+      // Extract unique skills for filtering with proper typing
+      const allSkills = formattedArtistsData
+        .flatMap((artist: Artist) => artist.skills || [])
+        .filter((skill): skill is string => typeof skill === 'string' && skill.length > 0);
+      
       const uniqueSkills = Array.from(new Set(allSkills)).sort();
       setUniqueTags(uniqueSkills);
     } catch (error: any) {
@@ -122,7 +125,6 @@ const Artists = () => {
     return matchesSearch && matchesTags && matchesCategory;
   });
   
-  // Toggle tag selection
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
       setSelectedTags(selectedTags.filter((t) => t !== tag));
