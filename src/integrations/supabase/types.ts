@@ -245,7 +245,7 @@ export type Database = {
             foreignKeyName: "education_training_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "unified_profiles"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -368,7 +368,7 @@ export type Database = {
             foreignKeyName: "language_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "unified_profiles"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -428,7 +428,7 @@ export type Database = {
             foreignKeyName: "media_assets_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "unified_profiles"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -470,135 +470,12 @@ export type Database = {
             foreignKeyName: "professional_references_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
-            referencedRelation: "unified_profiles"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      projects: {
-        Row: {
-          artist_id: string | null
-          created_at: string | null
-          director_producer: string | null
-          id: string
-          link: string | null
-          project_name: string
-          project_type: Database["public"]["Enums"]["project_type"]
-          role_in_project: string
-          streaming_platform: string | null
-          updated_at: string | null
-          year_of_release: number | null
-        }
-        Insert: {
-          artist_id?: string | null
-          created_at?: string | null
-          director_producer?: string | null
-          id?: string
-          link?: string | null
-          project_name: string
-          project_type: Database["public"]["Enums"]["project_type"]
-          role_in_project: string
-          streaming_platform?: string | null
-          updated_at?: string | null
-          year_of_release?: number | null
-        }
-        Update: {
-          artist_id?: string | null
-          created_at?: string | null
-          director_producer?: string | null
-          id?: string
-          link?: string | null
-          project_name?: string
-          project_type?: Database["public"]["Enums"]["project_type"]
-          role_in_project?: string
-          streaming_platform?: string | null
-          updated_at?: string | null
-          year_of_release?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_projects_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_artist_id_fkey"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "unified_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      special_skills: {
-        Row: {
-          artist_id: string | null
-          id: string
-          skill: string
-        }
-        Insert: {
-          artist_id?: string | null
-          id?: string
-          skill: string
-        }
-        Update: {
-          artist_id?: string | null
-          id?: string
-          skill?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_special_skills_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "special_skills_artist_id_fkey"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "unified_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tools_software: {
-        Row: {
-          artist_id: string | null
-          id: string
-          tool_name: string
-        }
-        Insert: {
-          artist_id?: string | null
-          id?: string
-          tool_name: string
-        }
-        Update: {
-          artist_id?: string | null
-          id?: string
-          tool_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_tools_software_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tools_software_artist_id_fkey"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "unified_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      unified_profiles: {
+      profiles: {
         Row: {
           association_membership: string | null
           bio: string | null
@@ -690,6 +567,129 @@ export type Database = {
           youtube_vimeo?: string | null
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          artist_id: string | null
+          created_at: string | null
+          director_producer: string | null
+          id: string
+          link: string | null
+          project_name: string
+          project_type: Database["public"]["Enums"]["project_type"]
+          role_in_project: string
+          streaming_platform: string | null
+          updated_at: string | null
+          year_of_release: number | null
+        }
+        Insert: {
+          artist_id?: string | null
+          created_at?: string | null
+          director_producer?: string | null
+          id?: string
+          link?: string | null
+          project_name: string
+          project_type: Database["public"]["Enums"]["project_type"]
+          role_in_project: string
+          streaming_platform?: string | null
+          updated_at?: string | null
+          year_of_release?: number | null
+        }
+        Update: {
+          artist_id?: string | null
+          created_at?: string | null
+          director_producer?: string | null
+          id?: string
+          link?: string | null
+          project_name?: string
+          project_type?: Database["public"]["Enums"]["project_type"]
+          role_in_project?: string
+          streaming_platform?: string | null
+          updated_at?: string | null
+          year_of_release?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_projects_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      special_skills: {
+        Row: {
+          artist_id: string | null
+          id: string
+          skill: string
+        }
+        Insert: {
+          artist_id?: string | null
+          id?: string
+          skill: string
+        }
+        Update: {
+          artist_id?: string | null
+          id?: string
+          skill?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_special_skills_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_skills_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tools_software: {
+        Row: {
+          artist_id: string | null
+          id: string
+          tool_name: string
+        }
+        Insert: {
+          artist_id?: string | null
+          id?: string
+          tool_name: string
+        }
+        Update: {
+          artist_id?: string | null
+          id?: string
+          tool_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tools_software_artist_details"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tools_software_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
