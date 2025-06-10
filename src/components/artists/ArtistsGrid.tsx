@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import ArtistCard from "./ArtistCard";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface Artist {
   id: string;
@@ -49,7 +50,7 @@ const ErrorState = ({ error, onRetry }: { error?: any; onRetry?: () => void }) =
     <AlertDescription>
       <div className="flex flex-col gap-3">
         <p className="text-red-800">
-          {error?.message || "Failed to load artists. This might be due to server issues."}
+          {error?.message || "Failed to load artists. This might be due to server issues or network problems."}
         </p>
         <div className="flex gap-2">
           {onRetry && (
@@ -105,33 +106,43 @@ const ArtistsGrid = ({
     return <EmptyState onClearFilters={onClearFilters} />;
   }
 
-  // Show artists grid
+  // Show artists grid with error boundary
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500">
-          Showing {artists.length} artist{artists.length !== 1 ? 's' : ''}
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {artists.map((artist) => {
-          // Validate artist data before rendering
-          if (!artist?.id || !artist?.full_name) {
-            console.warn("Invalid artist data:", artist);
-            return null;
-          }
+    <ErrorBoundary fallback={<ErrorState error={{ message: "Error displaying artists" }} onRetry={onRetry} />}>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-500">
+            Showing {artists.length} artist{artists.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {artists.map((artist) => {
+            // Validate artist data before rendering
+            if (!artist?.id || !artist?.full_name) {
+              console.warn("Invalid artist data:", artist);
+              return null;
+            }
 
-          return (
-            <ArtistCard
-              key={artist.id}
-              artist={artist}
-              onViewProfile={onViewProfile}
-            />
-          );
-        })}
+            return (
+              <ErrorBoundary 
+                key={artist.id}
+                fallback={
+                  <Card className="p-4 text-center">
+                    <p className="text-gray-500">Error loading artist</p>
+                  </Card>
+                }
+              >
+                <ArtistCard
+                  artist={artist}
+                  onViewProfile={onViewProfile}
+                />
+              </ErrorBoundary>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 

@@ -24,7 +24,7 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 3 * 60 * 1000 // Reduced to 3 minutes
+    staleTime = 5 * 60 * 1000 // 5 minutes
   } = options;
   
   const profileQuery = useQuery({
@@ -63,11 +63,11 @@ export const useArtistProfile = (
         return false;
       }
       
-      // Retry up to 2 times for other errors
-      return failureCount < 2;
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    gcTime: 5 * 60 * 1000, // Reduced garbage collection time
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
   });
   
   const updateProfileMutation = useMutation({
@@ -112,7 +112,7 @@ export const useArtistProfile = (
       const result = await Promise.race([
         profileQuery.refetch(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Refresh timeout')), 8000)
+          setTimeout(() => reject(new Error('Refresh timeout')), 15000)
         )
       ]);
       return result;

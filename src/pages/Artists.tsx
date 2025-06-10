@@ -39,12 +39,13 @@ const Artists = () => {
   const fetchArtists = async () => {
     setLoading(true);
     setError(null);
+    
     try {
-      console.log("Fetching artists with optimized query...");
+      console.log("Starting to fetch artists...");
       
-      // Reduced timeout for faster feedback
+      // Increased timeout to 20 seconds for better reliability
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Artists loading timeout - please check your connection')), 5000)
+        setTimeout(() => reject(new Error('Request timeout - server may be busy, please try again')), 20000)
       );
 
       const fetchPromise = supabase
@@ -76,36 +77,67 @@ const Artists = () => {
 
       if (artistsError) {
         console.error("Database error fetching artists:", artistsError);
-        setError("Failed to load artists from database");
+        throw new Error(`Database error: ${artistsError.message}`);
+      }
+
+      if (!artistsData) {
+        console.log("No artist data returned from database");
+        setArtists([]);
+        setUniqueTags([]);
         return;
       }
 
-      // Format the artists data efficiently with proper typing
-      const formattedArtistsData: Artist[] = artistsData ? artistsData.map((artist: any) => ({
-        ...artist,
-        skills: artist.special_skills ? artist.special_skills.map((s: any) => String(s.skill || '')) : [],
-      })) : [];
+      // Format the artists data with proper error handling
+      const formattedArtistsData: Artist[] = artistsData.map((artist: any) => {
+        try {
+          return {
+            ...artist,
+            skills: artist.special_skills 
+              ? artist.special_skills.map((s: any) => String(s.skill || ''))
+              : [],
+          };
+        } catch (err) {
+          console.warn("Error formatting artist data:", err, artist);
+          return {
+            ...artist,
+            skills: [],
+          };
+        }
+      });
 
-      console.log(`Successfully fetched ${formattedArtistsData.length} artists`);
-      setArtists(formattedArtistsData || []);
+      console.log(`Successfully fetched and formatted ${formattedArtistsData.length} artists`);
+      setArtists(formattedArtistsData);
 
-      // Extract unique skills for filtering with proper typing
-      const allSkills: string[] = formattedArtistsData
-        .flatMap((artist: Artist) => artist.skills || [])
-        .filter((skill): skill is string => typeof skill === 'string' && skill.length > 0);
-      
-      const uniqueSkills: string[] = Array.from(new Set(allSkills)).sort();
-      setUniqueTags(uniqueSkills);
+      // Extract unique skills safely
+      try {
+        const allSkills: string[] = formattedArtistsData
+          .flatMap((artist: Artist) => artist.skills || [])
+          .filter((skill): skill is string => typeof skill === 'string' && skill.trim().length > 0);
+        
+        const uniqueSkills: string[] = Array.from(new Set(allSkills)).sort();
+        setUniqueTags(uniqueSkills);
+        console.log(`Extracted ${uniqueSkills.length} unique skills`);
+      } catch (skillsError) {
+        console.error("Error extracting skills:", skillsError);
+        setUniqueTags([]);
+      }
+
     } catch (error: any) {
       console.error("Critical error fetching artists:", error);
-      setError(error.message || "Failed to load artists");
+      const errorMessage = error.message || "Failed to load artists";
+      setError(errorMessage);
       setArtists([]);
+      setUniqueTags([]);
+      
+      // Show user-friendly toast
+      toast.error("Unable to load artists. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("Artists component mounted, starting fetch...");
     fetchArtists();
   }, []);
   
