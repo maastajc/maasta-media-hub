@@ -81,7 +81,7 @@ const Artists = () => {
       }
 
       // Format the artists data efficiently with proper typing
-      const formattedArtistsData = artistsData ? artistsData.map((artist: any) => ({
+      const formattedArtistsData: Artist[] = artistsData ? artistsData.map((artist: any) => ({
         ...artist,
         skills: artist.special_skills ? artist.special_skills.map((s: any) => String(s.skill || '')) : [],
       })) : [];
@@ -90,11 +90,11 @@ const Artists = () => {
       setArtists(formattedArtistsData || []);
 
       // Extract unique skills for filtering with proper typing
-      const allSkills = formattedArtistsData
+      const allSkills: string[] = formattedArtistsData
         .flatMap((artist: Artist) => artist.skills || [])
         .filter((skill): skill is string => typeof skill === 'string' && skill.length > 0);
       
-      const uniqueSkills = Array.from(new Set(allSkills)).sort();
+      const uniqueSkills: string[] = Array.from(new Set(allSkills)).sort();
       setUniqueTags(uniqueSkills);
     } catch (error: any) {
       console.error("Critical error fetching artists:", error);
