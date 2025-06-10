@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -32,10 +31,12 @@ interface AuditionData {
 }
 
 const Auditions = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [auditions, setAuditions] = useState<AuditionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTab, setCurrentTab] = useState("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const fetchAuditions = async () => {
     try {
@@ -108,6 +109,19 @@ const Auditions = () => {
     return true;
   });
 
+  // Extract unique tags from auditions
+  const uniqueTags = Array.from(
+    new Set(auditions.flatMap(audition => audition.tags || []))
+  ).filter(Boolean);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -132,7 +146,14 @@ const Auditions = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-64 flex-shrink-0">
-              <ArtistFilters />
+              <ArtistFilters 
+                currentTab={currentTab}
+                setCurrentTab={setCurrentTab}
+                uniqueTags={uniqueTags}
+                selectedTags={selectedTags}
+                toggleTag={toggleTag}
+                isLoading={loading}
+              />
             </aside>
             
             <div className="flex-1">
