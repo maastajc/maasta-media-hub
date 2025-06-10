@@ -44,25 +44,29 @@ const LoadingSkeleton = () => (
 );
 
 const ErrorState = ({ error, onRetry }: { error?: any; onRetry?: () => void }) => (
-  <div className="text-center py-12">
-    <Alert className="max-w-md mx-auto mb-6">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription>
-        {error?.message || "Failed to load artists. Please try again."}
-      </AlertDescription>
-    </Alert>
-    
-    {onRetry && (
-      <Button 
-        variant="outline" 
-        onClick={onRetry}
-        className="flex items-center gap-2"
-      >
-        <RefreshCw className="h-4 w-4" />
-        Try Again
-      </Button>
-    )}
-  </div>
+  <Alert className="border-red-200 bg-red-50">
+    <AlertCircle className="h-4 w-4 text-red-600" />
+    <AlertDescription>
+      <div className="flex flex-col gap-3">
+        <p className="text-red-800">
+          {error?.message || "Failed to load artists. This might be due to server issues."}
+        </p>
+        <div className="flex gap-2">
+          {onRetry && (
+            <Button 
+              variant="outline" 
+              onClick={onRetry}
+              size="sm"
+              className="border-red-300 text-red-700 hover:bg-red-100"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          )}
+        </div>
+      </div>
+    </AlertDescription>
+  </Alert>
 );
 
 const EmptyState = ({ onClearFilters }: { onClearFilters: () => void }) => (
@@ -104,9 +108,11 @@ const ArtistsGrid = ({
   // Show artists grid
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Showing {artists.length} artist{artists.length !== 1 ? 's' : ''}
-      </p>
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-gray-500">
+          Showing {artists.length} artist{artists.length !== 1 ? 's' : ''}
+        </p>
+      </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {artists.map((artist) => {

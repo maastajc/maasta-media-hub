@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
@@ -24,49 +23,56 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 5 * 60 * 1000 // Reduced to 5 minutes for better UX
+    staleTime = 5 * 60 * 1000
   } = options;
   
   const profileQuery = useQuery({
     queryKey: ['artistProfile', targetId],
     queryFn: async () => {
       if (!targetId) {
-        throw new Error('No artist ID provided');
+        throw new Error('No artist ID provided - user may not be logged in');
       }
       
-      console.log('Fetching artist profile for ID:', targetId);
+      console.log('useArtistProfile: Fetching profile for ID:', targetId);
       
-      // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
-      );
-
-      const fetchPromise = fetchArtistById(targetId);
-      
-      const profile = await Promise.race([fetchPromise, timeoutPromise]) as Artist | null;
-      
-      if (!profile) {
-        throw new Error(`Artist profile not found for ID: ${targetId}`);
+      try {
+        const profile = await fetchArtistById(targetId);
+        
+        if (!profile) {
+          throw new Error(`Artist profile not found for ID: ${targetId}`);
+        }
+        
+        console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
+        return profile;
+      } catch (error: any) {
+        console.error('useArtistProfile: Fetch failed:', error);
+        
+        // Re-throw with more context
+        if (error.message?.includes('timeout')) {
+          throw new Error('Profile loading timed out. Please check your internet connection and try again.');
+        }
+        
+        throw error;
       }
-      
-      console.log('Successfully loaded artist profile:', profile.full_name);
-      return profile;
     },
     enabled: !!targetId && enabled,
     staleTime,
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
-      console.log(`Artist profile fetch attempt ${failureCount + 1} failed:`, error);
+      console.log(`useArtistProfile: Retry attempt ${failureCount + 1}, error:`, error?.message);
       
-      // Don't retry if it's a "not found" error or timeout
-      if (error?.message?.includes('not found') || error?.message?.includes('timeout')) {
+      // Don't retry on specific errors
+      if (error?.message?.includes('not found') || 
+          error?.message?.includes('Invalid artist ID') ||
+          error?.message?.includes('user may not be logged in')) {
         return false;
       }
-      // Retry up to 2 times for other errors
-      return failureCount < 2;
+      
+      // Retry up to 3 times for other errors with exponential backoff
+      return failureCount < 3;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Reduced max delay
-    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    gcTime: 10 * 60 * 1000,
   });
   
   const updateProfileMutation = useMutation({
@@ -90,10 +96,7 @@ export const useArtistProfile = (
       return result;
     },
     onSuccess: (updatedProfile) => {
-      // Update the cache with the new profile data
       queryClient.setQueryData(['artistProfile', targetId], updatedProfile);
-      
-      // Invalidate related queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
       
@@ -103,20 +106,18 @@ export const useArtistProfile = (
     onError: (error: any) => {
       console.error('Profile update error:', error);
       
-      // Show user-friendly error message
       const errorMessage = error?.message || 'Failed to update profile';
       toast.error(errorMessage);
     },
   });
   
-  // Helper function to refresh profile data with timeout
   const refreshProfile = async () => {
     try {
       console.log('Refreshing profile data...');
       const result = await Promise.race([
         profileQuery.refetch(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Refresh timeout')), 10000)
+          setTimeout(() => reject(new Error('Refresh timeout')), 15000)
         )
       ]);
       return result;
@@ -127,7 +128,6 @@ export const useArtistProfile = (
     }
   };
   
-  // Helper function to check if profile is complete
   const isProfileComplete = (profile?: Artist) => {
     if (!profile) return false;
     
@@ -141,34 +141,21 @@ export const useArtistProfile = (
   };
   
   return {
-    // Data
     profile: profileQuery.data,
-    
-    // Loading states
     isLoading: profileQuery.isLoading,
     isFetching: profileQuery.isFetching,
     isUpdating: updateProfileMutation.isPending,
-    
-    // Error states
     isError: profileQuery.isError,
     error: profileQuery.error,
     updateError: updateProfileMutation.error,
-    
-    // Actions
     updateProfile: updateProfileMutation.mutate,
     refreshProfile,
     refetch: profileQuery.refetch,
-    
-    // Status checks
     canEdit: user?.id === targetId,
     isOwnProfile: user?.id === targetId,
     isProfileComplete: isProfileComplete(profileQuery.data),
-    
-    // Query status
     isStale: profileQuery.isStale,
     dataUpdatedAt: profileQuery.dataUpdatedAt,
-    
-    // Helper for resetting errors
     clearErrors: () => {
       updateProfileMutation.reset();
     }

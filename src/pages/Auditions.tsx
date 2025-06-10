@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -7,6 +8,9 @@ import ArtistFilters from "@/components/artists/ArtistFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface AuditionData {
   id: string;
@@ -40,12 +44,13 @@ const Auditions = () => {
 
   const fetchAuditions = async () => {
     try {
+      console.log('Fetching auditions...');
       setLoading(true);
       setError(null);
 
-      // Add timeout to prevent hanging requests
+      // Increase timeout for auditions
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions fetch timeout')), 10000)
+        setTimeout(() => reject(new Error('Auditions loading timeout - server may be busy')), 15000)
       );
 
       const fetchPromise = supabase
@@ -57,31 +62,36 @@ const Auditions = () => {
         .eq('status', 'open')
         .order('created_at', { ascending: false });
 
-      const { data, error } = await Promise.race([
+      const { data, error: fetchError } = await Promise.race([
         fetchPromise,
         timeoutPromise
       ]) as any;
 
-      if (error) {
-        console.error('Error fetching auditions:', error);
-        // Use fallback data if database query fails
+      if (fetchError) {
+        console.error('Supabase error fetching auditions:', fetchError);
+        throw new Error(`Database error: ${fetchError.message}`);
+      }
+
+      if (!data) {
+        console.log('No auditions data returned');
         setAuditions([]);
         return;
       }
 
-      // Transform data to match expected format
+      // Transform data with safe defaults
       const transformedAuditions = (data || []).map((audition: any) => ({
         ...audition,
+        tags: audition.tags || [],
         creator_profile: {
           full_name: audition.creator_profile?.full_name || 'Unknown Creator'
         }
       }));
 
+      console.log(`Successfully fetched ${transformedAuditions.length} auditions`);
       setAuditions(transformedAuditions);
     } catch (error: any) {
-      console.error('Error in fetchAuditions:', error);
-      setError(error.message);
-      // Set empty array as fallback
+      console.error('Critical error fetching auditions:', error);
+      setError(error.message || 'Failed to load auditions');
       setAuditions([]);
     } finally {
       setLoading(false);
@@ -106,6 +116,15 @@ const Auditions = () => {
     if (filters.experience && audition.experience_level !== filters.experience) return false;
     if (filters.gender && audition.gender !== filters.gender) return false;
     if (filters.ageRange && audition.age_range !== filters.ageRange) return false;
+    
+    // Filter by selected tags
+    if (selectedTags.length > 0) {
+      const hasSelectedTag = selectedTags.some(tag => 
+        audition.tags?.includes(tag)
+      );
+      if (!hasSelectedTag) return false;
+    }
+    
     return true;
   });
 
@@ -122,6 +141,15 @@ const Auditions = () => {
     );
   };
 
+  const handleRetry = () => {
+    fetchAuditions();
+  };
+
+  const clearFilters = () => {
+    setSearchParams(new URLSearchParams());
+    setSelectedTags([]);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -130,6 +158,7 @@ const Auditions = () => {
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-gray-600">Loading auditions...</p>
+            <p className="mt-2 text-sm text-gray-500">This may take a moment</p>
           </div>
         </main>
         <Footer />
@@ -144,6 +173,26 @@ const Auditions = () => {
         <AuditionsHeader />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <div className="flex items-center justify-between">
+                  <span>Error loading auditions: {error}</span>
+                  <Button 
+                    onClick={handleRetry}
+                    size="sm"
+                    variant="outline"
+                    className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-64 flex-shrink-0">
               <ArtistFilters 
@@ -157,28 +206,25 @@ const Auditions = () => {
             </aside>
             
             <div className="flex-1">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                  <p className="text-red-800">Error loading auditions: {error}</p>
-                  <button 
-                    onClick={fetchAuditions}
-                    className="mt-2 text-red-600 underline hover:text-red-800"
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-              
               <AuditionsGrid 
                 auditions={filteredAuditions} 
                 loading={loading}
                 error={error}
+                onClearFilters={clearFilters}
+                onRetry={handleRetry}
               />
               
-              {!loading && !error && filteredAuditions.length === 0 && (
+              {!loading && !error && filteredAuditions.length === 0 && auditions.length > 0 && (
                 <div className="text-center py-12">
                   <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
-                  <p className="text-gray-500 mt-2">Try adjusting your filters or check back later</p>
+                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
+                  <Button 
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Clear All Filters
+                  </Button>
                 </div>
               )}
             </div>
