@@ -48,9 +48,9 @@ const Auditions = () => {
       setLoading(true);
       setError(null);
 
-      // Increase timeout for auditions
+      // Reduced timeout for better UX
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - server may be busy')), 15000)
+        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 8000)
       );
 
       const fetchPromise = supabase
@@ -68,7 +68,7 @@ const Auditions = () => {
       ]) as any;
 
       if (fetchError) {
-        console.error('Supabase error fetching auditions:', fetchError);
+        console.error('Database error fetching auditions:', fetchError);
         throw new Error(`Database error: ${fetchError.message}`);
       }
 
@@ -90,7 +90,7 @@ const Auditions = () => {
       console.log(`Successfully fetched ${transformedAuditions.length} auditions`);
       setAuditions(transformedAuditions);
     } catch (error: any) {
-      console.error('Critical error fetching auditions:', error);
+      console.error('Error fetching auditions:', error);
       setError(error.message || 'Failed to load auditions');
       setAuditions([]);
     } finally {

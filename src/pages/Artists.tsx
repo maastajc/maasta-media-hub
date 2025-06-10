@@ -32,16 +32,22 @@ const Artists = () => {
   const [currentTab, setCurrentTab] = useState("all");
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [uniqueTags, setUniqueTags] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const fetchArtists = async () => {
     setLoading(true);
+    setError(null);
     try {
       console.log("Fetching artists with optimized query...");
       
-      // Optimized query with selective columns and proper joins
-      const { data: artistsData, error: artistsError } = await supabase
+      // Reduced timeout and better error handling
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Artists loading timeout - please check your connection')), 8000)
+      );
+
+      const fetchPromise = supabase
         .from('artist_details')
         .select(`
           id,
@@ -61,11 +67,16 @@ const Artists = () => {
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-        .limit(50); // Limit for better performance
+        .limit(50);
+
+      const { data: artistsData, error: artistsError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]) as any;
 
       if (artistsError) {
-        console.error("Error fetching artists:", artistsError);
-        toast.error("Failed to load artists");
+        console.error("Database error fetching artists:", artistsError);
+        setError("Failed to load artists from database");
         return;
       }
 
@@ -83,8 +94,9 @@ const Artists = () => {
       const uniqueSkills = Array.from(new Set(allSkills)).sort();
       setUniqueTags(uniqueSkills);
     } catch (error: any) {
-      console.error("Error fetching artists:", error);
-      toast.error("Failed to load artists");
+      console.error("Critical error fetching artists:", error);
+      setError(error.message || "Failed to load artists");
+      setArtists([]);
     } finally {
       setLoading(false);
     }
@@ -154,6 +166,8 @@ const Artists = () => {
             <ArtistsGrid
               artists={filteredArtists}
               isLoading={loading}
+              isError={!!error}
+              error={error}
               onViewProfile={handleViewProfile}
               onClearFilters={handleClearFilters}
               onRetry={fetchArtists}

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
@@ -23,7 +24,7 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 5 * 60 * 1000
+    staleTime = 3 * 60 * 1000 // Reduced to 3 minutes
   } = options;
   
   const profileQuery = useQuery({
@@ -33,7 +34,7 @@ export const useArtistProfile = (
         throw new Error('No artist ID provided - user may not be logged in');
       }
       
-      console.log('useArtistProfile: Fetching profile for ID:', targetId);
+      console.log('useArtistProfile: Starting fetch for ID:', targetId);
       
       try {
         const profile = await fetchArtistById(targetId);
@@ -45,13 +46,7 @@ export const useArtistProfile = (
         console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
         return profile;
       } catch (error: any) {
-        console.error('useArtistProfile: Fetch failed:', error);
-        
-        // Re-throw with more context
-        if (error.message?.includes('timeout')) {
-          throw new Error('Profile loading timed out. Please check your internet connection and try again.');
-        }
-        
+        console.error('useArtistProfile: Fetch failed with error:', error);
         throw error;
       }
     },
@@ -68,11 +63,11 @@ export const useArtistProfile = (
         return false;
       }
       
-      // Retry up to 3 times for other errors with exponential backoff
-      return failureCount < 3;
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    gcTime: 10 * 60 * 1000,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    gcTime: 5 * 60 * 1000, // Reduced garbage collection time
   });
   
   const updateProfileMutation = useMutation({
@@ -117,7 +112,7 @@ export const useArtistProfile = (
       const result = await Promise.race([
         profileQuery.refetch(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Refresh timeout')), 15000)
+          setTimeout(() => reject(new Error('Refresh timeout')), 8000)
         )
       ]);
       return result;

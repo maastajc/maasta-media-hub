@@ -21,8 +21,8 @@ const ArtistProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Add debug logging
-  console.log('ArtistProfile component loaded');
+  // Add debug logging for profile page loading
+  console.log('ArtistProfile component loaded - starting profile fetch');
   console.log('URL artistId:', artistId);
   console.log('Current location:', window.location.href);
 
@@ -36,7 +36,7 @@ const ArtistProfile = () => {
   } = useArtistProfile(artistId, {
     enabled: !!artistId,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000 // 5 minutes
+    staleTime: 3 * 60 * 1000 // 3 minutes
   });
 
   // Handle missing artist ID
@@ -65,9 +65,9 @@ const ArtistProfile = () => {
     );
   }
 
-  // Loading state
+  // Loading state with detailed logs
   if (isLoading) {
-    console.log('Loading artist profile...');
+    console.log('Loading artist profile for ID:', artistId);
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -75,6 +75,7 @@ const ArtistProfile = () => {
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-gray-600">Loading artist profile...</p>
+            <p className="mt-2 text-sm text-gray-500">Please wait while we fetch the data</p>
           </div>
         </main>
         <Footer />
@@ -89,11 +90,12 @@ const ArtistProfile = () => {
                        errorMessage.includes('NOT_FOUND') || 
                        !artistData;
     
-    console.error('Artist profile error:', {
+    console.error('Artist profile error details:', {
       error: errorMessage,
       artistId,
       isNotFound,
-      currentUrl: window.location.href
+      currentUrl: window.location.href,
+      errorObject: error
     });
     
     return (

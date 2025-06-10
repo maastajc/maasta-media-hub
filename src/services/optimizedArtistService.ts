@@ -6,9 +6,9 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
   try {
     console.log('Fetching featured artists...');
     
-    // Increase timeout and add more specific error handling
+    // Reduced timeout and better error handling
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Featured artists fetch timeout - server may be overloaded')), 15000)
+      setTimeout(() => reject(new Error('Request timeout - please check your connection')), 8000)
     );
 
     const fetchPromise = supabase
@@ -37,13 +37,12 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
     ]) as any;
 
     if (error) {
-      console.error('Supabase error fetching featured artists:', error);
-      // Return empty array instead of crashing
+      console.error('Database error fetching featured artists:', error);
       return [];
     }
 
     if (!artists || artists.length === 0) {
-      console.log('No featured artists found in database');
+      console.log('No featured artists found');
       return [];
     }
 
@@ -58,8 +57,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       };
     });
   } catch (error: any) {
-    console.error('Critical error in fetchFeaturedArtists:', error);
-    // Always return empty array to prevent crashes
+    console.error('Error in fetchFeaturedArtists:', error);
     return [];
   }
 };
@@ -72,9 +70,9 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       throw new Error('Invalid artist ID provided');
     }
     
-    // Increase timeout for detailed profile queries
+    // Reduced timeout for profile queries
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Artist profile fetch timeout - this may indicate server issues')), 20000)
+      setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 10000)
     );
 
     const fetchPromise = supabase
@@ -131,13 +129,13 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     ]) as any;
 
     if (error) {
-      console.error('Supabase error fetching artist:', error);
+      console.error('Database error fetching artist:', error);
       
       if (error.code === 'PGRST116') {
         throw new Error(`Artist not found with ID: ${id}`);
       }
       
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Failed to load profile: ${error.message}`);
     }
 
     if (!artist) {
@@ -159,17 +157,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       skills: special_skills?.map((s: any) => s.skill) || []
     };
   } catch (error: any) {
-    console.error('Critical error in fetchArtistById:', error);
-    
-    // Provide more specific error messages
-    if (error.message?.includes('timeout')) {
-      throw new Error('Request timed out. Please check your connection and try again.');
-    }
-    
-    if (error.message?.includes('not found')) {
-      throw new Error(`Artist profile not found. The artist may have been removed or the link is incorrect.`);
-    }
-    
+    console.error('Error in fetchArtistById:', error);
     throw error;
   }
 };
