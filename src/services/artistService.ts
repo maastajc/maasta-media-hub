@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -75,7 +76,7 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
         category,
         experience_level,
         verified,
-        special_skills!fk_special_skills_artist_details (skill)
+        special_skills (skill)
       `)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -129,11 +130,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       .from('artist_details')
       .select(`
         *,
-        special_skills!special_skills_artist_id_fkey (
+        special_skills (
           id,
           skill
         ),
-        projects!projects_artist_id_fkey (
+        projects (
           id,
           project_name,
           role_in_project,
@@ -143,14 +144,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           streaming_platform,
           link
         ),
-        education_training!education_training_artist_id_fkey (
+        education_training (
           id,
           qualification_name,
           institution,
           year_completed,
           is_academic
         ),
-        media_assets!media_assets_artist_id_fkey (
+        media_assets (
           id,
           url,
           file_name,
@@ -160,12 +161,12 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           is_embed,
           embed_source
         ),
-        language_skills!language_skills_artist_id_fkey (
+        language_skills (
           id,
           language,
           proficiency
         ),
-        tools_software!tools_software_artist_id_fkey (
+        tools_software (
           id,
           tool_name
         )
