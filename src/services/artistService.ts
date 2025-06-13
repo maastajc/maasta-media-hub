@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -28,6 +27,29 @@ type ArtistUpdateData = {
   work_preference?: string;
   years_of_experience?: number;
   youtube_vimeo?: string;
+};
+
+// Helper function to convert Artist data to database update format
+const convertToUpdateData = (profileData: Partial<Artist>) => {
+  // Create a clean object with only the fields that can be updated
+  const updateData: any = {};
+  
+  const allowedFields = [
+    'association_membership', 'bio', 'category', 'city', 'country', 
+    'date_of_birth', 'email', 'experience_level', 'full_name', 
+    'gender', 'imdb_profile', 'instagram', 'linkedin', 
+    'personal_website', 'phone_number', 'profile_picture_url', 
+    'role', 'state', 'status', 'verified', 'willing_to_relocate', 
+    'work_preference', 'years_of_experience', 'youtube_vimeo'
+  ];
+  
+  allowedFields.forEach(field => {
+    if (profileData[field as keyof Artist] !== undefined) {
+      updateData[field] = profileData[field as keyof Artist];
+    }
+  });
+  
+  return updateData;
 };
 
 export const fetchAllArtists = async (): Promise<Artist[]> => {
@@ -190,13 +212,15 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
   }
 };
 
-export const updateArtistProfile = async (artistId: string, profileData: ArtistUpdateData): Promise<Artist> => {
+export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist> => {
   try {
     console.log('Updating artist profile:', artistId);
     
+    const updateData = convertToUpdateData(profileData);
+    
     const { data, error } = await supabase
       .from('artist_details')
-      .update(profileData)
+      .update(updateData)
       .eq('id', artistId)
       .select()
       .single();

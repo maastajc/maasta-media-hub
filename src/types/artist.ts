@@ -15,8 +15,8 @@ export interface Artist {
   linkedin?: string;
   youtube_vimeo?: string;
   personal_website?: string;
-  category?: string;
-  experience_level?: string;
+  category?: "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
+  experience_level?: "beginner" | "fresher" | "intermediate" | "expert" | "veteran";
   years_of_experience?: number;
   role?: string;
   verified?: boolean;

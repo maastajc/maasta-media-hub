@@ -82,6 +82,7 @@ export const useArtistProfile = (
       
       console.log('Updating profile with data:', profileData);
       
+      // The updateArtistProfile function now handles the type conversion internally
       const result = await updateArtistProfile(user.id, profileData);
       
       if (!result) {
