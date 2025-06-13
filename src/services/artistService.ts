@@ -2,6 +2,34 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
+// Create a type that matches Supabase's expected update format
+type ArtistUpdateData = {
+  association_membership?: string;
+  bio?: string;
+  category?: "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
+  city?: string;
+  country?: string;
+  date_of_birth?: string;
+  email?: string;
+  experience_level?: "beginner" | "fresher" | "intermediate" | "expert" | "veteran";
+  full_name?: string;
+  gender?: string;
+  imdb_profile?: string;
+  instagram?: string;
+  linkedin?: string;
+  personal_website?: string;
+  phone_number?: string;
+  profile_picture_url?: string;
+  role?: string;
+  state?: string;
+  status?: string;
+  verified?: boolean;
+  willing_to_relocate?: boolean;
+  work_preference?: string;
+  years_of_experience?: number;
+  youtube_vimeo?: string;
+};
+
 export const fetchAllArtists = async (): Promise<Artist[]> => {
   try {
     console.log('Fetching all artists...');
@@ -162,7 +190,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
   }
 };
 
-export const updateArtistProfile = async (artistId: string, profileData: Partial<Artist>): Promise<Artist> => {
+export const updateArtistProfile = async (artistId: string, profileData: ArtistUpdateData): Promise<Artist> => {
   try {
     console.log('Updating artist profile:', artistId);
     
