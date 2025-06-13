@@ -27,8 +27,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         category,
         age_range,
         gender,
-        experience_level,
-        artist_details!auditions_creator_id_fkey(full_name)
+        experience_level
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -51,21 +50,46 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
 
     console.log(`Successfully fetched ${data.length} recent auditions`);
     
-    return data.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      location: item.location,
-      deadline: item.deadline,
-      requirements: item.requirements,
-      tags: item.tags || [],
-      urgent: item.deadline ? isUrgent(item.deadline) : false,
-      cover_image_url: item.cover_image_url,
-      company: item.artist_details?.full_name || 'Unknown Company',
-      category: item.category,
-      age_range: item.age_range,
-      gender: item.gender,
-      experience_level: item.experience_level
-    }));
+    // Fetch creator details separately for each audition
+    const auditionsWithCreators = await Promise.all(
+      data.map(async (item: any) => {
+        let creatorName = 'Unknown Company';
+        
+        if (item.creator_id) {
+          try {
+            const { data: creatorData } = await supabase
+              .from('artist_details')
+              .select('full_name')
+              .eq('id', item.creator_id)
+              .single();
+            
+            if (creatorData?.full_name) {
+              creatorName = creatorData.full_name;
+            }
+          } catch (error) {
+            console.warn(`Could not fetch creator for audition ${item.id}:`, error);
+          }
+        }
+        
+        return {
+          id: item.id,
+          title: item.title,
+          location: item.location,
+          deadline: item.deadline,
+          requirements: item.requirements,
+          tags: item.tags || [],
+          urgent: item.deadline ? isUrgent(item.deadline) : false,
+          cover_image_url: item.cover_image_url,
+          company: creatorName,
+          category: item.category,
+          age_range: item.age_range,
+          gender: item.gender,
+          experience_level: item.experience_level
+        };
+      })
+    );
+    
+    return auditionsWithCreators;
   } catch (error: any) {
     console.error("Error fetching recent auditions:", error);
     

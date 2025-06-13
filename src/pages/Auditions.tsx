@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -56,8 +55,7 @@ const Auditions = () => {
       const fetchPromise = supabase
         .from('auditions')
         .select(`
-          *,
-          creator_profile:artist_details!auditions_creator_id_fkey(full_name)
+          *
         `)
         .eq('status', 'open')
         .order('created_at', { ascending: false });
@@ -78,17 +76,39 @@ const Auditions = () => {
         return;
       }
 
-      // Transform data with safe defaults
-      const transformedAuditions = (data || []).map((audition: any) => ({
-        ...audition,
-        tags: audition.tags || [],
-        creator_profile: {
-          full_name: audition.creator_profile?.full_name || 'Unknown Creator'
-        }
-      }));
+      // Fetch creator details separately for each audition
+      const auditionsWithCreators = await Promise.all(
+        data.map(async (audition: any) => {
+          let creatorName = 'Unknown Creator';
+          
+          if (audition.creator_id) {
+            try {
+              const { data: creatorData } = await supabase
+                .from('artist_details')
+                .select('full_name')
+                .eq('id', audition.creator_id)
+                .single();
+              
+              if (creatorData?.full_name) {
+                creatorName = creatorData.full_name;
+              }
+            } catch (error) {
+              console.warn(`Could not fetch creator for audition ${audition.id}:`, error);
+            }
+          }
+          
+          return {
+            ...audition,
+            tags: audition.tags || [],
+            creator_profile: {
+              full_name: creatorName
+            }
+          };
+        })
+      );
 
-      console.log(`Successfully fetched ${transformedAuditions.length} auditions`);
-      setAuditions(transformedAuditions);
+      console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
+      setAuditions(auditionsWithCreators);
     } catch (error: any) {
       console.error('Error fetching auditions:', error);
       setError(error.message || 'Failed to load auditions');
