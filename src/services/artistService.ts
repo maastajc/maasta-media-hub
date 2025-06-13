@@ -129,11 +129,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       .from('artist_details')
       .select(`
         *,
-        special_skills!fk_special_skills_artist_details (
+        special_skills!special_skills_artist_id_fkey (
           id,
           skill
         ),
-        projects!fk_projects_artist_details (
+        projects!projects_artist_id_fkey (
           id,
           project_name,
           role_in_project,
@@ -143,14 +143,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           streaming_platform,
           link
         ),
-        education_training!fk_education_training_artist_details (
+        education_training!education_training_artist_id_fkey (
           id,
           qualification_name,
           institution,
           year_completed,
           is_academic
         ),
-        media_assets!fk_media_assets_artist_details (
+        media_assets!media_assets_artist_id_fkey (
           id,
           url,
           file_name,
@@ -160,12 +160,12 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           is_embed,
           embed_source
         ),
-        language_skills (
+        language_skills!language_skills_artist_id_fkey (
           id,
           language,
           proficiency
         ),
-        tools_software (
+        tools_software!tools_software_artist_id_fkey (
           id,
           tool_name
         )
@@ -193,6 +193,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     }
 
     console.log(`Successfully fetched artist: ${artist.full_name}`);
+    console.log('Related data counts:', {
+      skills: artist.special_skills?.length || 0,
+      projects: artist.projects?.length || 0,
+      education: artist.education_training?.length || 0,
+      media: artist.media_assets?.length || 0,
+      languages: artist.language_skills?.length || 0,
+      tools: artist.tools_software?.length || 0
+    });
 
     // Transform data with safe defaults
     const { special_skills, language_skills, tools_software, ...artistData } = artist;

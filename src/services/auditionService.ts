@@ -28,7 +28,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         age_range,
         gender,
         experience_level,
-        profiles!auditions_creator_id_fkey(full_name)
+        artist_details!auditions_creator_id_fkey(full_name)
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -60,7 +60,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       tags: item.tags || [],
       urgent: item.deadline ? isUrgent(item.deadline) : false,
       cover_image_url: item.cover_image_url,
-      company: item.profiles?.full_name || 'Unknown Company',
+      company: item.artist_details?.full_name || 'Unknown Company',
       category: item.category,
       age_range: item.age_range,
       gender: item.gender,
