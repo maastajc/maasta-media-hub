@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -93,7 +92,7 @@ const Auditions = () => {
       setAuditions(data);
 
       // Fetch creator names in batch for better performance
-      const creatorIds = Array.from(
+      const creatorIds: string[] = Array.from(
         new Set(
           data
             .map((audition: any) => audition.creator_id)
