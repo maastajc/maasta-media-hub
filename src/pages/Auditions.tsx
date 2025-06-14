@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -133,7 +132,7 @@ const Auditions = () => {
       if (creatorIds.length > 0) {
         console.log('Fetching details for creator IDs:', creatorIds);
         const { data: creatorsData, error: creatorsError } = await supabase
-          .from('artist_details')
+          .from('profiles')
           .select('id, full_name')
           .in('id', creatorIds); 
 

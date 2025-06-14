@@ -11,35 +11,36 @@ type ValidTableName =
   | "tools_software" 
   | "media_assets";
 
-// Helper function to ensure artist_details record exists
-export const ensureArtistDetailsExists = async (userId: string): Promise<void> => {
+// Helper function to ensure artist profile record exists
+export const ensureProfileExists = async (userId: string): Promise<void> => {
   try {
-    // Check if artist_details record exists
-    const { data: existingArtist, error: checkError } = await supabase
-      .from('artist_details')
+    // Check if profile record exists
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
       .select('id')
       .eq('id', userId)
       .maybeSingle();
 
     if (checkError) {
-      console.error('Error checking artist_details:', checkError);
+      console.error('Error checking profile:', checkError);
       throw checkError;
     }
 
     // If no record exists, create one from auth user data
-    if (!existingArtist) {
-      console.log('Creating missing artist_details record for user:', userId);
+    if (!existingProfile) {
+      console.log('Creating missing profile record for user:', userId);
       
       // Get user data from auth
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
+      if (!user) throw new Error("User not found");
 
       const { error: insertError } = await supabase
-        .from('artist_details')
+        .from('profiles')
         .insert({
           id: userId,
-          full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'New User',
-          email: user?.email || '',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'New User',
+          email: user.email || '',
           role: 'artist',
           category: 'actor',
           experience_level: 'beginner',
@@ -48,14 +49,14 @@ export const ensureArtistDetailsExists = async (userId: string): Promise<void> =
         });
 
       if (insertError) {
-        console.error('Error creating artist_details record:', insertError);
+        console.error('Error creating profile record:', insertError);
         throw insertError;
       }
       
-      console.log('Successfully created artist_details record');
+      console.log('Successfully created profile record');
     }
   } catch (error: any) {
-    console.error('Error in ensureArtistDetailsExists:', error);
+    console.error('Error in ensureProfileExists:', error);
     throw error;
   }
 };
@@ -63,7 +64,7 @@ export const ensureArtistDetailsExists = async (userId: string): Promise<void> =
 // Specific functions for each table to avoid TypeScript issues
 export const saveProject = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,
@@ -99,7 +100,7 @@ export const saveProject = async (data: any, userId: string): Promise<any> => {
 
 export const saveSkill = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,
@@ -135,7 +136,7 @@ export const saveSkill = async (data: any, userId: string): Promise<any> => {
 
 export const saveEducation = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,
@@ -171,7 +172,7 @@ export const saveEducation = async (data: any, userId: string): Promise<any> => 
 
 export const saveLanguage = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,
@@ -207,7 +208,7 @@ export const saveLanguage = async (data: any, userId: string): Promise<any> => {
 
 export const saveTool = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,
@@ -243,7 +244,7 @@ export const saveTool = async (data: any, userId: string): Promise<any> => {
 
 export const saveMediaAsset = async (data: any, userId: string): Promise<any> => {
   try {
-    await ensureArtistDetailsExists(userId);
+    await ensureProfileExists(userId);
 
     const dataWithArtistId = {
       ...data,

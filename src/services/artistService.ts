@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -62,7 +63,7 @@ export const fetchAllArtists = async (): Promise<Artist[]> => {
     );
 
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('profiles')
       .select(`
         id,
         full_name,
@@ -125,9 +126,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 15000)
     );
 
-    // NOTE: Removed custom relationship hints to allow Supabase to auto-resolve (since no explicit FKs)
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('profiles')
       .select(`
         *,
         special_skills (
@@ -240,7 +240,7 @@ export const updateArtistProfile = async (artistId: string, profileData: Partial
     const updateData = convertToUpdateData(profileData);
     
     const { data, error } = await supabase
-      .from('artist_details')
+      .from('profiles')
       .update(updateData)
       .eq('id', artistId)
       .select()

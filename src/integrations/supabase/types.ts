@@ -9,105 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      artist_details: {
-        Row: {
-          association_membership: string | null
-          bio: string | null
-          category: Database["public"]["Enums"]["artist_category"]
-          city: string | null
-          country: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          email: string
-          experience_level:
-            | Database["public"]["Enums"]["experience_level"]
-            | null
-          full_name: string
-          gender: string | null
-          id: string
-          imdb_profile: string | null
-          instagram: string | null
-          linkedin: string | null
-          personal_website: string | null
-          phone_number: string | null
-          profile_picture_url: string | null
-          rate_card: Json | null
-          role: string | null
-          state: string | null
-          status: string | null
-          updated_at: string | null
-          verified: boolean | null
-          willing_to_relocate: boolean | null
-          work_preference: string | null
-          years_of_experience: number | null
-          youtube_vimeo: string | null
-        }
-        Insert: {
-          association_membership?: string | null
-          bio?: string | null
-          category: Database["public"]["Enums"]["artist_category"]
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email: string
-          experience_level?:
-            | Database["public"]["Enums"]["experience_level"]
-            | null
-          full_name?: string
-          gender?: string | null
-          id: string
-          imdb_profile?: string | null
-          instagram?: string | null
-          linkedin?: string | null
-          personal_website?: string | null
-          phone_number?: string | null
-          profile_picture_url?: string | null
-          rate_card?: Json | null
-          role?: string | null
-          state?: string | null
-          status?: string | null
-          updated_at?: string | null
-          verified?: boolean | null
-          willing_to_relocate?: boolean | null
-          work_preference?: string | null
-          years_of_experience?: number | null
-          youtube_vimeo?: string | null
-        }
-        Update: {
-          association_membership?: string | null
-          bio?: string | null
-          category?: Database["public"]["Enums"]["artist_category"]
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email?: string
-          experience_level?:
-            | Database["public"]["Enums"]["experience_level"]
-            | null
-          full_name?: string
-          gender?: string | null
-          id?: string
-          imdb_profile?: string | null
-          instagram?: string | null
-          linkedin?: string | null
-          personal_website?: string | null
-          phone_number?: string | null
-          profile_picture_url?: string | null
-          rate_card?: Json | null
-          role?: string | null
-          state?: string | null
-          status?: string | null
-          updated_at?: string | null
-          verified?: boolean | null
-          willing_to_relocate?: boolean | null
-          work_preference?: string | null
-          years_of_experience?: number | null
-          youtube_vimeo?: string | null
-        }
-        Relationships: []
-      }
       audition_applications: {
         Row: {
           application_date: string | null
@@ -210,7 +111,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "auditions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       education_training: {
         Row: {
@@ -246,13 +155,6 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_education_training_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
             referencedColumns: ["id"]
           },
         ]
@@ -358,13 +260,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_language_skills_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "language_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -418,13 +313,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_media_assets_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "media_assets_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -459,13 +347,6 @@ export type Database = {
           role?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_professional_references_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "professional_references_artist_id_fkey"
             columns: ["artist_id"]
@@ -610,13 +491,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_projects_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "projects_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -643,13 +517,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_special_skills_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "special_skills_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
@@ -675,13 +542,6 @@ export type Database = {
           tool_name?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_tools_software_artist_details"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artist_details"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tools_software_artist_id_fkey"
             columns: ["artist_id"]

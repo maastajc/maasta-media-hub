@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Audition } from "@/types/audition";
@@ -89,7 +88,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     if (creatorIds.length > 0) {
       console.log('Fetching details for recent audition creator IDs:', creatorIds);
       const { data: creatorsData, error: creatorsError } = await supabase
-        .from('artist_details')
+        .from('profiles')
         .select('id, full_name')
         .in('id', creatorIds); 
 
@@ -142,4 +141,3 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     return [];
   }
 };
-

@@ -1,9 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset } from "@/types/artist";
 import { Database } from "@/integrations/supabase/types";
 
-type ArtistDetailsRow = Database['public']['Tables']['artist_details']['Row'];
+type ArtistDetailsRow = Database['public']['Tables']['profiles']['Row'];
 
 // Specific type for featured artists query result
 type FeaturedArtistRow = ArtistDetailsRow & {
@@ -30,7 +29,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
     );
 
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('profiles')
       .select(`
         id,
         full_name,
@@ -43,7 +42,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
         category,
         experience_level,
         verified,
-        special_skills!fk_special_skills_artist_details (skill)
+        special_skills (skill)
       `)
       .eq('status', 'active')
       .not('profile_picture_url', 'is', null)
@@ -132,14 +131,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     );
 
     const fetchPromise = supabase
-      .from('artist_details')
+      .from('profiles')
       .select(`
         *,
-        special_skills!fk_special_skills_artist_details (
+        special_skills (
           id,
           skill
         ),
-        projects!fk_projects_artist_details (
+        projects (
           id,
           project_name,
           role_in_project,
@@ -149,14 +148,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           streaming_platform,
           link
         ),
-        education_training!fk_education_training_artist_details (
+        education_training (
           id,
           qualification_name,
           institution,
           year_completed,
           is_academic
         ),
-        media_assets!fk_media_assets_artist_details (
+        media_assets (
           id,
           url,
           file_name,
@@ -165,14 +164,14 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           is_video,
           is_embed,
           embed_source,
-          file_size /* Added file_size to select */
+          file_size
         ),
-        language_skills!fk_language_skills_artist_details ( /* Changed from language_skills ( to !fk_... */
+        language_skills (
           id,
           language,
           proficiency
         ),
-        tools_software!fk_tools_software_artist_details ( /* Changed from tools_software ( to !fk_... */
+        tools_software (
           id,
           tool_name
         )
