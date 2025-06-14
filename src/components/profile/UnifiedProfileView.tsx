@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,12 +19,44 @@ import {
   Play
 } from "lucide-react";
 import { Artist } from "@/types/artist";
+import React from "react";
 
 interface UnifiedProfileViewProps {
   artist: Artist;
 }
 
 const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
+  // DEBUG: Print the data to console and display in-page data summary
+  React.useEffect(() => {
+    console.log("[UnifiedProfileView] artist received:", artist);
+    if (artist) {
+      console.log("Skills:", artist.special_skills);
+      console.log("Projects:", artist.projects);
+      console.log("Education:", artist.education_training);
+      console.log("Media:", artist.media_assets);
+      console.log("Languages:", artist.language_skills);
+      console.log("Tools:", artist.tools_software);
+    }
+  }, [artist]);
+
+  // DEBUG/SUMMARY DISPLAY: Show object keys and items count at top of page (for dev)
+  const PortfolioDebugInfo = () => (
+    <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-900">
+      <div className="mb-1 font-semibold">[Debug] Portfolio Data Summary:</div>
+      <ul className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
+        <li>Skills: {artist.special_skills?.length ?? 0}</li>
+        <li>Projects: {artist.projects?.length ?? 0}</li>
+        <li>Education: {artist.education_training?.length ?? 0}</li>
+        <li>Media: {artist.media_assets?.length ?? 0}</li>
+        <li>Languages: {artist.language_skills?.length ?? 0}</li>
+        <li>Tools: {artist.tools_software?.length ?? 0}</li>
+      </ul>
+      <div className="mt-1">
+        <span className="font-mono">artist.id:</span> <span className="font-mono">{artist.id}</span>
+      </div>
+    </div>
+  );
+
   const socialLinks = [
     { icon: Globe, url: artist.personal_website, label: 'Website' },
     { icon: Instagram, url: artist.instagram, label: 'Instagram' },
@@ -39,7 +70,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
     const videos = mediaAssets.filter(asset => asset.is_video);
     const images = mediaAssets.filter(asset => !asset.is_video);
 
-    if (mediaAssets.length === 0) return null;
+    if (mediaAssets.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Play className="w-5 h-5 text-maasta-purple" />
+              Portfolio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No portfolio media uploaded.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -107,7 +152,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
   };
 
   const renderSocialLinks = () => {
-    if (socialLinks.length === 0) return null;
+    if (socialLinks.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-maasta-purple" />
+              Social Links
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No social links provided.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -143,7 +202,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   const renderProjects = () => {
     const projects = artist.projects || [];
-    if (projects.length === 0) return null;
+    if (projects.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-maasta-purple" />
+              Projects
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No projects listed.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -197,7 +270,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   const renderSkills = () => {
     const skills = artist.special_skills || [];
-    if (skills.length === 0) return null;
+    if (skills.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-maasta-purple" />
+              Skills
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No skills added.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -222,7 +309,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   const renderEducation = () => {
     const education = artist.education_training || [];
-    if (education.length === 0) return null;
+    if (education.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-maasta-purple" />
+              Education & Training
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No education or training listed.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -266,7 +367,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   const renderLanguages = () => {
     const languages = artist.language_skills || [];
-    if (languages.length === 0) return null;
+    if (languages.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-maasta-purple" />
+              Languages
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No language skills provided.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -294,7 +409,21 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   const renderTools = () => {
     const tools = artist.tools_software || [];
-    if (tools.length === 0) return null;
+    if (tools.length === 0) {
+      return (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-maasta-purple" />
+              Tools & Software
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="italic text-gray-400">No tools or software listed.</div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     return (
       <Card className="mb-8">
@@ -319,6 +448,7 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   return (
     <div className="space-y-0">
+      <PortfolioDebugInfo />
       {renderMediaSection()}
       {renderSocialLinks()}
       {renderProjects()}
