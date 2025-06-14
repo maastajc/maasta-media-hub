@@ -1,3 +1,4 @@
+
 /**
  * List of cities mapped by COUNTRY -> STATE.
  * Only partial data below for brevity; expand as needed for your app.
@@ -16,7 +17,7 @@ const CITIES = {
     California: ["Los Angeles", "San Francisco", "San Diego", "Sacramento"],
     Texas: ["Houston", "Dallas", "Austin", "San Antonio"],
     Florida: ["Miami", "Orlando", "Tampa"],
-    New York: ["New York City", "Buffalo", "Rochester", "Albany"],
+    "New York": ["New York City", "Buffalo", "Rochester", "Albany"],
     // ...all 50 states and major cities
   },
   Canada: {
@@ -42,3 +43,4 @@ const CITIES = {
 };
 
 export default CITIES;
+
