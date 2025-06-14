@@ -4,6 +4,26 @@ import { toast } from "sonner";
 import { Audition } from "@/types/audition";
 import { isUrgent } from "@/utils/auditionHelpers";
 
+// Define a type for the raw data structure returned by the Supabase query
+type SupabaseAuditionSelect = {
+  id: string;
+  title: string;
+  location: string;
+  deadline: string | null;
+  requirements: string | null;
+  tags: string[] | null;
+  cover_image_url: string | null;
+  creator_id: string | null;
+  category: string | null;
+  age_range: string | null;
+  gender: string | null;
+  experience_level: string | null;
+  description: string | null;
+  audition_date: string | null;
+  compensation: string | null;
+  status: string | null;
+};
+
 export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
     console.log("Fetching recent auditions...");
@@ -12,7 +32,6 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 10000)
     );
 
-    // Step 1: Fetch recent auditions
     const fetchPromise = supabase
       .from('auditions')
       .select(`
@@ -37,17 +56,19 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       .order('created_at', { ascending: false })
       .limit(3);
 
-    // Use 'any' for race result type if complex, but ideally type it better
-    const { data: auditionsData, error } = await Promise.race([
+    // Type the result of the fetch operation
+    const fetchResult = await Promise.race([
       fetchPromise,
       timeoutPromise
-    ]) as any; // Cast to any for now, Supabase types can be complex with Promise.race
+    ]) as { data: SupabaseAuditionSelect[] | null; error: any | null };
 
-    if (error) {
-      console.error("Error fetching recent auditions data:", error);
-      throw error;
+    if (fetchResult.error) {
+      console.error("Error fetching recent auditions data:", fetchResult.error);
+      throw fetchResult.error;
     }
     
+    const auditionsData = fetchResult.data;
+
     if (!auditionsData || auditionsData.length === 0) {
       console.log("No recent auditions found");
       return [];
@@ -55,18 +76,16 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
 
     console.log(`Successfully fetched ${auditionsData.length} recent auditions. Fetching creator details...`);
     
-    // Step 2: Extract unique creator_ids, ensuring they are strings
     const creatorIds: string[] = [
       ...new Set(
         auditionsData
-          .map((a: { creator_id: string | null | undefined }) => a.creator_id) 
+          .map((a: SupabaseAuditionSelect) => a.creator_id) 
           .filter((id): id is string => typeof id === 'string' && id.length > 0)
       ),
     ];
     
     let creatorMap = new Map<string, string>();
 
-    // Step 3: Fetch artist_details for these IDs if there are any creatorIds
     if (creatorIds.length > 0) {
       console.log('Fetching details for recent audition creator IDs:', creatorIds);
       const { data: creatorsData, error: creatorsError } = await supabase
@@ -86,8 +105,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       console.log('No valid creator IDs found for recent auditions.');
     }
     
-    // Step 4: Map creator names (as company) back to auditions
-    const auditionsWithCompany = auditionsData.map((item: any): Audition => {
+    const auditionsWithCompany = auditionsData.map((item: SupabaseAuditionSelect): Audition => {
       const companyName = item.creator_id ? creatorMap.get(item.creator_id) || 'Unknown Company' : 'Unknown Company';
       return {
         id: item.id,
@@ -97,13 +115,13 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         requirements: item.requirements,
         tags: item.tags || [],
         urgent: item.deadline ? isUrgent(item.deadline) : false,
-        cover_image_url: item.cover_image_url, // This should now be fine
+        cover_image_url: item.cover_image_url,
         company: companyName,
         category: item.category,
         age_range: item.age_range,
         gender: item.gender,
         experience_level: item.experience_level,
-        description: item.description || (item.requirements || null), 
+        description: item.description ?? item.requirements ?? undefined, 
         audition_date: item.audition_date || null,
         compensation: item.compensation || undefined, 
         status: item.status || 'open',
@@ -124,3 +142,4 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     return [];
   }
 };
+

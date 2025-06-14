@@ -34,6 +34,26 @@ interface AuditionData {
   creator_id?: string; 
 }
 
+// Define a type for the raw data structure returned by the Supabase query
+type SupabaseAuditionEntry = {
+  id: string;
+  title: string;
+  description: string | null;
+  location: string;
+  audition_date: string | null;
+  deadline: string | null;
+  compensation: string | null;
+  requirements: string | null;
+  status: string | null;
+  category: string | null;
+  experience_level: string | null;
+  gender: string | null;
+  age_range: string | null;
+  cover_image_url: string | null;
+  tags: string[] | null;
+  creator_id: string | null; 
+};
+
 const Auditions = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [auditions, setAuditions] = useState<AuditionData[]>([]);
@@ -52,7 +72,6 @@ const Auditions = () => {
         setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000)
       );
 
-      // Step 1: Fetch auditions with their creator_ids
       const auditionsFetchPromise = supabase
         .from('auditions')
         .select(`
@@ -77,15 +96,18 @@ const Auditions = () => {
         .eq('status', 'open')
         .order('created_at', { ascending: false });
 
-      const { data: auditionsData, error: fetchError } = await Promise.race([
+      // Type the result of the fetch operation
+      const fetchResult = await Promise.race([
         auditionsFetchPromise,
         timeoutPromise
-      ]) as any; 
+      ]) as { data: SupabaseAuditionEntry[] | null, error: any | null }; 
 
-      if (fetchError) {
-        console.error('Database error fetching auditions:', fetchError);
-        throw new Error(`Database error: ${fetchError.message}`);
+      if (fetchResult.error) {
+        console.error('Database error fetching auditions:', fetchResult.error);
+        throw new Error(`Database error: ${fetchResult.error.message}`);
       }
+
+      const auditionsData = fetchResult.data;
 
       if (!auditionsData || auditionsData.length === 0) {
         console.log('No auditions data returned');
@@ -96,18 +118,16 @@ const Auditions = () => {
 
       console.log(`Fetched ${auditionsData.length} auditions, preparing to fetch creator details...`);
 
-      // Step 2: Extract unique creator_ids, ensuring they are strings
       const creatorIds: string[] = [
         ...new Set(
           auditionsData
-            .map((a: { creator_id: string | null | undefined }) => a.creator_id)
+            .map((a: SupabaseAuditionEntry) => a.creator_id)
             .filter((id): id is string => typeof id === 'string' && id.length > 0)
         ),
       ];
       
       let creatorMap = new Map<string, string>();
 
-      // Step 3: Fetch artist_details for these IDs if there are any creatorIds
       if (creatorIds.length > 0) {
         console.log('Fetching details for creator IDs:', creatorIds);
         const { data: creatorsData, error: creatorsError } = await supabase
@@ -127,31 +147,29 @@ const Auditions = () => {
         console.log('No valid creator IDs found to fetch details for.');
       }
 
-      // Step 4: Map creator names back to auditions
-      const auditionsWithCreators = auditionsData.map((audition: any): AuditionData => {
+      const auditionsWithCreators = auditionsData.map((audition: SupabaseAuditionEntry): AuditionData => {
         const creatorName = audition.creator_id ? creatorMap.get(audition.creator_id) || 'Unknown Creator' : 'Unknown Creator';
         return {
+          // Spread audition data and ensure all fields are correctly typed or defaulted
           ...audition,
+          description: audition.description ?? '', // Ensure description is string
+          location: audition.location ?? '', // Ensure location is string
+          audition_date: audition.audition_date ?? '',
+          deadline: audition.deadline ?? '',
+          compensation: audition.compensation ?? '',
+          requirements: audition.requirements ?? '',
+          status: audition.status ?? 'open',
+          category: audition.category ?? '',
+          experience_level: audition.experience_level ?? '',
+          gender: audition.gender ?? '',
+          age_range: audition.age_range ?? '',
+          cover_image_url: audition.cover_image_url ?? '',
           tags: audition.tags || [], 
           creator_profile: { 
             full_name: creatorName 
           },
-          description: audition.description || '', 
-          compensation: audition.compensation || '',
-          // ensure all fields of AuditionData are correctly mapped or defaulted
-          id: audition.id,
-          title: audition.title,
-          location: audition.location,
-          audition_date: audition.audition_date || '',
-          deadline: audition.deadline || '',
-          requirements: audition.requirements || '',
-          status: audition.status || 'open',
-          category: audition.category || '',
-          experience_level: audition.experience_level || '',
-          gender: audition.gender || '',
-          age_range: audition.age_range || '',
-          cover_image_url: audition.cover_image_url || '',
           created_at: audition.created_at || new Date().toISOString(),
+          creator_id: audition.creator_id ?? undefined,
         };
       });
 
