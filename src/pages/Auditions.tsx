@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -96,7 +97,9 @@ const Auditions = () => {
       }
 
       // Fetch creator names in batch for better performance
-      const creatorIds = [...new Set(data.map((a: any) => a.creator_id).filter((id): id is string => Boolean(id)))];
+      const creatorIds: string[] = data
+        .map((a: any) => a.creator_id)
+        .filter((id: any): id is string => typeof id === 'string' && id.length > 0);
       
       if (creatorIds.length > 0) {
         const { data: creators } = await supabase
