@@ -120,9 +120,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
         return null;
       }
 
-      // Convert profile data to artist format
+      // Convert profile data to artist format with proper typing
       return {
         ...profileData,
+        category: (profileData.category as Artist['category']) || 'actor',
+        experience_level: (profileData.experience_level as Artist['experience_level']) || 'beginner',
         special_skills: [],
         projects: [],
         education_training: [],
@@ -155,9 +157,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
 
       console.log(`Found profile data for user: ${profileData.full_name}`);
 
-      // Convert profile data to artist format with safe defaults
+      // Convert profile data to artist format with proper typing
       return {
         ...profileData,
+        category: (profileData.category as Artist['category']) || 'actor',
+        experience_level: (profileData.experience_level as Artist['experience_level']) || 'beginner',
         special_skills: [],
         projects: [],
         education_training: [],
@@ -178,9 +182,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       supabase.from('media_assets').select('*').eq('artist_id', id)
     ]);
 
-    // Transform data with safe defaults
+    // Transform data with safe defaults and proper typing
     return {
       ...artist,
+      category: (artist.category as Artist['category']) || 'actor',
+      experience_level: (artist.experience_level as Artist['experience_level']) || 'beginner',
       special_skills: skillsData.status === 'fulfilled' ? skillsData.value.data || [] : [],
       projects: projectsData.status === 'fulfilled' ? projectsData.value.data || [] : [],
       education_training: educationData.status === 'fulfilled' ? educationData.value.data || [] : [],
