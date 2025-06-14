@@ -49,20 +49,37 @@ const Auditions = () => {
       setError(null);
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000) // Increased timeout slightly as well
+        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000)
       );
 
-      // Step 1: Fetch auditions
+      // Step 1: Fetch auditions with their creator_ids
       const auditionsFetchPromise = supabase
         .from('auditions')
-        .select(`*, creator_id`) // Ensure creator_id is selected
+        .select(`
+          id,
+          title,
+          description,
+          location,
+          audition_date,
+          deadline,
+          compensation,
+          requirements,
+          status,
+          category,
+          experience_level,
+          gender,
+          age_range,
+          cover_image_url,
+          tags,
+          creator_id 
+        `)
         .eq('status', 'open')
         .order('created_at', { ascending: false });
 
       const { data: auditionsData, error: fetchError } = await Promise.race([
         auditionsFetchPromise,
         timeoutPromise
-      ]) as any;
+      ]) as any; // Keep 'as any' for now if the race result structure is complex, though ideally type this better.
 
       if (fetchError) {
         console.error('Database error fetching auditions:', fetchError);
@@ -76,25 +93,37 @@ const Auditions = () => {
         return;
       }
 
-      // Step 2: Extract unique creator_ids
-      const creatorIds = [...new Set(auditionsData.map((a: any) => a.creator_id).filter(Boolean))];
+      console.log(`Fetched ${auditionsData.length} auditions, preparing to fetch creator details...`);
+
+      // Step 2: Extract unique creator_ids, ensuring they are strings
+      const creatorIds: string[] = [
+        ...new Set(
+          auditionsData
+            .map((a: any) => a.creator_id as string) // Ensure creator_id is treated as string
+            .filter(Boolean) // Filter out null, undefined, or empty strings if they are not valid IDs
+        ),
+      ];
+      
       let creatorMap = new Map<string, string>();
 
       // Step 3: Fetch artist_details for these IDs if there are any creatorIds
       if (creatorIds.length > 0) {
+        console.log('Fetching details for creator IDs:', creatorIds);
         const { data: creatorsData, error: creatorsError } = await supabase
           .from('artist_details')
           .select('id, full_name')
-          .in('id', creatorIds);
+          .in('id', creatorIds); // Now creatorIds is string[]
 
         if (creatorsError) {
           console.warn('Could not fetch some creator details:', creatorsError);
-          // Proceed without all creator names if this fails, or handle more gracefully
         } else if (creatorsData) {
           creatorsData.forEach(creator => {
             creatorMap.set(creator.id, creator.full_name || 'Unknown Creator');
           });
+          console.log('Creator details fetched and mapped:', creatorMap);
         }
+      } else {
+        console.log('No valid creator IDs found to fetch details for.');
       }
 
       // Step 4: Map creator names back to auditions
@@ -102,17 +131,22 @@ const Auditions = () => {
         const creatorName = audition.creator_id ? creatorMap.get(audition.creator_id) || 'Unknown Creator' : 'Unknown Creator';
         return {
           ...audition,
-          tags: audition.tags || [],
-          creator_profile: {
-            full_name: creatorName
-          }
+          tags: audition.tags || [], // Ensure tags is always an array
+          creator_profile: { // Ensure creator_profile structure matches AuditionData
+            full_name: creatorName 
+          },
+          // Ensure all other fields expected by AuditionData are present
+          // Example: if AuditionData expects description but audition.description is null, provide default or handle
+          description: audition.description || '', 
+          compensation: audition.compensation || '',
+          // ... (ensure all fields of AuditionData are correctly mapped or defaulted)
         };
       });
 
-      console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
+      console.log(`Successfully processed ${auditionsWithCreators.length} auditions with creator names`);
       setAuditions(auditionsWithCreators);
     } catch (error: any) {
-      console.error('Error fetching auditions:', error);
+      console.error('Error in fetchAuditions process:', error);
       setError(error.message || 'Failed to load auditions');
       setAuditions([]);
     } finally {
