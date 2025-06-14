@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
@@ -126,48 +125,61 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 15000)
     );
 
+    // NOTE: Removed custom relationship hints to allow Supabase to auto-resolve (since no explicit FKs)
     const fetchPromise = supabase
       .from('artist_details')
       .select(`
         *,
         special_skills (
           id,
-          skill
+          skill,
+          artist_id
         ),
         projects (
           id,
+          artist_id,
           project_name,
           role_in_project,
           project_type,
           year_of_release,
           director_producer,
           streaming_platform,
-          link
+          link,
+          created_at,
+          updated_at
         ),
         education_training (
           id,
+          artist_id,
           qualification_name,
           institution,
           year_completed,
-          is_academic
+          is_academic,
+          created_at
         ),
         media_assets (
           id,
-          url,
+          artist_id,
+          user_id,
           file_name,
           file_type,
+          file_size,
+          url,
           description,
           is_video,
           is_embed,
-          embed_source
+          embed_source,
+          created_at
         ),
         language_skills (
           id,
+          artist_id,
           language,
           proficiency
         ),
         tools_software (
           id,
+          artist_id,
           tool_name
         )
       `)
@@ -181,11 +193,9 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
 
     if (error) {
       console.error('Database error fetching artist:', error);
-      
-      if (error.code === 'PGRST116') {
+      if (error.code === 'PGRST116' || error.code === '42703') {
         throw new Error(`Artist not found with ID: ${id}`);
       }
-      
       throw new Error(`Failed to load profile: ${error.message}`);
     }
 
@@ -193,27 +203,29 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       throw new Error(`No artist data returned for ID: ${id}`);
     }
 
-    console.log(`Successfully fetched artist: ${artist.full_name}`);
-    console.log('Related data counts:', {
-      skills: artist.special_skills?.length || 0,
-      projects: artist.projects?.length || 0,
-      education: artist.education_training?.length || 0,
-      media: artist.media_assets?.length || 0,
-      languages: artist.language_skills?.length || 0,
-      tools: artist.tools_software?.length || 0
+    console.log(`Successfully fetched artist: ${artist.full_name} (ID: ${id})`);
+    // Log related section counts
+    console.log('Portfolio data counts:', {
+      skills: Array.isArray(artist.special_skills) ? artist.special_skills.length : 0,
+      projects: Array.isArray(artist.projects) ? artist.projects.length : 0,
+      education_training: Array.isArray(artist.education_training) ? artist.education_training.length : 0,
+      media_assets: Array.isArray(artist.media_assets) ? artist.media_assets.length : 0,
+      language_skills: Array.isArray(artist.language_skills) ? artist.language_skills.length : 0,
+      tools_software: Array.isArray(artist.tools_software) ? artist.tools_software.length : 0
     });
 
-    // Transform data with safe defaults
-    const { special_skills, language_skills, tools_software, ...artistData } = artist;
+    // Re-structure and provide safe defaults for all sections
     return {
-      ...artistData,
-      special_skills: special_skills || [],
-      language_skills: language_skills || [],
-      tools_software: tools_software || [],
-      projects: artistData.projects || [],
-      education_training: artistData.education_training || [],
-      media_assets: artistData.media_assets || [],
-      skills: special_skills?.map((s: any) => s.skill) || []
+      ...artist,
+      special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
+      projects: Array.isArray(artist.projects) ? artist.projects : [],
+      education_training: Array.isArray(artist.education_training) ? artist.education_training : [],
+      media_assets: Array.isArray(artist.media_assets) ? artist.media_assets : [],
+      language_skills: Array.isArray(artist.language_skills) ? artist.language_skills : [],
+      tools_software: Array.isArray(artist.tools_software) ? artist.tools_software : [],
+      skills: Array.isArray(artist.special_skills) 
+        ? artist.special_skills.map((s: any) => s.skill) 
+        : []
     };
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
