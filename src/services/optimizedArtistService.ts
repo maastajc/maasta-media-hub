@@ -4,14 +4,13 @@ import { Artist } from "@/types/artist";
 
 export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]> => {
   try {
-    console.log(`Fetching ${limit} featured artists...`);
+    console.log('Fetching featured artists...');
     
-    // Reduced timeout for faster failure
+    // Reduced timeout and better error handling
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Connection timeout - please try again')), 5000)
+      setTimeout(() => reject(new Error('Request timeout - please check your connection')), 8000)
     );
 
-    // Simplified query for better performance
     const fetchPromise = supabase
       .from('artist_details')
       .select(`
@@ -25,11 +24,11 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
         country,
         category,
         experience_level,
-        verified
+        verified,
+        special_skills!fk_special_skills_artist_details (skill)
       `)
       .eq('status', 'active')
-      .not('full_name', 'eq', 'New User')
-      .order('created_at', { ascending: false })
+      .not('profile_picture_url', 'is', null)
       .limit(limit);
 
     const { data: artists, error } = await Promise.race([
@@ -39,46 +38,26 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
 
     if (error) {
       console.error('Database error fetching featured artists:', error);
-      throw new Error(`Failed to load artists: ${error.message}`);
+      return [];
     }
 
-    if (!artists) {
+    if (!artists || artists.length === 0) {
       console.log('No featured artists found');
       return [];
     }
 
     console.log(`Successfully fetched ${artists.length} featured artists`);
     
-    // Fetch skills separately for better performance
-    const artistsWithSkills = await Promise.all(
-      artists.map(async (artist: any) => {
-        try {
-          const { data: skills } = await supabase
-            .from('special_skills')
-            .select('skill')
-            .eq('artist_id', artist.id)
-            .limit(5); // Limit skills for performance
-
-          return {
-            ...artist,
-            special_skills: skills || [],
-            skills: skills?.map((s: any) => s.skill) || []
-          };
-        } catch (error) {
-          console.warn(`Failed to fetch skills for artist ${artist.id}:`, error);
-          return {
-            ...artist,
-            special_skills: [],
-            skills: []
-          };
-        }
-      })
-    );
-
-    return artistsWithSkills;
+    return artists.map((artist: any) => {
+      const { special_skills, ...artistData } = artist;
+      return {
+        ...artistData,
+        special_skills: special_skills || [],
+        skills: special_skills?.map((s: any) => s.skill) || []
+      };
+    });
   } catch (error: any) {
     console.error('Error in fetchFeaturedArtists:', error);
-    // Return empty array instead of throwing to prevent app crashes
     return [];
   }
 };
@@ -88,117 +67,97 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     console.log('Fetching artist by ID:', id);
     
     if (!id || id === 'undefined' || id === 'null') {
-      console.warn('Invalid artist ID provided:', id);
-      return null;
+      throw new Error('Invalid artist ID provided');
     }
     
-    // First try to get from artist_details
-    const { data: artist, error } = await supabase
+    // Reduced timeout for profile queries
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 10000)
+    );
+
+    const fetchPromise = supabase
       .from('artist_details')
-      .select('*')
+      .select(`
+        *,
+        special_skills!fk_special_skills_artist_details (
+          id,
+          skill
+        ),
+        projects!fk_projects_artist_details (
+          id,
+          project_name,
+          role_in_project,
+          project_type,
+          year_of_release,
+          director_producer,
+          streaming_platform,
+          link
+        ),
+        education_training!fk_education_training_artist_details (
+          id,
+          qualification_name,
+          institution,
+          year_completed,
+          is_academic
+        ),
+        media_assets!fk_media_assets_artist_details (
+          id,
+          url,
+          file_name,
+          file_type,
+          description,
+          is_video,
+          is_embed,
+          embed_source
+        ),
+        language_skills (
+          id,
+          language,
+          proficiency
+        ),
+        tools_software (
+          id,
+          tool_name
+        )
+      `)
       .eq('id', id)
-      .maybeSingle();
+      .single();
+
+    const { data: artist, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any;
 
     if (error) {
-      console.error('Database error fetching from artist_details:', error);
+      console.error('Database error fetching artist:', error);
       
-      // Fallback to profiles table
-      console.log('Falling back to profiles table...');
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Database error fetching from profiles:', profileError);
-        return null;
+      if (error.code === 'PGRST116') {
+        throw new Error(`Artist not found with ID: ${id}`);
       }
-
-      if (!profileData) {
-        console.log(`No profile found for user ID: ${id}`);
-        return null;
-      }
-
-      // Convert profile data to artist format with proper typing
-      return {
-        ...profileData,
-        category: (profileData.category as Artist['category']) || 'actor',
-        experience_level: (profileData.experience_level as Artist['experience_level']) || 'beginner',
-        special_skills: [],
-        projects: [],
-        education_training: [],
-        media_assets: [],
-        language_skills: [],
-        tools_software: [],
-        skills: []
-      };
+      
+      throw new Error(`Failed to load profile: ${error.message}`);
     }
 
     if (!artist) {
-      console.log(`No artist found with ID: ${id}, checking profiles table...`);
-      
-      // Fallback to profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Database error fetching from profiles:', profileError);
-        return null;
-      }
-
-      if (!profileData) {
-        console.log(`No profile found for user ID: ${id}`);
-        return null;
-      }
-
-      console.log(`Found profile data for user: ${profileData.full_name}`);
-
-      // Convert profile data to artist format with proper typing
-      return {
-        ...profileData,
-        category: (profileData.category as Artist['category']) || 'actor',
-        experience_level: (profileData.experience_level as Artist['experience_level']) || 'beginner',
-        special_skills: [],
-        projects: [],
-        education_training: [],
-        media_assets: [],
-        language_skills: [],
-        tools_software: [],
-        skills: []
-      };
+      throw new Error(`No artist data returned for ID: ${id}`);
     }
 
     console.log(`Successfully fetched artist: ${artist.full_name}`);
 
-    // Fetch related data separately for better performance
-    const [skillsData, projectsData, educationData, mediaData] = await Promise.allSettled([
-      supabase.from('special_skills').select('*').eq('artist_id', id),
-      supabase.from('projects').select('*').eq('artist_id', id),
-      supabase.from('education_training').select('*').eq('artist_id', id),
-      supabase.from('media_assets').select('*').eq('artist_id', id)
-    ]);
-
-    // Transform data with safe defaults and proper typing
+    // Transform data with safe defaults
+    const { special_skills, language_skills, tools_software, ...artistData } = artist;
     return {
-      ...artist,
-      category: (artist.category as Artist['category']) || 'actor',
-      experience_level: (artist.experience_level as Artist['experience_level']) || 'beginner',
-      special_skills: skillsData.status === 'fulfilled' ? skillsData.value.data || [] : [],
-      projects: projectsData.status === 'fulfilled' ? projectsData.value.data || [] : [],
-      education_training: educationData.status === 'fulfilled' ? educationData.value.data || [] : [],
-      media_assets: mediaData.status === 'fulfilled' ? mediaData.value.data || [] : [],
-      language_skills: [],
-      tools_software: [],
-      skills: skillsData.status === 'fulfilled' ? 
-        (skillsData.value.data || []).map((s: any) => s.skill) : []
+      ...artistData,
+      special_skills: special_skills || [],
+      language_skills: language_skills || [],
+      tools_software: tools_software || [],
+      projects: artistData.projects || [],
+      education_training: artistData.education_training || [],
+      media_assets: artistData.media_assets || [],
+      skills: special_skills?.map((s: any) => s.skill) || []
     };
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
-    // Don't throw error, return null to let the UI handle gracefully
-    return null;
+    throw error;
   }
 };

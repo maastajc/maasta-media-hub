@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -91,37 +90,6 @@ const Profile = () => {
     );
   }
 
-  if (isLoading || isInitializing) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <LoadingSpinner size="lg" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Loading Your Profile</h3>
-              <p className="text-gray-600">Setting up your workspace...</p>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Handle case where profile data is null but user exists (new user or profile creation needed)
-  if (!profileData) {
-    console.log('Profile data is null, showing welcome for new user');
-    return (
-      <NewUserWelcome
-        userName={user.email?.split('@')[0] || 'New User'}
-        onGetStarted={() => {
-          setIsEditingProfile(true);
-        }}
-      />
-    );
-  }
-
   if (isError) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -138,7 +106,23 @@ const Profile = () => {
     );
   }
 
-  if (showWelcome && (!profileData.full_name || profileData.full_name === 'New User')) {
+  if (!profileData || !profileData.id) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2 text-red-500">Profile not found</h2>
+            <p className="text-gray-600">We couldn't find your profile information. Please try refreshing, or contact support if the problem persists.</p>
+            <button onClick={() => window.location.reload()}>Reload Page</button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (showWelcome && !isLoading && !isInitializing) {
     return (
       <NewUserWelcome
         userName={user.email?.split('@')[0] || 'New User'}
@@ -147,6 +131,24 @@ const Profile = () => {
           setIsEditingProfile(true);
         }}
       />
+    );
+  }
+
+  if (isLoading || isInitializing) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <LoadingSpinner size="lg" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Loading Your Profile</h3>
+              <p className="text-gray-600">Setting up your workspace...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
@@ -199,3 +201,4 @@ const Profile = () => {
 };
 
 export default Profile;
+// END

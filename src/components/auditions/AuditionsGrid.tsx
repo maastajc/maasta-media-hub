@@ -22,16 +22,56 @@ interface AuditionData {
   age_range: string;
   cover_image_url: string;
   tags: string[];
-  creator_id: string;
+  creator_profile: {
+    full_name: string;
+  };
   created_at: string;
 }
 
 interface AuditionsGridProps {
   auditions: AuditionData[];
-  creators: Record<string, string>;
+  loading: boolean;
+  error: string | null;
+  onClearFilters: () => void;
+  onRetry: () => void;
 }
 
-const AuditionsGrid = ({ auditions, creators }: AuditionsGridProps) => {
+const AuditionsGrid = ({ auditions, loading, error, onClearFilters, onRetry }: AuditionsGridProps) => {
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">Loading auditions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <AlertCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription>
+          <div className="flex flex-col gap-3">
+            <p className="text-red-800">Unable to load auditions: {error}</p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={onRetry}
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (auditions.length === 0) {
     return (
       <div className="text-center py-12">
@@ -79,7 +119,7 @@ const AuditionsGrid = ({ auditions, creators }: AuditionsGridProps) => {
               <div className="space-y-3">
                 <div className="flex items-center text-sm text-gray-600">
                   <User className="h-4 w-4 mr-2" />
-                  {creators[audition.creator_id] || 'Unknown Creator'}
+                  {audition.creator_profile?.full_name || 'Unknown Creator'}
                 </div>
                 
                 {audition.location && (

@@ -1,76 +1,64 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
+import ArtistFilters from "@/components/artists/ArtistFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+
+interface AuditionData {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  audition_date: string;
+  deadline: string;
+  compensation: string;
+  requirements: string;
+  status: string;
+  category: string;
+  experience_level: string;
+  gender: string;
+  age_range: string;
+  cover_image_url: string;
+  tags: string[];
+  creator_profile: {
+    full_name: string;
+  };
+  created_at: string;
+}
 
 const Auditions = () => {
-  const [searchParams] = useSearchParams();
-  const [auditions, setAuditions] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [auditions, setAuditions] = useState<AuditionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creators, setCreators] = useState<Record<string, string>>({});
-
-  // Get filter values from URL params
-  const category = searchParams.get('category') || '';
-  const location = searchParams.get('location') || '';
-  const experienceLevel = searchParams.get('experience') || '';
-  const searchTerm = searchParams.get('search') || '';
+  const [currentTab, setCurrentTab] = useState("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const fetchAuditions = async () => {
     try {
+      console.log('Fetching auditions...');
       setLoading(true);
       setError(null);
-      
-      console.log('Fetching auditions with filters:', { category, location, experienceLevel, searchTerm });
 
-      // Add timeout to prevent hanging
+      // Reduced timeout for better UX
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout - please try again')), 10000)
+        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 8000)
       );
 
-      let query = supabase
+      const fetchPromise = supabase
         .from('auditions')
         .select(`
-          id,
-          title,
-          description,
-          location,
-          audition_date,
-          deadline,
-          status,
-          creator_id,
-          category,
-          experience_level,
-          compensation,
-          cover_image_url,
-          created_at
+          *
         `)
         .eq('status', 'open')
-        .order('created_at', { ascending: false })
-        .limit(50); // Limit for better performance
-
-      // Apply filters
-      if (category) {
-        query = query.eq('category', category);
-      }
-      if (location) {
-        query = query.ilike('location', `%${location}%`);
-      }
-      if (experienceLevel) {
-        query = query.eq('experience_level', experienceLevel);
-      }
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-
-      const fetchPromise = query;
+        .order('created_at', { ascending: false });
 
       const { data, error: fetchError } = await Promise.race([
         fetchPromise,
@@ -78,46 +66,53 @@ const Auditions = () => {
       ]) as any;
 
       if (fetchError) {
-        console.error('Error fetching auditions:', fetchError);
-        throw new Error(`Failed to load auditions: ${fetchError.message}`);
+        console.error('Database error fetching auditions:', fetchError);
+        throw new Error(`Database error: ${fetchError.message}`);
       }
 
       if (!data) {
-        console.log('No auditions found');
+        console.log('No auditions data returned');
         setAuditions([]);
         return;
       }
 
-      console.log(`Successfully fetched ${data.length} auditions`);
-      setAuditions(data);
-
-      // Fetch creator names in batch for better performance
-      const creatorIds: string[] = Array.from(
-        new Set(
-          data
-            .map((audition: any) => audition.creator_id)
-            .filter((id: any): id is string => typeof id === 'string' && id.length > 0)
-        )
+      // Fetch creator details separately for each audition
+      const auditionsWithCreators = await Promise.all(
+        data.map(async (audition: any) => {
+          let creatorName = 'Unknown Creator';
+          
+          if (audition.creator_id) {
+            try {
+              const { data: creatorData } = await supabase
+                .from('artist_details')
+                .select('full_name')
+                .eq('id', audition.creator_id)
+                .single();
+              
+              if (creatorData?.full_name) {
+                creatorName = creatorData.full_name;
+              }
+            } catch (error) {
+              console.warn(`Could not fetch creator for audition ${audition.id}:`, error);
+            }
+          }
+          
+          return {
+            ...audition,
+            tags: audition.tags || [],
+            creator_profile: {
+              full_name: creatorName
+            }
+          };
+        })
       );
-      
-      if (creatorIds.length > 0) {
-        const { data: creators } = await supabase
-          .from('artist_details')
-          .select('id, full_name')
-          .in('id', creatorIds);
 
-        if (creators) {
-          const creatorsMap = creators.reduce((acc: Record<string, string>, creator: any) => {
-            acc[creator.id] = creator.full_name || 'Unknown Creator';
-            return acc;
-          }, {});
-          setCreators(creatorsMap);
-        }
-      }
-
+      console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
+      setAuditions(auditionsWithCreators);
     } catch (error: any) {
-      console.error('Error in fetchAuditions:', error);
-      setError(error.message || 'Failed to load auditions. Please try again.');
+      console.error('Error fetching auditions:', error);
+      setError(error.message || 'Failed to load auditions');
+      setAuditions([]);
     } finally {
       setLoading(false);
     }
@@ -125,44 +120,66 @@ const Auditions = () => {
 
   useEffect(() => {
     fetchAuditions();
-  }, [category, location, experienceLevel, searchTerm]);
+  }, []);
+
+  const filters = {
+    category: searchParams.get('category') || '',
+    location: searchParams.get('location') || '',
+    experience: searchParams.get('experience') || '',
+    gender: searchParams.get('gender') || '',
+    ageRange: searchParams.get('ageRange') || '',
+  };
+
+  const filteredAuditions = auditions.filter(audition => {
+    if (filters.category && audition.category !== filters.category) return false;
+    if (filters.location && !audition.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    if (filters.experience && audition.experience_level !== filters.experience) return false;
+    if (filters.gender && audition.gender !== filters.gender) return false;
+    if (filters.ageRange && audition.age_range !== filters.ageRange) return false;
+    
+    // Filter by selected tags
+    if (selectedTags.length > 0) {
+      const hasSelectedTag = selectedTags.some(tag => 
+        audition.tags?.includes(tag)
+      );
+      if (!hasSelectedTag) return false;
+    }
+    
+    return true;
+  });
+
+  // Extract unique tags from auditions
+  const uniqueTags = Array.from(
+    new Set(auditions.flatMap(audition => audition.tags || []))
+  ).filter(Boolean);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const handleRetry = () => {
+    fetchAuditions();
+  };
+
+  const clearFilters = () => {
+    setSearchParams(new URLSearchParams());
+    setSelectedTags([]);
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center space-y-4">
+          <div className="text-center">
             <LoadingSpinner size="lg" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Loading Auditions</h3>
-              <p className="text-gray-600">Finding the best opportunities for you...</p>
-            </div>
+            <p className="mt-4 text-gray-600">Loading auditions...</p>
+            <p className="mt-2 text-sm text-gray-500">This may take a moment</p>
           </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <Alert className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="mt-2">
-              <strong>Unable to load auditions</strong>
-              <p className="mt-1">{error}</p>
-              <button 
-                onClick={fetchAuditions}
-                className="mt-3 px-4 py-2 bg-maasta-purple text-white rounded hover:bg-maasta-purple/90 transition-colors"
-              >
-                Try Again
-              </button>
-            </AlertDescription>
-          </Alert>
         </main>
         <Footer />
       </div>
@@ -174,8 +191,64 @@ const Auditions = () => {
       <Navbar />
       <main className="flex-grow">
         <AuditionsHeader />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <AuditionsGrid auditions={auditions} creators={creators} />
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <div className="flex items-center justify-between">
+                  <span>Error loading auditions: {error}</span>
+                  <Button 
+                    onClick={handleRetry}
+                    size="sm"
+                    variant="outline"
+                    className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            <aside className="lg:w-64 flex-shrink-0">
+              <ArtistFilters 
+                currentTab={currentTab}
+                setCurrentTab={setCurrentTab}
+                uniqueTags={uniqueTags}
+                selectedTags={selectedTags}
+                toggleTag={toggleTag}
+                isLoading={loading}
+              />
+            </aside>
+            
+            <div className="flex-1">
+              <AuditionsGrid 
+                auditions={filteredAuditions} 
+                loading={loading}
+                error={error}
+                onClearFilters={clearFilters}
+                onRetry={handleRetry}
+              />
+              
+              {!loading && !error && filteredAuditions.length === 0 && auditions.length > 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
+                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
+                  <Button 
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Clear All Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
       <Footer />
