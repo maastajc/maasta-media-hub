@@ -1,5 +1,6 @@
 
 import React from "react";
+import STATES from "@/utils/states";
 
 interface StateDropdownProps {
   value: string;
@@ -7,15 +8,11 @@ interface StateDropdownProps {
   onChange: (value: string) => void;
 }
 
-const STATE_OPTIONS = {
-  India: [ "Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "West Bengal" ],
-  "United States": [ "California", "Texas", "New York", "Florida", "Illinois" ],
-  "United Kingdom": [ "England", "Scotland", "Wales", "Northern Ireland" ],
-  Canada: [ "Ontario", "Quebec", "Alberta", "British Columbia" ]
-};
-
+/**
+ * Select dropdown for all states in selected country (no manual typing).
+ */
 const StateDropdown: React.FC<StateDropdownProps> = ({ value, country, onChange }) => {
-  const states = STATE_OPTIONS[country] || [];
+  const states = STATES[country] || [];
   return (
     <select
       className="w-full border rounded p-2"
@@ -23,6 +20,7 @@ const StateDropdown: React.FC<StateDropdownProps> = ({ value, country, onChange 
       onChange={e => onChange(e.target.value)}
       required
       disabled={!country}
+      autoComplete="off"
     >
       <option value="">Select state</option>
       {states.map((s) => (
@@ -33,4 +31,4 @@ const StateDropdown: React.FC<StateDropdownProps> = ({ value, country, onChange 
 };
 
 export default StateDropdown;
-export { STATE_OPTIONS };
+export { STATES as STATE_OPTIONS };

@@ -1,19 +1,15 @@
 
 import React from "react";
+import COUNTRIES from "@/utils/countries";
 
 interface CountryDropdownProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-const COUNTRY_OPTIONS = [
-  { code: "IN", name: "India" },
-  { code: "US", name: "United States" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "CA", name: "Canada" },
-  // Add more countries as needed for your app
-];
-
+/**
+ * Select dropdown for all countries (no manual typing allowed).
+ */
 const CountryDropdown: React.FC<CountryDropdownProps> = ({ value, onChange }) => {
   return (
     <select
@@ -21,9 +17,10 @@ const CountryDropdown: React.FC<CountryDropdownProps> = ({ value, onChange }) =>
       value={value}
       onChange={e => onChange(e.target.value)}
       required
+      autoComplete="off"
     >
       <option value="">Select country</option>
-      {COUNTRY_OPTIONS.map((c) => (
+      {COUNTRIES.map((c) => (
         <option key={c.code} value={c.name}>{c.name}</option>
       ))}
     </select>
@@ -31,4 +28,4 @@ const CountryDropdown: React.FC<CountryDropdownProps> = ({ value, onChange }) =>
 };
 
 export default CountryDropdown;
-export { COUNTRY_OPTIONS };
+export { COUNTRIES as COUNTRY_OPTIONS };
