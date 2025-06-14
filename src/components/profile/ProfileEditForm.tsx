@@ -14,20 +14,43 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Switch } from "@/components/ui/switch";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import { toast } from "sonner";
+import CountryDropdown, { COUNTRY_OPTIONS } from "./CountryDropdown";
+import StateDropdown, { STATE_OPTIONS } from "./StateDropdown";
+import CityDropdown, { CITY_OPTIONS } from "./CityDropdown";
+
+const MAX_BIO_LENGTH = 250;
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
-  bio: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  phone_number: z.string().optional(),
-  date_of_birth: z.string().optional(),
+  email: z.string().email("Invalid email address"),
+  bio: z.string().max(MAX_BIO_LENGTH, "Bio cannot exceed 250 characters").optional(),
+  city: z.string(), // Required by dropdown
+  state: z.string(), // Required by dropdown
+  country: z.string(), // Required by dropdown
+  phone_number: z.string().refine(
+    (val) => /^\+\d{1,4} \d{10,15}$/.test(val),
+    { message: "Enter number as +<country_code> <10-15 digit number>" }
+  ),
+  date_of_birth: z.string().refine(
+    (val) => {
+      const d = new Date(val);
+      const now = new Date();
+      const min = new Date(now.getFullYear() - 100, now.getMonth(), now.getDate());
+      const max = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate());
+      return d >= min && d <= max;
+    },
+    { message: "You must be between 10 and 100 years old; no future dates." }
+  ),
   gender: z.string().optional(),
   willing_to_relocate: z.boolean().default(false),
   work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
-  category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
-  experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).default("beginner"),
+  category: z.enum([
+    "actor","director","cinematographer","musician","editor",
+    "art_director","stunt_coordinator","producer","writer","other"
+  ]).optional(),
+  experience_level: z.enum([
+    "beginner","fresher","intermediate","expert","veteran"
+  ]).default("beginner"),
   years_of_experience: z.number().min(0).optional(),
   association_membership: z.string().optional(),
 });
@@ -46,6 +69,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
+  const [bioChars, setBioChars] = useState(profileData?.bio?.length ?? 0);
+  const [emailError, setEmailError] = useState(""); // for real-time error
 
   // Get signup data from user metadata or existing profile
   const getSignupFullName = () => {
@@ -69,6 +94,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   // Safe default values for new users
   const defaultValues = {
     full_name: getSignupFullName(),
+    email: getSignupEmail(),
     bio: profileData?.bio || "",
     city: profileData?.city || "",
     state: profileData?.state || "",
@@ -88,6 +114,35 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     resolver: zodResolver(profileSchema),
     defaultValues,
   });
+
+  // Drop and bind location controlled values:
+  const [country, setCountry] = useState(profileData?.country || "");
+  const [state, setState] = useState(profileData?.state || "");
+  const [city, setCity] = useState(profileData?.city || "");
+
+  // Email uniqueness check
+  const checkEmailUnique = async (email: string) => {
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    if (profileData?.email === email) {
+      setEmailError("");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("artist_details")
+      .select("id")
+      .eq("email", email)
+      .neq("id", userId)
+      .maybeSingle();
+    if (data) setEmailError("Email already in use");
+    else setEmailError("");
+  };
+
+  useEffect(() => {
+    if (!COUNTRY_OPTIONS.some(opt => opt.name === country)) setCountry("");
+    if (!country || !(STATE_OPTIONS as any)[country]?.includes(state)) setState("");
+    if (!country || !state || !(CITY_OPTIONS as any)[country]?.[state]?.includes(city)) setCity("");
+  }, [country, state, city]);
 
   const onSubmit = async (values: ProfileFormValues) => {
     if (!userId || !user?.email) {
@@ -177,34 +232,30 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6"
+              autoComplete="off"
+            >
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="full_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name*</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Email Display (Read-only) */}
+                {/* Full name stays the same */}
+                {/* Email: show error, live check */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none">Email</label>
-                  <Input 
-                    value={getSignupEmail()} 
-                    disabled 
-                    className="bg-gray-50 text-gray-600"
+                  <Input
+                    type="email"
+                    value={form.watch("email")}
+                    className={`bg-gray-50 text-gray-600 ${emailError ? "border-red-500" : ""}`}
+                    onBlur={e => checkEmailUnique(e.target.value)}
+                    onChange={(e) => form.setValue("email", e.target.value)}
+                    disabled={!!profileData?.email}
                   />
+                  {emailError && <p className="text-xs text-red-500">{emailError}</p>}
                   <p className="text-xs text-gray-500">Email cannot be changed</p>
                 </div>
 
+                {/* Phone Number with strict formatting */}
                 <FormField
                   control={form.control}
                   name="phone_number"
@@ -212,13 +263,32 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your phone number" {...field} />
+                        <Input
+                          placeholder="+91 9876543210"
+                          {...field}
+                          pattern="^\+\d{1,4} \d{10,15}$"
+                          maxLength={20}
+                          onInput={e => {
+                            // allow "+" at first, then only numbers, one space mandatory after code
+                            let v = (e.target as HTMLInputElement).value;
+                            v = v.replace(/[^\d+ ]/g, "");
+                            // No more than one space, must after country code
+                            v = v.replace(/ +/g, " ");
+                            if (v.indexOf(" ") > -1) {
+                              const [code, ...nums] = v.split(" ");
+                              v = code.slice(0, 5) + " " + nums.join("").slice(0, 15);
+                            }
+                            (e.target as HTMLInputElement).value = v;
+                            field.onChange(v);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* DOB field, strict validation on input */}
                 <FormField
                   control={form.control}
                   name="date_of_birth"
@@ -226,13 +296,30 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Date of Birth</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input
+                          type="date"
+                          {...field}
+                          onChange={e => {
+                            field.onChange(e.target.value);
+                            // DOB validation will be handled by schema, extra feedback below on blur
+                          }}
+                          max={(() => {
+                            const d = new Date();
+                            d.setFullYear(d.getFullYear() - 10);
+                            return d.toISOString().split("T")[0];
+                          })()}
+                          min={(() => {
+                            const d = new Date();
+                            d.setFullYear(d.getFullYear() - 100);
+                            return d.toISOString().split("T")[0];
+                          })()}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                {/* Gender */}
                 <FormField
                   control={form.control}
                   name="gender"
@@ -258,16 +345,26 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 />
               </div>
 
-              {/* Location */}
+              {/* LOCATION FIELDS as dropdowns */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
-                  name="city"
+                  name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City</FormLabel>
+                      <FormLabel>Country</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your city" {...field} />
+                        <CountryDropdown
+                          value={country}
+                          onChange={(val) => {
+                            setCountry(val);
+                            setState("");
+                            setCity("");
+                            form.setValue("country", val);
+                            form.setValue("state", "");
+                            form.setValue("city", "");
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -281,7 +378,16 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>State</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your state" {...field} />
+                        <StateDropdown
+                          country={country}
+                          value={state}
+                          onChange={(val) => {
+                            setState(val);
+                            setCity("");
+                            form.setValue("state", val);
+                            form.setValue("city", "");
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -290,12 +396,20 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
                 <FormField
                   control={form.control}
-                  name="country"
+                  name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Country</FormLabel>
+                      <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your country" {...field} />
+                        <CityDropdown
+                          country={country}
+                          state={state}
+                          value={city}
+                          onChange={(val) => {
+                            setCity(val);
+                            form.setValue("city", val);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -303,7 +417,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 />
               </div>
 
-              {/* Bio */}
+              {/* BIO with live character counter, truncate on limit */}
               <FormField
                 control={form.control}
                 name="bio"
@@ -311,11 +425,25 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   <FormItem>
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Tell us about yourself..." 
-                        className="min-h-24"
-                        {...field} 
-                      />
+                      <div className="relative">
+                        <Textarea
+                          placeholder="Tell us about yourself..."
+                          maxLength={MAX_BIO_LENGTH}
+                          {...field}
+                          onChange={e => {
+                            if (e.target.value.length <= MAX_BIO_LENGTH) {
+                              field.onChange(e.target.value);
+                              setBioChars(e.target.value.length);
+                            } else {
+                              field.onChange(e.target.value.slice(0, MAX_BIO_LENGTH));
+                            }
+                          }}
+                          className="min-h-24 pr-12"
+                        />
+                        <span className="absolute bottom-2 right-3 text-xs text-gray-500">
+                          {bioChars} / {MAX_BIO_LENGTH}
+                        </span>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
