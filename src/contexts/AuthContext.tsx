@@ -25,28 +25,28 @@ const ensureProfileExists = async (userId: string): Promise<void> => {
   try {
     console.log('Ensuring profile exists for user:', userId);
     
-    // Check if artist_details record exists
-    const { data: existingArtist, error: checkError } = await supabase
-      .from('artist_details')
+    // Check if profile record exists
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
       .select('id')
       .eq('id', userId)
       .maybeSingle();
 
     if (checkError) {
-      console.error('Error checking artist_details:', checkError);
+      console.error('Error checking profile:', checkError);
       throw checkError;
     }
 
     // If no record exists, create one from auth user data
-    if (!existingArtist) {
-      console.log('Creating missing artist_details record for user:', userId);
+    if (!existingProfile) {
+      console.log('Creating missing profile record for user:', userId);
       
       // Get user data from auth
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       const { error: insertError } = await supabase
-        .from('artist_details')
+        .from('profiles')
         .insert({
           id: userId,
           full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'New User',
@@ -59,11 +59,11 @@ const ensureProfileExists = async (userId: string): Promise<void> => {
         });
 
       if (insertError) {
-        console.error('Error creating artist_details record:', insertError);
+        console.error('Error creating profile record:', insertError);
         throw insertError;
       }
       
-      console.log('Successfully created artist_details record');
+      console.log('Successfully created profile record');
     }
   } catch (error: any) {
     console.error('Error in ensureProfileExists:', error);

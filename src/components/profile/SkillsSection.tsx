@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,55 +98,11 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     }
   };
 
-  const ensureArtistDetailsExists = async () => {
-    if (!userId) return;
-
-    try {
-      const { data: existingArtist, error: checkError } = await supabase
-        .from('artist_details')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking artist_details:', checkError);
-        throw checkError;
-      }
-
-      if (!existingArtist) {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
-
-        const { error: insertError } = await supabase
-          .from('artist_details')
-          .insert({
-            id: userId,
-            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'New User',
-            email: user?.email || '',
-            role: 'artist',
-            category: 'actor',
-            experience_level: 'beginner',
-            years_of_experience: 0,
-            status: 'active'
-          });
-
-        if (insertError) {
-          console.error('Error creating artist_details record:', insertError);
-          throw insertError;
-        }
-      }
-    } catch (error: any) {
-      console.error('Error in ensureArtistDetailsExists:', error);
-      throw error;
-    }
-  };
-
   const handleAddTool = async () => {
     if (!newTool.trim() || !userId) return;
 
     try {
       setIsAddingTool(true);
-      await ensureArtistDetailsExists();
       await saveTool({ tool_name: newTool.trim() });
       setNewTool("");
       onUpdate();

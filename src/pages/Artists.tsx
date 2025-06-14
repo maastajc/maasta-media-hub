@@ -49,7 +49,7 @@ const Artists = () => {
       );
 
       const fetchPromise = supabase
-        .from('artist_details')
+        .from('profiles')
         .select(`
           id,
           full_name,
@@ -64,7 +64,7 @@ const Artists = () => {
           experience_level,
           years_of_experience,
           verified,
-          special_skills!fk_special_skills_artist_details (skill)
+          special_skills (skill)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
