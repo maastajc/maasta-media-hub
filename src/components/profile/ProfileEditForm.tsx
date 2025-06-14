@@ -119,8 +119,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Clean phone number: remove spaces and hyphens, keep + and digits
       const cleanedPhoneNumber = values.phone_number ? values.phone_number.replace(/[^\d+]/g, '') : null;
 
-      // Prepare data for artist_details table with all required fields
-      const artistDetailsData = {
+      // Prepare data for profiles table with all required fields
+      const profileUpdateData = {
         id: userId,
         full_name: values.full_name,
         email: getSignupEmail(), // Use signup email
@@ -141,16 +141,16 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         updated_at: new Date().toISOString()
       };
 
-      // Update artist details
-      const { error: artistError } = await supabase
-        .from("artist_details")
-        .upsert(artistDetailsData, {
+      // Update profile
+      const { error: upsertError } = await supabase
+        .from("profiles")
+        .upsert(profileUpdateData, {
           onConflict: 'id'
         });
 
-      if (artistError) {
-        console.error('Error updating artist_details:', artistError);
-        throw artistError;
+      if (upsertError) {
+        console.error('Error updating profile:', upsertError);
+        throw upsertError;
       }
 
       toast.success("Profile updated successfully!");
