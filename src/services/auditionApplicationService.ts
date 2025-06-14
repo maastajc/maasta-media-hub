@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AuditionApplication {
@@ -24,6 +25,9 @@ export interface AuditionApplication {
     profile_picture_url: string | null;
     category: string;
     experience_level: string;
+    personal_website?: string | null;
+    linkedin?: string | null;
+    youtube_vimeo?: string | null;
   };
 }
 
@@ -81,13 +85,16 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
           creator_id,
           status
         ),
-        artist_details!inner (
+        artist:profiles!inner (
           id,
           full_name,
           email,
           profile_picture_url,
           category,
-          experience_level
+          experience_level,
+          personal_website,
+          linkedin,
+          youtube_vimeo
         )
       `)
       .eq('auditions.creator_id', creatorId)
@@ -99,7 +106,7 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
     }
 
     console.log(`Successfully fetched ${applications?.length || 0} applications`);
-    return applications || [];
+    return (applications as any) || [];
   } catch (error: any) {
     console.error('Error in fetchApplicationsForCreator:', error);
     throw error;
