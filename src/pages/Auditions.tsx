@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -10,6 +11,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 interface AuditionData {
   id: string;
@@ -49,16 +51,34 @@ const Auditions = () => {
 
       // Reduced timeout for better UX
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 8000)
+        setTimeout(() => reject(new Error('Connection timeout - please check your connection')), 5000)
       );
 
+      // Simplified query for better performance
       const fetchPromise = supabase
         .from('auditions')
         .select(`
-          *
+          id,
+          title,
+          description,
+          location,
+          audition_date,
+          deadline,
+          compensation,
+          requirements,
+          status,
+          category,
+          experience_level,
+          gender,
+          age_range,
+          cover_image_url,
+          tags,
+          creator_id,
+          created_at
         `)
         .eq('status', 'open')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // Limit for better performance
 
       const { data, error: fetchError } = await Promise.race([
         fetchPromise,
@@ -67,7 +87,7 @@ const Auditions = () => {
 
       if (fetchError) {
         console.error('Database error fetching auditions:', fetchError);
-        throw new Error(`Database error: ${fetchError.message}`);
+        throw new Error(`Failed to load auditions: ${fetchError.message}`);
       }
 
       if (!data) {
@@ -76,43 +96,32 @@ const Auditions = () => {
         return;
       }
 
-      // Fetch creator details separately for each audition
-      const auditionsWithCreators = await Promise.all(
-        data.map(async (audition: any) => {
-          let creatorName = 'Unknown Creator';
-          
-          if (audition.creator_id) {
-            try {
-              const { data: creatorData } = await supabase
-                .from('artist_details')
-                .select('full_name')
-                .eq('id', audition.creator_id)
-                .single();
-              
-              if (creatorData?.full_name) {
-                creatorName = creatorData.full_name;
-              }
-            } catch (error) {
-              console.warn(`Could not fetch creator for audition ${audition.id}:`, error);
-            }
-          }
-          
-          return {
-            ...audition,
-            tags: audition.tags || [],
-            creator_profile: {
-              full_name: creatorName
-            }
-          };
-        })
-      );
+      // Fetch creator names in batch for better performance
+      const creatorIds = [...new Set(data.map((a: any) => a.creator_id).filter(Boolean))];
+      const { data: creators } = await supabase
+        .from('artist_details')
+        .select('id, full_name')
+        .in('id', creatorIds);
+
+      const creatorMap = new Map(creators?.map(c => [c.id, c.full_name]) || []);
+
+      const auditionsWithCreators = data.map((audition: any) => ({
+        ...audition,
+        tags: audition.tags || [],
+        creator_profile: {
+          full_name: creatorMap.get(audition.creator_id) || 'Unknown Creator'
+        }
+      }));
 
       console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
       setAuditions(auditionsWithCreators);
+      toast.success(`Loaded ${auditionsWithCreators.length} auditions`);
     } catch (error: any) {
       console.error('Error fetching auditions:', error);
-      setError(error.message || 'Failed to load auditions');
+      const errorMessage = error.message || 'Failed to load auditions';
+      setError(errorMessage);
       setAuditions([]);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -161,10 +170,6 @@ const Auditions = () => {
     );
   };
 
-  const handleRetry = () => {
-    fetchAuditions();
-  };
-
   const clearFilters = () => {
     setSearchParams(new URLSearchParams());
     setSelectedTags([]);
@@ -178,7 +183,6 @@ const Auditions = () => {
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-gray-600">Loading auditions...</p>
-            <p className="mt-2 text-sm text-gray-500">This may take a moment</p>
           </div>
         </main>
         <Footer />
@@ -200,7 +204,7 @@ const Auditions = () => {
                 <div className="flex items-center justify-between">
                   <span>Error loading auditions: {error}</span>
                   <Button 
-                    onClick={handleRetry}
+                    onClick={fetchAuditions}
                     size="sm"
                     variant="outline"
                     className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
@@ -231,7 +235,7 @@ const Auditions = () => {
                 loading={loading}
                 error={error}
                 onClearFilters={clearFilters}
-                onRetry={handleRetry}
+                onRetry={fetchAuditions}
               />
               
               {!loading && !error && filteredAuditions.length === 0 && auditions.length > 0 && (

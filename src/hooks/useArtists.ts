@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchAllArtists } from '@/services/artistService';
+import { fetchFeaturedArtists } from '@/services/optimizedArtistService';
 import { Artist } from '@/types/artist';
 
 interface UseArtistsOptions {
@@ -18,15 +18,15 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const query = useQuery({
     queryKey: ['artists'],
-    queryFn: fetchAllArtists,
+    queryFn: () => fetchFeaturedArtists(50), // Fetch more artists but with optimized query
     enabled,
     staleTime,
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
       console.error(`Artists fetch attempt ${failureCount + 1} failed:`, error);
-      return failureCount < 2; // Retry up to 2 times
+      return failureCount < 1; // Reduce retry attempts
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Faster retries
   });
 
   // Filter and search functionality
@@ -47,8 +47,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         const searchTerm = filters.search.toLowerCase();
         const matchesName = artist.full_name?.toLowerCase().includes(searchTerm);
         const matchesBio = artist.bio?.toLowerCase().includes(searchTerm);
-        const matchesSkills = artist.special_skills?.some(skill => 
-          skill.skill?.toLowerCase().includes(searchTerm)
+        const matchesSkills = artist.skills?.some(skill => 
+          skill.toLowerCase().includes(searchTerm)
         );
         
         if (!matchesName && !matchesBio && !matchesSkills) {
