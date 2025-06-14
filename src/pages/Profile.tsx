@@ -58,33 +58,87 @@ const Profile = () => {
 
   useEffect(() => {
     if (!user) {
+      // Debug: user not logged in!
+      console.error("[Profile page] No user found, redirecting to sign-in.");
       navigate("/sign-in");
       return;
     }
 
-    // Check if this is a new user (no profile data after loading)
     if (!isLoading && !isError && (!rawProfileData || !rawProfileData.full_name || rawProfileData.full_name === 'New User')) {
-      console.log('New user detected, showing welcome flow');
+      console.warn("[Profile page] No profile data found or new user:", rawProfileData);
       setShowWelcome(true);
     }
-    
     setIsInitializing(false);
   }, [user, navigate, isLoading, isError, rawProfileData]);
 
-  // Handle profile loading errors
+  // Extra debugging for errors
   useEffect(() => {
-    if (isError && error) {
-      console.error("Error loading profile:", error);
-      toast({
-        title: "Profile Loading Error",
-        description: "We had trouble loading your profile. Please try refreshing the page.",
-        variant: "destructive",
-      });
+    if (isError || !user) {
+      console.error("[Profile page] Error status detected:", error, "user:", user);
     }
-  }, [isError, error, toast]);
+    if (error) {
+      console.error("[Profile page] Profile load error:", error);
+    }
+  }, [isError, error, user]);
+  
+  // Additional: check profile data safety
+  useEffect(() => {
+    if (!isLoading && profileData) {
+      // Debug log safe profile
+      console.log("[Profile page] Using profileData:", profileData);
+      if (!profileData.id) {
+        console.warn("[Profile page] WARNING: profileData.id missing!", profileData);
+      }
+    }
+  }, [isLoading, profileData]);
 
+  // If no user
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2 text-red-500">No user session</h2>
+            <p className="text-gray-600">Please sign in to view your profile.</p>
+            <Button onClick={() => navigate("/sign-in")}>Sign In</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  // If error loading profile
+  if (isError) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2 text-red-500">Error loading profile</h2>
+            <p className="text-gray-600">{typeof error === 'object' && error && "message" in error ? (error as any).message : String(error)}</p>
+            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  // If profileData is undefined/null or missing required props
+  if (!profileData || !profileData.id) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2 text-red-500">Profile not found</h2>
+            <p className="text-gray-600">We couldn't find your profile information. Please try refreshing, or contact support if the problem persists.</p>
+            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   // Show welcome flow for new users
