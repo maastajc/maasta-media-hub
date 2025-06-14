@@ -56,44 +56,51 @@ const Profile = () => {
   // Get safe profile data with defaults
   const profileData = useSafeProfile(rawProfileData, user?.id);
 
+  // Improved Debugging: Log critical variables during render
+  if (typeof window !== "undefined") {
+    console.log("[Profile Render] user:", user);
+    console.log("[Profile Render] isError:", isError);
+    console.log("[Profile Render] isLoading:", isLoading);
+    console.log("[Profile Render] error:", error);
+    console.log("[Profile Render] profileData:", profileData);
+  }
+
   useEffect(() => {
     if (!user) {
-      // Debug: user not logged in!
-      console.error("[Profile page] No user found, redirecting to sign-in.");
+      console.error("[Profile page - useEffect] No user found, redirecting to sign-in.");
       navigate("/sign-in");
       return;
     }
 
     if (!isLoading && !isError && (!rawProfileData || !rawProfileData.full_name || rawProfileData.full_name === 'New User')) {
-      console.warn("[Profile page] No profile data found or new user:", rawProfileData);
+      console.warn("[Profile page - useEffect] No profile data found or new user:", rawProfileData);
       setShowWelcome(true);
     }
     setIsInitializing(false);
   }, [user, navigate, isLoading, isError, rawProfileData]);
 
-  // Extra debugging for errors
   useEffect(() => {
     if (isError || !user) {
-      console.error("[Profile page] Error status detected:", error, "user:", user);
+      console.error("[Profile page - useEffect] Error status detected:", error, "user:", user);
     }
     if (error) {
-      console.error("[Profile page] Profile load error:", error);
+      console.error("[Profile page - useEffect] Profile load error:", error);
     }
   }, [isError, error, user]);
   
-  // Additional: check profile data safety
   useEffect(() => {
     if (!isLoading && profileData) {
-      // Debug log safe profile
-      console.log("[Profile page] Using profileData:", profileData);
+      console.log("[Profile page - useEffect] Using profileData:", profileData);
       if (!profileData.id) {
-        console.warn("[Profile page] WARNING: profileData.id missing!", profileData);
+        console.warn("[Profile page - useEffect] WARNING: profileData.id missing!", profileData);
       }
     }
   }, [isLoading, profileData]);
 
-  // If no user
+  // Extra: alert the user as well as log when something vital is missing
+  // No user
   if (!user) {
+    console.error("[Profile page - render] No user object detected, rendering sign-in screen.");
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -108,8 +115,9 @@ const Profile = () => {
       </div>
     );
   }
-  // If error loading profile
+  // Error state
   if (isError) {
+    console.error("[Profile page - render] Profile error detected, error:", error);
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -124,8 +132,9 @@ const Profile = () => {
       </div>
     );
   }
-  // If profileData is undefined/null or missing required props
+  // No profile data (or missing id)
   if (!profileData || !profileData.id) {
+    console.error("[Profile page - render] Profile data missing or no id, profileData:", profileData);
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
