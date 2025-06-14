@@ -10,6 +10,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchApplicationsForArtist } from "@/services/auditionApplicationService";
+import { AuditionApplication } from "@/services/auditionApplicationService";
 
 interface AuditionData {
   id: string;
@@ -62,6 +65,22 @@ const Auditions = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const { user } = useAuth();
+  const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
+
+  useEffect(() => {
+    const fetchUserApplications = async () => {
+      if (user?.id) {
+        try {
+          const applications = await fetchApplicationsForArtist(user.id);
+          setUserApplications(applications);
+        } catch (err) {
+          console.error("Failed to fetch user applications:", err);
+        }
+      }
+    };
+    fetchUserApplications();
+  }, [user]);
 
   const fetchAuditions = async () => {
     try {
@@ -237,6 +256,10 @@ const Auditions = () => {
     setSelectedTags([]);
   };
 
+  const applicationStatusMap = new Map(
+    userApplications.map((app) => [app.audition_id, app.status])
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -299,6 +322,7 @@ const Auditions = () => {
                 error={error}
                 onClearFilters={clearFilters}
                 onRetry={handleRetry}
+                applicationStatusMap={applicationStatusMap}
               />
               
               {!loading && !error && filteredAuditions.length === 0 && auditions.length > 0 && (

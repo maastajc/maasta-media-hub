@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -33,9 +32,10 @@ interface AuditionsGridProps {
   error: string | null;
   onClearFilters: () => void;
   onRetry: () => void;
+  applicationStatusMap: Map<string, string>;
 }
 
-const AuditionsGrid = ({ auditions, loading, error, onClearFilters, onRetry }: AuditionsGridProps) => {
+const AuditionsGrid = ({ auditions, loading, error, onClearFilters, onRetry, applicationStatusMap }: AuditionsGridProps) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -95,6 +95,7 @@ const AuditionsGrid = ({ auditions, loading, error, onClearFilters, onRetry }: A
             audition={{
               ...audition,
               company: audition.creator_profile?.full_name || 'Unknown Creator',
+              applicationStatus: applicationStatusMap.get(audition.id),
             }}
           />
         ))}
