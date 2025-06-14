@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -97,25 +96,40 @@ const Auditions = () => {
       }
 
       // Fetch creator names in batch for better performance
-      const creatorIds = [...new Set(data.map((a: any) => a.creator_id).filter(Boolean))];
-      const { data: creators } = await supabase
-        .from('artist_details')
-        .select('id, full_name')
-        .in('id', creatorIds);
+      const creatorIds = [...new Set(data.map((a: any) => a.creator_id).filter((id): id is string => Boolean(id)))];
+      
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('artist_details')
+          .select('id, full_name')
+          .in('id', creatorIds);
 
-      const creatorMap = new Map(creators?.map(c => [c.id, c.full_name]) || []);
+        const creatorMap = new Map(creators?.map(c => [c.id, c.full_name]) || []);
 
-      const auditionsWithCreators = data.map((audition: any) => ({
-        ...audition,
-        tags: audition.tags || [],
-        creator_profile: {
-          full_name: creatorMap.get(audition.creator_id) || 'Unknown Creator'
-        }
-      }));
+        const auditionsWithCreators = data.map((audition: any) => ({
+          ...audition,
+          tags: audition.tags || [],
+          creator_profile: {
+            full_name: creatorMap.get(audition.creator_id) || 'Unknown Creator'
+          }
+        }));
 
-      console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
-      setAuditions(auditionsWithCreators);
-      toast.success(`Loaded ${auditionsWithCreators.length} auditions`);
+        console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
+        setAuditions(auditionsWithCreators);
+        toast.success(`Loaded ${auditionsWithCreators.length} auditions`);
+      } else {
+        const auditionsWithCreators = data.map((audition: any) => ({
+          ...audition,
+          tags: audition.tags || [],
+          creator_profile: {
+            full_name: 'Unknown Creator'
+          }
+        }));
+
+        console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
+        setAuditions(auditionsWithCreators);
+        toast.success(`Loaded ${auditionsWithCreators.length} auditions`);
+      }
     } catch (error: any) {
       console.error('Error fetching auditions:', error);
       const errorMessage = error.message || 'Failed to load auditions';
