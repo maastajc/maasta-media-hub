@@ -28,7 +28,6 @@ interface AuditionData {
   experience_level: string;
   gender: string;
   age_range: string;
-  cover_image_url: string;
   tags: string[];
   creator_profile: {
     full_name: string;
@@ -52,7 +51,6 @@ type SupabaseAuditionEntry = {
   experience_level: string | null;
   gender: string | null;
   age_range: string | null;
-  cover_image_url: string | null;
   tags: string[] | null;
   creator_id: string | null; 
   created_at: string | null;
@@ -108,7 +106,6 @@ const Auditions = () => {
           experience_level,
           gender,
           age_range,
-          cover_image_url,
           tags,
           creator_id,
           created_at 
@@ -183,7 +180,6 @@ const Auditions = () => {
           experience_level: audition.experience_level ?? '',
           gender: audition.gender ?? '',
           age_range: audition.age_range ?? '',
-          cover_image_url: audition.cover_image_url ?? '',
           tags: audition.tags || [], 
           creator_profile: { 
             full_name: creatorName 

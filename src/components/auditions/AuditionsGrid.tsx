@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -19,7 +18,6 @@ interface AuditionData {
   experience_level: string;
   gender: string;
   age_range: string;
-  cover_image_url: string;
   tags: string[];
   creator_profile: {
     full_name: string;
