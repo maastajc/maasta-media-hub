@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
       onUpdate();
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error("Upload error:", error.message);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload file",
@@ -109,7 +108,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
       onUpdate();
     } catch (error: any) {
-      console.error("Delete error:", error);
+      console.error("Delete error:", error.message);
       toast({
         title: "Delete failed",
         description: "Failed to delete media file",

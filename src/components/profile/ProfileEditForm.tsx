@@ -113,8 +113,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
     try {
       setIsSaving(true);
-
-      console.log('Updating profile with values:', values);
       
       // Clean phone number: remove spaces and hyphens, keep + and digits
       const cleanedPhoneNumber = values.phone_number ? values.phone_number.replace(/[^\d+]/g, '') : null;
@@ -149,7 +147,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         });
 
       if (upsertError) {
-        console.error('Error updating profile:', upsertError);
         throw upsertError;
       }
 

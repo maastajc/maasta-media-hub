@@ -48,7 +48,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Skill added successfully");
     } catch (error: any) {
-      console.error("Error adding skill:", error);
+      console.error("Error adding skill:", error.message);
       toast.error("Failed to add skill");
     } finally {
       setIsAddingSkill(false);
@@ -61,7 +61,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Skill deleted successfully");
     } catch (error: any) {
-      console.error("Error deleting skill:", error);
+      console.error("Error deleting skill:", error.message);
       toast.error("Failed to delete skill");
     }
   };
@@ -80,7 +80,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Language added successfully");
     } catch (error: any) {
-      console.error("Error adding language:", error);
+      console.error("Error adding language:", error.message);
       toast.error("Failed to add language");
     } finally {
       setIsAddingLanguage(false);
@@ -93,7 +93,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Language deleted successfully");
     } catch (error: any) {
-      console.error("Error deleting language:", error);
+      console.error("Error deleting language:", error.message);
       toast.error("Failed to delete language");
     }
   };
@@ -108,7 +108,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Tool added successfully");
     } catch (error: any) {
-      console.error("Error adding tool:", error);
+      console.error("Error adding tool:", error.message);
       toast.error("Failed to add tool");
     } finally {
       setIsAddingTool(false);
@@ -121,7 +121,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       onUpdate();
       toast.success("Tool deleted successfully");
     } catch (error: any) {
-      console.error("Error deleting tool:", error);
+      console.error("Error deleting tool:", error.message);
       toast.error("Failed to delete tool");
     }
   };

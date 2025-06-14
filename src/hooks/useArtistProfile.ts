@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
@@ -43,10 +42,9 @@ export const useArtistProfile = (
           throw new Error(`Artist profile not found for ID: ${targetId}`);
         }
         
-        console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
         return profile;
       } catch (error: any) {
-        console.error('useArtistProfile: Fetch failed with error:', error);
+        console.error('useArtistProfile: Fetch failed with error:', error.message);
         throw error;
       }
     },
@@ -80,8 +78,6 @@ export const useArtistProfile = (
         throw new Error('No profile data provided for update');
       }
       
-      console.log('Updating profile with data:', profileData);
-      
       // The updateArtistProfile function now handles the type conversion internally
       const result = await updateArtistProfile(user.id, profileData);
       
@@ -96,11 +92,10 @@ export const useArtistProfile = (
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
       
-      console.log('Profile updated successfully:', updatedProfile.full_name);
       toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
-      console.error('Profile update error:', error);
+      console.error('Profile update error:', error.message);
       
       const errorMessage = error?.message || 'Failed to update profile';
       toast.error(errorMessage);
@@ -117,8 +112,8 @@ export const useArtistProfile = (
         )
       ]);
       return result;
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
+    } catch (error: any) {
+      console.error('Error refreshing profile:', error.message);
       toast.error('Failed to refresh profile data');
       throw error;
     }
