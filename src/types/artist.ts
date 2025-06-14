@@ -1,4 +1,3 @@
-
 export interface Artist {
   id: string;
   full_name: string;
@@ -39,6 +38,9 @@ export interface Artist {
   professional_references?: ProfessionalReference[];
   media_assets?: MediaAsset[];
 }
+
+export type ArtistCategory = "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
+export type ExperienceLevel = "beginner" | "fresher" | "intermediate" | "expert" | "veteran";
 
 export interface Project {
   id: string;
