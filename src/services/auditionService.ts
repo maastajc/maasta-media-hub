@@ -8,11 +8,11 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
     console.log("Fetching recent auditions...");
     
-    // Add timeout to prevent hanging requests
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 8000)
+      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 10000) // Slightly increased timeout
     );
 
+    // Step 1: Fetch recent auditions
     const fetchPromise = supabase
       .from('auditions')
       .select(`
@@ -33,7 +33,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       .order('created_at', { ascending: false })
       .limit(3);
 
-    const { data, error } = await Promise.race([
+    const { data: auditionsData, error } = await Promise.race([
       fetchPromise,
       timeoutPromise
     ]) as any;
@@ -43,53 +43,55 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       throw error;
     }
     
-    if (!data) {
+    if (!auditionsData || auditionsData.length === 0) {
       console.log("No recent auditions found");
       return [];
     }
 
-    console.log(`Successfully fetched ${data.length} recent auditions`);
+    console.log(`Successfully fetched ${auditionsData.length} recent auditions`);
     
-    // Fetch creator details separately for each audition
-    const auditionsWithCreators = await Promise.all(
-      data.map(async (item: any) => {
-        let creatorName = 'Unknown Company';
-        
-        if (item.creator_id) {
-          try {
-            const { data: creatorData } = await supabase
-              .from('artist_details')
-              .select('full_name')
-              .eq('id', item.creator_id)
-              .single();
-            
-            if (creatorData?.full_name) {
-              creatorName = creatorData.full_name;
-            }
-          } catch (error) {
-            console.warn(`Could not fetch creator for audition ${item.id}:`, error);
-          }
-        }
-        
-        return {
-          id: item.id,
-          title: item.title,
-          location: item.location,
-          deadline: item.deadline,
-          requirements: item.requirements,
-          tags: item.tags || [],
-          urgent: item.deadline ? isUrgent(item.deadline) : false,
-          cover_image_url: item.cover_image_url,
-          company: creatorName,
-          category: item.category,
-          age_range: item.age_range,
-          gender: item.gender,
-          experience_level: item.experience_level
-        };
-      })
-    );
+    // Step 2: Extract unique creator_ids
+    const creatorIds = [...new Set(auditionsData.map((a: any) => a.creator_id).filter(Boolean))];
+    let creatorMap = new Map<string, string>();
+
+    // Step 3: Fetch artist_details for these IDs if there are any creatorIds
+    if (creatorIds.length > 0) {
+      const { data: creatorsData, error: creatorsError } = await supabase
+        .from('artist_details')
+        .select('id, full_name')
+        .in('id', creatorIds);
+
+      if (creatorsError) {
+        console.warn('Could not fetch some creator details for recent auditions:', creatorsError);
+      } else if (creatorsData) {
+        creatorsData.forEach(creator => {
+          creatorMap.set(creator.id, creator.full_name || 'Unknown Company');
+        });
+      }
+    }
     
-    return auditionsWithCreators;
+    // Step 4: Map creator names (as company) back to auditions
+    const auditionsWithCompany = auditionsData.map((item: any) => {
+      const companyName = item.creator_id ? creatorMap.get(item.creator_id) || 'Unknown Company' : 'Unknown Company';
+      return {
+        id: item.id,
+        title: item.title,
+        location: item.location,
+        deadline: item.deadline,
+        requirements: item.requirements,
+        tags: item.tags || [],
+        urgent: item.deadline ? isUrgent(item.deadline) : false,
+        cover_image_url: item.cover_image_url,
+        company: companyName, // Populated here
+        category: item.category,
+        age_range: item.age_range,
+        gender: item.gender,
+        experience_level: item.experience_level
+        // Ensure all fields from Audition type are present or optional
+      };
+    });
+    
+    return auditionsWithCompany;
   } catch (error: any) {
     console.error("Error fetching recent auditions:", error);
     

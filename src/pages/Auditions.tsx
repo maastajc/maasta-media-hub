@@ -31,6 +31,7 @@ interface AuditionData {
     full_name: string;
   };
   created_at: string;
+  creator_id?: string; // Added for fetching creator details
 }
 
 const Auditions = () => {
@@ -47,21 +48,19 @@ const Auditions = () => {
       setLoading(true);
       setError(null);
 
-      // Reduced timeout for better UX
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 8000)
+        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000) // Increased timeout slightly as well
       );
 
-      const fetchPromise = supabase
+      // Step 1: Fetch auditions
+      const auditionsFetchPromise = supabase
         .from('auditions')
-        .select(`
-          *
-        `)
+        .select(`*, creator_id`) // Ensure creator_id is selected
         .eq('status', 'open')
         .order('created_at', { ascending: false });
 
-      const { data, error: fetchError } = await Promise.race([
-        fetchPromise,
+      const { data: auditionsData, error: fetchError } = await Promise.race([
+        auditionsFetchPromise,
         timeoutPromise
       ]) as any;
 
@@ -70,42 +69,45 @@ const Auditions = () => {
         throw new Error(`Database error: ${fetchError.message}`);
       }
 
-      if (!data) {
+      if (!auditionsData || auditionsData.length === 0) {
         console.log('No auditions data returned');
         setAuditions([]);
+        setLoading(false);
         return;
       }
 
-      // Fetch creator details separately for each audition
-      const auditionsWithCreators = await Promise.all(
-        data.map(async (audition: any) => {
-          let creatorName = 'Unknown Creator';
-          
-          if (audition.creator_id) {
-            try {
-              const { data: creatorData } = await supabase
-                .from('artist_details')
-                .select('full_name')
-                .eq('id', audition.creator_id)
-                .single();
-              
-              if (creatorData?.full_name) {
-                creatorName = creatorData.full_name;
-              }
-            } catch (error) {
-              console.warn(`Could not fetch creator for audition ${audition.id}:`, error);
-            }
+      // Step 2: Extract unique creator_ids
+      const creatorIds = [...new Set(auditionsData.map((a: any) => a.creator_id).filter(Boolean))];
+      let creatorMap = new Map<string, string>();
+
+      // Step 3: Fetch artist_details for these IDs if there are any creatorIds
+      if (creatorIds.length > 0) {
+        const { data: creatorsData, error: creatorsError } = await supabase
+          .from('artist_details')
+          .select('id, full_name')
+          .in('id', creatorIds);
+
+        if (creatorsError) {
+          console.warn('Could not fetch some creator details:', creatorsError);
+          // Proceed without all creator names if this fails, or handle more gracefully
+        } else if (creatorsData) {
+          creatorsData.forEach(creator => {
+            creatorMap.set(creator.id, creator.full_name || 'Unknown Creator');
+          });
+        }
+      }
+
+      // Step 4: Map creator names back to auditions
+      const auditionsWithCreators = auditionsData.map((audition: any) => {
+        const creatorName = audition.creator_id ? creatorMap.get(audition.creator_id) || 'Unknown Creator' : 'Unknown Creator';
+        return {
+          ...audition,
+          tags: audition.tags || [],
+          creator_profile: {
+            full_name: creatorName
           }
-          
-          return {
-            ...audition,
-            tags: audition.tags || [],
-            creator_profile: {
-              full_name: creatorName
-            }
-          };
-        })
-      );
+        };
+      });
 
       console.log(`Successfully fetched ${auditionsWithCreators.length} auditions`);
       setAuditions(auditionsWithCreators);
