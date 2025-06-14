@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { FileUpload } from '@/components/ui/file-upload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
@@ -38,9 +37,6 @@ const EditAudition = () => {
   const { auditionId } = useParams<{ auditionId: string }>();
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverImageUrl, setCoverImageUrl] = useState<string>('');
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -107,7 +103,6 @@ const EditAudition = () => {
           });
 
           setTags(data.tags || []);
-          setCoverImageUrl(data.cover_image_url || '');
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -143,44 +138,6 @@ const EditAudition = () => {
     }
   };
 
-  const handleCoverImageUpload = async (file: File) => {
-    setIsUploading(true);
-    setCoverImage(file);
-    
-    try {
-      const result = await uploadFile(file, 'audition-covers', 'covers');
-      
-      if (result.error) {
-        toast({
-          title: "Upload failed",
-          description: result.error,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setCoverImageUrl(result.url);
-      toast({
-        title: "Success",
-        description: "Cover image uploaded successfully",
-      });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({
-        title: "Upload failed", 
-        description: error.message || "Failed to upload cover image",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const removeCoverImage = () => {
-    setCoverImage(null);
-    setCoverImageUrl('');
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user || !auditionId) {
       toast({
@@ -208,7 +165,6 @@ const EditAudition = () => {
         gender: values.gender || null,
         experience_level: values.experience_level || null,
         tags: tags.length > 0 ? tags : null,
-        cover_image_url: coverImageUrl || null,
         updated_at: new Date().toISOString()
       };
 
@@ -282,20 +238,6 @@ const EditAudition = () => {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Cover Image Upload */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Cover Image</label>
-                      <FileUpload
-                        onFileUpload={handleCoverImageUpload}
-                        acceptedTypes="image/*"
-                        maxSizeMB={5}
-                        previewUrl={coverImageUrl}
-                        isLoading={isUploading}
-                        onRemove={removeCoverImage}
-                        buttonText="Upload cover image"
-                      />
-                    </div>
-
                     {/* Form fields - same as CreateAudition but abbreviated */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField

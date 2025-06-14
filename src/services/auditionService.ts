@@ -11,7 +11,6 @@ type SupabaseAuditionSelect = {
   deadline: string | null;
   requirements: string | null;
   tags: string[] | null;
-  cover_image_url: string | null;
   creator_id: string | null;
   category: string | null;
   age_range: string | null;
@@ -40,7 +39,6 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         deadline,
         requirements,
         tags,
-        cover_image_url,
         creator_id,
         category,
         age_range,
@@ -114,7 +112,6 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         requirements: item.requirements,
         tags: item.tags || [],
         urgent: item.deadline ? isUrgent(item.deadline) : false,
-        cover_image_url: item.cover_image_url,
         company: companyName,
         category: item.category,
         age_range: item.age_range,

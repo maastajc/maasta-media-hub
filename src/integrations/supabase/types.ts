@@ -47,11 +47,9 @@ export type Database = {
       auditions: {
         Row: {
           age_range: string | null
-          audition_cover: Json | null
           audition_date: string | null
           category: string | null
           compensation: string | null
-          cover_image_url: string | null
           created_at: string | null
           creator_id: string | null
           deadline: string | null
@@ -69,11 +67,9 @@ export type Database = {
         }
         Insert: {
           age_range?: string | null
-          audition_cover?: Json | null
           audition_date?: string | null
           category?: string | null
           compensation?: string | null
-          cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
           deadline?: string | null
@@ -91,11 +87,9 @@ export type Database = {
         }
         Update: {
           age_range?: string | null
-          audition_cover?: Json | null
           audition_date?: string | null
           category?: string | null
           compensation?: string | null
-          cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string | null
           deadline?: string | null
