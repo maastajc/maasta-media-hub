@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -52,6 +53,7 @@ type SupabaseAuditionEntry = {
   cover_image_url: string | null;
   tags: string[] | null;
   creator_id: string | null; 
+  created_at: string | null;
 };
 
 const Auditions = () => {
