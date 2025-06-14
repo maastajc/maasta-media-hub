@@ -88,7 +88,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     console.log('Fetching artist by ID:', id);
     
     if (!id || id === 'undefined' || id === 'null') {
-      throw new Error('Invalid artist ID provided');
+      console.warn('Invalid artist ID provided:', id);
+      return null;
     }
     
     // Reduced timeout for profile queries
@@ -96,11 +97,12 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 8000)
     );
 
+    // First fetch basic artist data
     const fetchPromise = supabase
       .from('artist_details')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle(); // Use maybeSingle to avoid errors when no data found
 
     const { data: artist, error } = await Promise.race([
       fetchPromise,
@@ -109,16 +111,12 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
 
     if (error) {
       console.error('Database error fetching artist:', error);
-      
-      if (error.code === 'PGRST116') {
-        throw new Error(`Artist not found with ID: ${id}`);
-      }
-      
       throw new Error(`Failed to load profile: ${error.message}`);
     }
 
     if (!artist) {
-      throw new Error(`No artist data returned for ID: ${id}`);
+      console.log(`No artist found with ID: ${id}`);
+      return null;
     }
 
     console.log(`Successfully fetched artist: ${artist.full_name}`);
@@ -145,6 +143,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     };
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
-    throw error;
+    // Don't throw error, return null to let the UI handle gracefully
+    return null;
   }
 };

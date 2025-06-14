@@ -31,7 +31,8 @@ export const useArtistProfile = (
     queryKey: ['artistProfile', targetId],
     queryFn: async () => {
       if (!targetId) {
-        throw new Error('No artist ID provided - user may not be logged in');
+        console.warn('useArtistProfile: No artist ID provided - user may not be logged in');
+        return null;
       }
       
       console.log('useArtistProfile: Starting fetch for ID:', targetId);
@@ -39,11 +40,12 @@ export const useArtistProfile = (
       try {
         const profile = await fetchArtistById(targetId);
         
-        if (!profile) {
-          throw new Error(`Artist profile not found for ID: ${targetId}`);
+        if (profile) {
+          console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
+        } else {
+          console.log('useArtistProfile: No profile found for ID:', targetId);
         }
         
-        console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
         return profile;
       } catch (error: any) {
         console.error('useArtistProfile: Fetch failed with error:', error);
@@ -63,10 +65,10 @@ export const useArtistProfile = (
         return false;
       }
       
-      // Retry up to 3 times for other errors
-      return failureCount < 3;
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
   });
   
@@ -82,7 +84,6 @@ export const useArtistProfile = (
       
       console.log('Updating profile with data:', profileData);
       
-      // The updateArtistProfile function now handles the type conversion internally
       const result = await updateArtistProfile(user.id, profileData);
       
       if (!result) {
@@ -124,7 +125,7 @@ export const useArtistProfile = (
     }
   };
   
-  const isProfileComplete = (profile?: Artist) => {
+  const isProfileComplete = (profile?: Artist | null) => {
     if (!profile) return false;
     
     return !!(
