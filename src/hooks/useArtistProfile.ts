@@ -38,18 +38,31 @@ export const useArtistProfile = (
       console.log('useArtistProfile: Starting fetch for ID:', targetId);
       
       try {
-        const profile = await fetchArtistById(targetId);
+        // Try optimized service first
+        const { fetchArtistById: optimizedFetch } = await import('@/services/optimizedArtistService');
+        const profile = await optimizedFetch(targetId);
         
         if (profile) {
           console.log('useArtistProfile: Successfully loaded profile:', profile.full_name);
+          return profile;
+        }
+        
+        console.log('useArtistProfile: Profile not found in optimized service, trying main service...');
+        
+        // Fallback to main service
+        const fallbackProfile = await fetchArtistById(targetId);
+        
+        if (fallbackProfile) {
+          console.log('useArtistProfile: Successfully loaded profile from fallback:', fallbackProfile.full_name);
         } else {
           console.log('useArtistProfile: No profile found for ID:', targetId);
         }
         
-        return profile;
+        return fallbackProfile;
       } catch (error: any) {
         console.error('useArtistProfile: Fetch failed with error:', error);
-        throw error;
+        // Don't throw, return null to let UI handle gracefully
+        return null;
       }
     },
     enabled: !!targetId && enabled,

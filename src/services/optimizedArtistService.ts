@@ -92,31 +92,80 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       return null;
     }
     
-    // Reduced timeout for profile queries
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 8000)
-    );
-
-    // First fetch basic artist data
-    const fetchPromise = supabase
+    // First try to get from artist_details
+    const { data: artist, error } = await supabase
       .from('artist_details')
       .select('*')
       .eq('id', id)
-      .maybeSingle(); // Use maybeSingle to avoid errors when no data found
-
-    const { data: artist, error } = await Promise.race([
-      fetchPromise,
-      timeoutPromise
-    ]) as any;
+      .maybeSingle();
 
     if (error) {
-      console.error('Database error fetching artist:', error);
-      throw new Error(`Failed to load profile: ${error.message}`);
+      console.error('Database error fetching from artist_details:', error);
+      
+      // Fallback to profiles table
+      console.log('Falling back to profiles table...');
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Database error fetching from profiles:', profileError);
+        return null;
+      }
+
+      if (!profileData) {
+        console.log(`No profile found for user ID: ${id}`);
+        return null;
+      }
+
+      // Convert profile data to artist format
+      return {
+        ...profileData,
+        special_skills: [],
+        projects: [],
+        education_training: [],
+        media_assets: [],
+        language_skills: [],
+        tools_software: [],
+        skills: []
+      };
     }
 
     if (!artist) {
-      console.log(`No artist found with ID: ${id}`);
-      return null;
+      console.log(`No artist found with ID: ${id}, checking profiles table...`);
+      
+      // Fallback to profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Database error fetching from profiles:', profileError);
+        return null;
+      }
+
+      if (!profileData) {
+        console.log(`No profile found for user ID: ${id}`);
+        return null;
+      }
+
+      console.log(`Found profile data for user: ${profileData.full_name}`);
+
+      // Convert profile data to artist format with safe defaults
+      return {
+        ...profileData,
+        special_skills: [],
+        projects: [],
+        education_training: [],
+        media_assets: [],
+        language_skills: [],
+        tools_software: [],
+        skills: []
+      };
     }
 
     console.log(`Successfully fetched artist: ${artist.full_name}`);
