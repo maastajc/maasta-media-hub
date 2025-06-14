@@ -17,12 +17,28 @@ import { toast } from "sonner";
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
-  bio: z.string().optional(),
+  bio: z.string().max(250, "Bio cannot exceed 250 characters").optional().or(z.literal("")),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  phone_number: z.string().optional(),
-  date_of_birth: z.string().optional(),
+  phone_number: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val || val.trim() === "") return true; // Allow empty or whitespace as optional
+      // Regex to allow an optional +, followed by digits, spaces, or hyphens.
+      // Ensures it's not just symbols and has a reasonable length.
+      return /^\+?[\d\s-]{7,20}$/.test(val);
+    }, "Invalid phone number. Must be 7-20 digits and can start with +.")
+    .or(z.literal("")),
+  date_of_birth: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val || val.trim() === "") return true; // Allow empty string
+      const date = new Date(val);
+      // Check if date is valid and not in the future
+      return !isNaN(date.getTime()) && date <= new Date();
+    }, "Invalid date or date is in the future. Please use YYYY-MM-DD format.")
+    .or(z.literal("")),
   gender: z.string().optional(),
   willing_to_relocate: z.boolean().default(false),
   work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
@@ -99,6 +115,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       setIsSaving(true);
 
       console.log('Updating profile with values:', values);
+      
+      // Clean phone number: remove spaces and hyphens, keep + and digits
+      const cleanedPhoneNumber = values.phone_number ? values.phone_number.replace(/[^\d+]/g, '') : null;
 
       // Prepare data for artist_details table with all required fields
       const artistDetailsData = {
@@ -109,7 +128,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         city: values.city || null,
         state: values.state || null,
         country: values.country || null,
-        phone_number: values.phone_number || null,
+        phone_number: cleanedPhoneNumber, // Use cleaned phone number
         date_of_birth: values.date_of_birth || null,
         gender: values.gender || null,
         willing_to_relocate: values.willing_to_relocate,
@@ -212,7 +231,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your phone number" {...field} />
+                        <Input type="tel" placeholder="e.g., +1 123 456 7890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -226,7 +245,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     <FormItem>
                       <FormLabel>Date of Birth</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} max={new Date().toISOString().split("T")[0]} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -309,11 +328,12 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>Bio (Max 250 characters)</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us about yourself..." 
                         className="min-h-24"
+                        maxLength={250}
                         {...field} 
                       />
                     </FormControl>
