@@ -1,5 +1,4 @@
-
-import { Navbar } from "@/components/layout/Navbar"; // adjust as needed
+import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ProfileErrorBoundary } from "@/components/profile/ProfileErrorBoundary";
