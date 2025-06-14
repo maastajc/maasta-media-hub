@@ -27,7 +27,11 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         category,
         age_range,
         gender,
-        experience_level
+        experience_level,
+        description,
+        audition_date,
+        compensation,
+        status
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -37,7 +41,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     const { data: auditionsData, error } = await Promise.race([
       fetchPromise,
       timeoutPromise
-    ]) as any; 
+    ]) as any; // Cast to any for now, Supabase types can be complex with Promise.race
 
     if (error) {
       console.error("Error fetching recent auditions data:", error);
@@ -55,8 +59,8 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     const creatorIds: string[] = [
       ...new Set(
         auditionsData
-          .map((a: any) => a.creator_id as string) // Ensure creator_id is treated as string
-          .filter(Boolean) // Filter out null, undefined, or empty strings
+          .map((a: { creator_id: string | null | undefined }) => a.creator_id) 
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
       ),
     ];
     
@@ -68,7 +72,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       const { data: creatorsData, error: creatorsError } = await supabase
         .from('artist_details')
         .select('id, full_name')
-        .in('id', creatorIds); // Now creatorIds is string[]
+        .in('id', creatorIds); 
 
       if (creatorsError) {
         console.warn('Could not fetch some creator details for recent auditions:', creatorsError);
@@ -93,17 +97,16 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         requirements: item.requirements,
         tags: item.tags || [],
         urgent: item.deadline ? isUrgent(item.deadline) : false,
-        cover_image_url: item.cover_image_url,
+        cover_image_url: item.cover_image_url, // This should now be fine
         company: companyName,
         category: item.category,
         age_range: item.age_range,
         gender: item.gender,
         experience_level: item.experience_level,
-        // Ensure all fields from Audition type are present or optional and correctly typed
-        description: item.description || (item.requirements || null), // Example for description if it uses requirements
+        description: item.description || (item.requirements || null), 
         audition_date: item.audition_date || null,
-        compensation: item.compensation || undefined, // Assuming compensation is optional string
-        status: item.status || 'open', // Assuming status has a default
+        compensation: item.compensation || undefined, 
+        status: item.status || 'open',
       };
     });
     
@@ -121,4 +124,3 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     return [];
   }
 };
-

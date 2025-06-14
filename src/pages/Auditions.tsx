@@ -31,7 +31,7 @@ interface AuditionData {
     full_name: string;
   };
   created_at: string;
-  creator_id?: string; // Added for fetching creator details
+  creator_id?: string; 
 }
 
 const Auditions = () => {
@@ -71,7 +71,8 @@ const Auditions = () => {
           age_range,
           cover_image_url,
           tags,
-          creator_id 
+          creator_id,
+          created_at 
         `)
         .eq('status', 'open')
         .order('created_at', { ascending: false });
@@ -79,7 +80,7 @@ const Auditions = () => {
       const { data: auditionsData, error: fetchError } = await Promise.race([
         auditionsFetchPromise,
         timeoutPromise
-      ]) as any; // Keep 'as any' for now if the race result structure is complex, though ideally type this better.
+      ]) as any; 
 
       if (fetchError) {
         console.error('Database error fetching auditions:', fetchError);
@@ -99,8 +100,8 @@ const Auditions = () => {
       const creatorIds: string[] = [
         ...new Set(
           auditionsData
-            .map((a: any) => a.creator_id as string) // Ensure creator_id is treated as string
-            .filter(Boolean) // Filter out null, undefined, or empty strings if they are not valid IDs
+            .map((a: { creator_id: string | null | undefined }) => a.creator_id)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0)
         ),
       ];
       
@@ -112,7 +113,7 @@ const Auditions = () => {
         const { data: creatorsData, error: creatorsError } = await supabase
           .from('artist_details')
           .select('id, full_name')
-          .in('id', creatorIds); // Now creatorIds is string[]
+          .in('id', creatorIds); 
 
         if (creatorsError) {
           console.warn('Could not fetch some creator details:', creatorsError);
@@ -127,19 +128,30 @@ const Auditions = () => {
       }
 
       // Step 4: Map creator names back to auditions
-      const auditionsWithCreators = auditionsData.map((audition: any) => {
+      const auditionsWithCreators = auditionsData.map((audition: any): AuditionData => {
         const creatorName = audition.creator_id ? creatorMap.get(audition.creator_id) || 'Unknown Creator' : 'Unknown Creator';
         return {
           ...audition,
-          tags: audition.tags || [], // Ensure tags is always an array
-          creator_profile: { // Ensure creator_profile structure matches AuditionData
+          tags: audition.tags || [], 
+          creator_profile: { 
             full_name: creatorName 
           },
-          // Ensure all other fields expected by AuditionData are present
-          // Example: if AuditionData expects description but audition.description is null, provide default or handle
           description: audition.description || '', 
           compensation: audition.compensation || '',
-          // ... (ensure all fields of AuditionData are correctly mapped or defaulted)
+          // ensure all fields of AuditionData are correctly mapped or defaulted
+          id: audition.id,
+          title: audition.title,
+          location: audition.location,
+          audition_date: audition.audition_date || '',
+          deadline: audition.deadline || '',
+          requirements: audition.requirements || '',
+          status: audition.status || 'open',
+          category: audition.category || '',
+          experience_level: audition.experience_level || '',
+          gender: audition.gender || '',
+          age_range: audition.age_range || '',
+          cover_image_url: audition.cover_image_url || '',
+          created_at: audition.created_at || new Date().toISOString(),
         };
       });
 

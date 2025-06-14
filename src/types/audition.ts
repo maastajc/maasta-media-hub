@@ -1,4 +1,3 @@
-
 export interface Audition {
   id: string;
   title: string;
@@ -16,4 +15,5 @@ export interface Audition {
   experience_level?: string | null;
   compensation?: string;
   status?: string;
+  cover_image_url?: string | null;
 }
