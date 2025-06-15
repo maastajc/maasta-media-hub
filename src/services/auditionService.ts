@@ -28,7 +28,7 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
     console.log("Fetching recent auditions...");
     
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 10000)
+      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 20000)
     );
 
     const fetchPromise = supabase

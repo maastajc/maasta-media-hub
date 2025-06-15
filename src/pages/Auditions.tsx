@@ -103,7 +103,7 @@ const Auditions = () => {
       console.log(`Fetching auditions page ${currentPage}...`);
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000)
+        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 30000)
       );
       
       const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
