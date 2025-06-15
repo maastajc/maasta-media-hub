@@ -13,10 +13,10 @@ interface OptimizedAuditionCardProps {
 
 const ApplicationStatusBadge = ({ status }: { status: string }) => {
   const statusStyles: { [key: string]: string } = {
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    shortlisted: 'bg-blue-100 text-blue-800 border-blue-200',
-    hired: 'bg-green-100 text-green-800 border-green-200',
-    rejected: 'bg-red-100 text-red-800 border-red-200',
+    pending: 'bg-yellow-100 text-yellow-800 border-yellow-300 font-semibold',
+    shortlisted: 'bg-blue-100 text-blue-800 border-blue-300 font-semibold',
+    hired: 'bg-green-100 text-green-800 border-green-300 font-semibold',
+    rejected: 'bg-red-100 text-red-800 border-red-300 font-semibold',
   };
 
   return (
@@ -49,10 +49,10 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl border bg-white shadow-sm hover:-translate-y-1">
-      <div className="p-4 flex-grow flex flex-col">
-        <div className="flex justify-between items-start mb-2">
-          <Badge variant="secondary" className="bg-maasta-purple/10 text-maasta-purple font-medium capitalize">
+    <Card className="h-full flex flex-col bg-white overflow-hidden rounded-xl border-2 border-transparent hover:border-maasta-purple transition-all duration-300 shadow-md hover:shadow-2xl group">
+      <div className="p-5 flex-grow flex flex-col">
+        <div className="flex justify-between items-start mb-3">
+          <Badge variant="secondary" className="bg-maasta-purple/10 text-maasta-purple font-semibold capitalize border-maasta-purple/20">
             {audition.category || 'General'}
           </Badge>
           <div className="flex items-center gap-2">
@@ -60,38 +60,38 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
               <ApplicationStatusBadge status={audition.applicationStatus} />
             )}
             {(isUrgent || audition.urgent) && !audition.applicationStatus && (
-              <Badge variant="destructive" className="text-xs animate-pulse">
-                Urgent
+              <Badge variant="destructive" className="text-xs font-bold animate-pulse">
+                URGENT
               </Badge>
             )}
           </div>
         </div>
-        <h3 className="font-bold text-lg leading-tight line-clamp-2 text-gray-900 mb-1">
+        <h3 className="font-extrabold text-xl text-gray-800 group-hover:text-maasta-purple transition-colors duration-300 leading-tight line-clamp-2 mb-2">
           {audition.title || 'Untitled Audition'}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">{audition.company || 'Company not listed'}</p>
+        <p className="text-sm font-medium text-gray-500 mb-4">{audition.company || 'Company not listed'}</p>
         
-        <div className="space-y-2.5 text-sm text-gray-600 mt-auto pt-4 border-t border-gray-100">
-          <div className="flex items-center">
-            <MapPin className="w-4 h-4 mr-2.5 text-maasta-orange flex-shrink-0" />
-            <span className="truncate">{audition.location || 'Location TBD'}</span>
+        <div className="mt-auto space-y-3 pt-4 border-t border-gray-100">
+          <div className="flex items-center text-gray-600">
+            <MapPin className="w-5 h-5 mr-3 text-maasta-orange flex-shrink-0" />
+            <span className="text-sm truncate">{audition.location || 'Location TBD'}</span>
           </div>
           
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-2.5 text-maasta-purple flex-shrink-0" />
-            <span>{audition.audition_date ? formatSafeDate(audition.audition_date) : 'Date TBD'}</span>
+          <div className="flex items-center text-gray-600">
+            <Calendar className="w-5 h-5 mr-3 text-maasta-purple flex-shrink-0" />
+            <span className="text-sm">{audition.audition_date ? formatSafeDate(audition.audition_date) : 'Date TBD'}</span>
           </div>
           
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-2.5 text-maasta-orange flex-shrink-0" />
-            <span>{formatDeadline(audition.deadline)}</span>
+          <div className="flex items-center text-gray-600">
+            <Clock className="w-5 h-5 mr-3 text-yellow-500 flex-shrink-0" />
+            <span className="text-sm font-medium">{formatDeadline(audition.deadline)}</span>
           </div>
         </div>
       </div>
       
-      <div className="p-4 pt-2">
+      <div className="p-5 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-300">
         <Link to={`/auditions/${audition.id}`} className="w-full">
-          <Button className="w-full bg-maasta-purple hover:bg-maasta-purple/90 text-white font-semibold">
+          <Button className="w-full bg-maasta-purple hover:bg-maasta-purple/90 text-white font-bold text-base py-3 rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1">
             View Details
           </Button>
         </Link>
