@@ -1,6 +1,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,10 +12,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredRole 
 }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  // If still loading, show loading spinner
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -23,14 +23,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // If not authenticated, redirect to login with return path
   if (!user) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
-  // For now, we'll just return the children since role checking would require
-  // additional database queries to the profiles/artist_details table
-  // This can be enhanced later if specific role-based access is needed
+  if (requiredRole && profile?.role !== requiredRole) {
+    toast.error("Access Denied", {
+      description: "You do not have permission to view this page.",
+    });
+    return <Navigate to="/" replace />;
+  }
   
   return <>{children}</>;
 };

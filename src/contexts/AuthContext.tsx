@@ -3,9 +3,16 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+export interface Profile {
+  id: string;
+  role?: string | null;
+  [key: string]: any;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
@@ -74,40 +81,49 @@ const ensureProfileExists = async (userId: string): Promise<void> => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Ensure profile exists if user is logged in
-      if (session?.user?.id) {
-        ensureProfileExists(session.user.id).catch(console.error);
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (error) throw error;
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setProfile(null);
       }
-      
-      setLoading(false);
-    });
+    };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
-      
-      // Ensure profile exists when user signs in
-      if (event === 'SIGNED_IN' && session?.user?.id) {
-        try {
-          await ensureProfileExists(session.user.id);
-        } catch (error) {
-          console.error('Failed to ensure profile exists:', error);
-        }
+
+      if (session?.user?.id) {
+        await ensureProfileExists(session.user.id);
+        await fetchProfile(session.user.id);
       }
-      
       setLoading(false);
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_IN' && session?.user?.id) {
+        await ensureProfileExists(session.user.id);
+        await fetchProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -128,6 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     user,
     session,
+    profile,
     loading,
     signIn,
     signOut,

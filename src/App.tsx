@@ -47,8 +47,8 @@ function App() {
               
               {/* Protected routes - authentication required */}
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/auditions/create" element={<ProtectedRoute><CreateAudition /></ProtectedRoute>} />
-              <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+              <Route path="/auditions/create" element={<ProtectedRoute requiredRole="recruiter"><CreateAudition /></ProtectedRoute>} />
+              <Route path="/events/create" element={<ProtectedRoute requiredRole="recruiter"><CreateEvent /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
