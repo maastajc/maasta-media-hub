@@ -54,6 +54,7 @@ type SupabaseAuditionEntry = {
   tags: string[] | null;
   creator_id: string | null; 
   created_at: string | null;
+  creator_profile: { full_name: string } | null;
 };
 
 const Auditions = () => {
@@ -82,7 +83,7 @@ const Auditions = () => {
 
   const fetchAuditions = async () => {
     try {
-      console.log('Fetching auditions...');
+      console.log('Fetching auditions with creator profiles...');
       setLoading(true);
       setError(null);
 
@@ -108,7 +109,8 @@ const Auditions = () => {
           age_range,
           tags,
           creator_id,
-          created_at 
+          created_at,
+          creator_profile:profiles(full_name)
         `)
         .eq('status', 'open')
         .order('created_at', { ascending: false });
@@ -133,44 +135,13 @@ const Auditions = () => {
         return;
       }
 
-      console.log(`Fetched ${auditionsData.length} auditions, preparing to fetch creator details...`);
-
-      const creatorIds: string[] = [
-        ...new Set(
-          auditionsData
-            .map((a: SupabaseAuditionEntry) => a.creator_id)
-            .filter((id): id is string => typeof id === 'string' && id.length > 0)
-        ),
-      ];
-      
-      let creatorMap = new Map<string, string>();
-
-      if (creatorIds.length > 0) {
-        console.log('Fetching details for creator IDs:', creatorIds);
-        const { data: creatorsData, error: creatorsError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorIds); 
-
-        if (creatorsError) {
-          console.warn('Could not fetch some creator details:', creatorsError);
-        } else if (creatorsData) {
-          creatorsData.forEach(creator => {
-            creatorMap.set(creator.id, creator.full_name || 'Unknown Creator');
-          });
-          console.log('Creator details fetched and mapped:', creatorMap);
-        }
-      } else {
-        console.log('No valid creator IDs found to fetch details for.');
-      }
+      console.log(`Fetched ${auditionsData.length} auditions, processing...`);
 
       const auditionsWithCreators = auditionsData.map((audition: SupabaseAuditionEntry): AuditionData => {
-        const creatorName = audition.creator_id ? creatorMap.get(audition.creator_id) || 'Unknown Creator' : 'Unknown Creator';
         return {
-          // Spread audition data and ensure all fields are correctly typed or defaulted
           ...audition,
-          description: audition.description ?? '', // Ensure description is string
-          location: audition.location ?? '', // Ensure location is string
+          description: audition.description ?? '',
+          location: audition.location ?? '',
           audition_date: audition.audition_date ?? '',
           deadline: audition.deadline ?? '',
           compensation: audition.compensation ?? '',
@@ -180,9 +151,9 @@ const Auditions = () => {
           experience_level: audition.experience_level ?? '',
           gender: audition.gender ?? '',
           age_range: audition.age_range ?? '',
-          tags: audition.tags || [], 
+          tags: audition.tags || [],
           creator_profile: { 
-            full_name: creatorName 
+            full_name: audition.creator_profile?.full_name || 'Unknown Creator' 
           },
           created_at: audition.created_at || new Date().toISOString(),
           creator_id: audition.creator_id ?? undefined,

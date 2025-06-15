@@ -20,6 +20,7 @@ type SupabaseAuditionSelect = {
   audition_date: string | null;
   compensation: string | null;
   status: string | null;
+  profiles: { full_name: string } | null;
 };
 
 export const fetchRecentAuditions = async (): Promise<Audition[]> => {
@@ -47,7 +48,8 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
         description,
         audition_date,
         compensation,
-        status
+        status,
+        profiles (full_name)
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -71,39 +73,10 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       return [];
     }
 
-    console.log(`Successfully fetched ${auditionsData.length} recent auditions. Fetching creator details...`);
-    
-    const creatorIds: string[] = [
-      ...new Set(
-        auditionsData
-          .map((a: SupabaseAuditionSelect) => a.creator_id) 
-          .filter((id): id is string => typeof id === 'string' && id.length > 0)
-      ),
-    ];
-    
-    let creatorMap = new Map<string, string>();
-
-    if (creatorIds.length > 0) {
-      console.log('Fetching details for recent audition creator IDs:', creatorIds);
-      const { data: creatorsData, error: creatorsError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', creatorIds); 
-
-      if (creatorsError) {
-        console.warn('Could not fetch some creator details for recent auditions:', creatorsError);
-      } else if (creatorsData) {
-        creatorsData.forEach(creator => {
-          creatorMap.set(creator.id, creator.full_name || 'Unknown Company');
-        });
-        console.log('Recent audition creator details fetched and mapped:', creatorMap);
-      }
-    } else {
-      console.log('No valid creator IDs found for recent auditions.');
-    }
+    console.log(`Successfully fetched ${auditionsData.length} recent auditions. Processing...`);
     
     const auditionsWithCompany = auditionsData.map((item: SupabaseAuditionSelect): Audition => {
-      const companyName = item.creator_id ? creatorMap.get(item.creator_id) || 'Unknown Company' : 'Unknown Company';
+      const companyName = item.profiles?.full_name || 'Unknown Company';
       return {
         id: item.id,
         title: item.title,
