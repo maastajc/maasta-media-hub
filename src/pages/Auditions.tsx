@@ -131,7 +131,7 @@ const Auditions = () => {
       if (filters.experience) query = query.eq('experience_level', filters.experience);
       if (filters.gender) query = query.eq('gender', filters.gender);
       if (filters.ageRange) query = query.eq('age_range', filters.ageRange);
-      if (selectedTags.length > 0) query = query.cs('tags', selectedTags);
+      if (selectedTags.length > 0) query = query.contains('tags', selectedTags);
 
       const auditionsFetchPromise = query.order('created_at', { ascending: false }).range(from, to);
 
@@ -199,9 +199,9 @@ const Auditions = () => {
 
   const fetchUniqueTags = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_unique_tags');
+      const { data, error } = await supabase.rpc('get_unique_tags' as any);
       if (error) throw error;
-      if (data) setUniqueTags(data.filter(Boolean));
+      if (data) setUniqueTags((data as string[]).filter(Boolean));
     } catch (error) {
       console.error("Error fetching unique tags:", error);
     }
