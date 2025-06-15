@@ -57,6 +57,8 @@ type SupabaseAuditionEntry = {
   creator_profile: { full_name: string } | null;
 };
 
+const AUDITIONS_PER_PAGE = 9;
+
 const Auditions = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [auditions, setAuditions] = useState<AuditionData[]>([]);
@@ -66,6 +68,12 @@ const Auditions = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { user } = useAuth();
   const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
+
+  // New state for pagination
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [uniqueTags, setUniqueTags] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchUserApplications = async () => {
@@ -81,41 +89,52 @@ const Auditions = () => {
     fetchUserApplications();
   }, [user]);
 
-  const fetchAuditions = async () => {
-    try {
-      console.log('Fetching auditions with creator profiles...');
+  const fetchAuditions = async (currentPage: number, isInitialLoad = false) => {
+    if (!isInitialLoad && loadingMore) return;
+
+    if (isInitialLoad) {
       setLoading(true);
       setError(null);
+    } else {
+      setLoadingMore(true);
+    }
 
+    try {
+      console.log(`Fetching auditions page ${currentPage}...`);
+      
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 15000)
       );
+      
+      const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
+      const to = from + AUDITIONS_PER_PAGE - 1;
 
-      const auditionsFetchPromise = supabase
+      const filters = {
+        category: searchParams.get('category') || '',
+        location: searchParams.get('location') || '',
+        experience: searchParams.get('experience') || '',
+        gender: searchParams.get('gender') || '',
+        ageRange: searchParams.get('ageRange') || '',
+      };
+
+      let query = supabase
         .from('auditions')
         .select(`
-          id,
-          title,
-          description,
-          location,
-          audition_date,
-          deadline,
-          compensation,
-          requirements,
-          status,
-          category,
-          experience_level,
-          gender,
-          age_range,
-          tags,
-          creator_id,
-          created_at,
-          creator_profile:profiles(full_name)
+          id, title, description, location, audition_date, deadline, compensation,
+          requirements, status, category, experience_level, gender, age_range,
+          tags, creator_id, created_at, creator_profile:profiles(full_name)
         `)
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
+        .eq('status', 'open');
 
-      // Type the result of the fetch operation
+      if (filters.category) query = query.eq('category', filters.category);
+      if (filters.location) query = query.ilike('location', `%${filters.location}%`);
+      if (filters.experience) query = query.eq('experience_level', filters.experience);
+      if (filters.gender) query = query.eq('gender', filters.gender);
+      if (filters.ageRange) query = query.eq('age_range', filters.ageRange);
+      if (selectedTags.length > 0) query = query.cs('tags', selectedTags);
+
+      const auditionsFetchPromise = query.order('created_at', { ascending: false }).range(from, to);
+
       const fetchResult = await Promise.race([
         auditionsFetchPromise,
         timeoutPromise
@@ -125,16 +144,15 @@ const Auditions = () => {
         console.error('Database error fetching auditions:', fetchResult.error);
         throw new Error(`Database error: ${fetchResult.error.message}`);
       }
-
+      
       const auditionsData = fetchResult.data;
 
       if (!auditionsData || auditionsData.length === 0) {
-        console.log('No auditions data returned');
-        setAuditions([]);
-        setLoading(false);
+        if (isInitialLoad) setAuditions([]);
+        setHasMore(false);
         return;
       }
-
+      
       console.log(`Fetched ${auditionsData.length} auditions, processing...`);
 
       const auditionsWithCreators = auditionsData.map((audition: SupabaseAuditionEntry): AuditionData => {
@@ -161,50 +179,63 @@ const Auditions = () => {
       });
 
       console.log(`Successfully processed ${auditionsWithCreators.length} auditions with creator names`);
-      setAuditions(auditionsWithCreators);
+      setAuditions(prev => isInitialLoad ? auditionsWithCreators : [...prev, ...auditionsWithCreators]);
+
+      if (auditionsData.length < AUDITIONS_PER_PAGE) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
     } catch (error: any) {
       console.error('Error in fetchAuditions process:', error);
       setError(error.message || 'Failed to load auditions');
-      setAuditions([]);
+      if (isInitialLoad) setAuditions([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const fetchUniqueTags = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_unique_tags');
+      if (error) throw error;
+      if (data) setUniqueTags(data.filter(Boolean));
+    } catch (error) {
+      console.error("Error fetching unique tags:", error);
     }
   };
 
   useEffect(() => {
-    fetchAuditions();
+    // Reset and fetch when filters change
+    setAuditions([]);
+    setPage(1);
+    setHasMore(true);
+    fetchAuditions(1, true);
+  }, [searchParams, selectedTags]);
+
+  useEffect(() => {
+    fetchUniqueTags();
   }, []);
 
-  const filters = {
-    category: searchParams.get('category') || '',
-    location: searchParams.get('location') || '',
-    experience: searchParams.get('experience') || '',
-    gender: searchParams.get('gender') || '',
-    ageRange: searchParams.get('ageRange') || '',
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchAuditions(nextPage, false);
+    }
   };
 
-  const filteredAuditions = auditions.filter(audition => {
-    if (filters.category && audition.category !== filters.category) return false;
-    if (filters.location && !audition.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
-    if (filters.experience && audition.experience_level !== filters.experience) return false;
-    if (filters.gender && audition.gender !== filters.gender) return false;
-    if (filters.ageRange && audition.age_range !== filters.ageRange) return false;
-    
-    // Filter by selected tags
-    if (selectedTags.length > 0) {
-      const hasSelectedTag = selectedTags.some(tag => 
-        audition.tags?.includes(tag)
-      );
-      if (!hasSelectedTag) return false;
-    }
-    
-    return true;
-  });
+  const handleRetry = () => {
+    setPage(1);
+    fetchAuditions(1, true);
+  };
 
-  // Extract unique tags from auditions
-  const uniqueTags = Array.from(
-    new Set(auditions.flatMap(audition => audition.tags || []))
-  ).filter(Boolean);
+  const clearFilters = () => {
+    setSearchParams(new URLSearchParams());
+    setSelectedTags([]);
+  };
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -212,15 +243,6 @@ const Auditions = () => {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
-  };
-
-  const handleRetry = () => {
-    fetchAuditions();
-  };
-
-  const clearFilters = () => {
-    setSearchParams(new URLSearchParams());
-    setSelectedTags([]);
   };
 
   const applicationStatusMap = new Map(
@@ -284,7 +306,7 @@ const Auditions = () => {
             
             <div className="flex-1">
               <AuditionsGrid 
-                auditions={filteredAuditions} 
+                auditions={auditions} 
                 loading={loading}
                 error={error}
                 onClearFilters={clearFilters}
@@ -292,7 +314,15 @@ const Auditions = () => {
                 applicationStatusMap={applicationStatusMap}
               />
               
-              {!loading && !error && filteredAuditions.length === 0 && auditions.length > 0 && (
+              {!loading && !error && auditions.length > 0 && hasMore && (
+                <div className="mt-8 text-center">
+                  <Button onClick={handleLoadMore} disabled={loadingMore} className="w-40">
+                    {loadingMore ? <LoadingSpinner size="sm" /> : 'Load More'}
+                  </Button>
+                </div>
+              )}
+
+              {!loading && !error && auditions.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
                   <p className="text-gray-500 mt-2">Try adjusting your filters</p>
