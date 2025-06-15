@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
-import ArtistFilters from "@/components/artists/ArtistFilters";
+import AuditionFilters from "@/components/auditions/AuditionFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -64,7 +64,6 @@ const Auditions = () => {
   const [auditions, setAuditions] = useState<AuditionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentTab, setCurrentTab] = useState("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { user } = useAuth();
   const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
@@ -74,6 +73,9 @@ const Auditions = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [uniqueTags, setUniqueTags] = useState<string[]>([]);
+  const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
+
+  const selectedCategory = searchParams.get('category') || '';
 
   useEffect(() => {
     const fetchUserApplications = async () => {
@@ -207,6 +209,16 @@ const Auditions = () => {
     }
   };
 
+  const fetchUniqueCategories = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_unique_categories');
+      if (error) throw error;
+      if (data) setUniqueCategories(data as string[]);
+    } catch (error) {
+      console.error("Error fetching unique categories:", error);
+    }
+  };
+
   useEffect(() => {
     // Reset and fetch when filters change
     setAuditions([]);
@@ -217,6 +229,7 @@ const Auditions = () => {
 
   useEffect(() => {
     fetchUniqueTags();
+    fetchUniqueCategories();
   }, []);
 
   const handleLoadMore = () => {
@@ -245,11 +258,22 @@ const Auditions = () => {
     );
   };
 
+  const handleCategoryChange = (category: string) => {
+    setSearchParams(prev => {
+      if (category) {
+        prev.set('category', category);
+      } else {
+        prev.delete('category');
+      }
+      return prev;
+    }, { replace: true });
+  };
+
   const applicationStatusMap = new Map(
     userApplications.map((app) => [app.audition_id, app.status])
   );
 
-  if (loading) {
+  if (loading && auditions.length === 0) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -293,31 +317,38 @@ const Auditions = () => {
           )}
           
           <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="lg:w-64 flex-shrink-0">
-              <ArtistFilters 
-                currentTab={currentTab}
-                setCurrentTab={setCurrentTab}
+            <aside className="lg:w-80 flex-shrink-0">
+              <AuditionFilters 
+                uniqueCategories={uniqueCategories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
                 uniqueTags={uniqueTags}
                 selectedTags={selectedTags}
                 toggleTag={toggleTag}
-                isLoading={loading}
+                isLoading={loading && auditions.length === 0}
               />
             </aside>
             
             <div className="flex-1">
               <AuditionsGrid 
                 auditions={auditions} 
-                loading={loading}
-                error={error}
+                loading={loading && auditions.length === 0}
+                error={null}
                 onClearFilters={clearFilters}
                 onRetry={handleRetry}
                 applicationStatusMap={applicationStatusMap}
               />
               
-              {!loading && !error && auditions.length > 0 && hasMore && (
+              {loadingMore && (
                 <div className="mt-8 text-center">
-                  <Button onClick={handleLoadMore} disabled={loadingMore} className="w-40">
-                    {loadingMore ? <LoadingSpinner size="sm" /> : 'Load More'}
+                  <LoadingSpinner size="md" />
+                </div>
+              )}
+              
+              {!loadingMore && hasMore && auditions.length > 0 && (
+                <div className="mt-8 text-center">
+                  <Button onClick={handleLoadMore} className="w-40">
+                    Load More
                   </Button>
                 </div>
               )}

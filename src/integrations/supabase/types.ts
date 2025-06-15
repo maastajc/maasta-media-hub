@@ -550,6 +550,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_unique_categories: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown
