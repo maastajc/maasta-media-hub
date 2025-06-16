@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -13,6 +14,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchApplicationsForArtist } from "@/services/auditionApplicationService";
 import { AuditionApplication } from "@/services/auditionApplicationService";
+import { toast } from "sonner";
 
 interface AuditionData {
   id: string;
@@ -36,28 +38,7 @@ interface AuditionData {
   creator_id?: string; 
 }
 
-// Define a type for the raw data structure returned by the Supabase query
-type SupabaseAuditionEntry = {
-  id: string;
-  title: string;
-  description: string | null;
-  location: string;
-  audition_date: string | null;
-  deadline: string | null;
-  compensation: string | null;
-  requirements: string | null;
-  status: string | null;
-  category: string | null;
-  experience_level: string | null;
-  gender: string | null;
-  age_range: string | null;
-  tags: string[] | null;
-  creator_id: string | null; 
-  created_at: string | null;
-  creator_profile: { full_name: string } | null;
-};
-
-const AUDITIONS_PER_PAGE = 9;
+const AUDITIONS_PER_PAGE = 12;
 
 const Auditions = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,7 +49,6 @@ const Auditions = () => {
   const { user } = useAuth();
   const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
 
-  // New state for pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -104,12 +84,19 @@ const Auditions = () => {
     try {
       console.log(`Fetching auditions page ${currentPage}...`);
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auditions loading timeout - please check your connection')), 30000)
-      );
-      
       const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
       const to = from + AUDITIONS_PER_PAGE - 1;
+
+      // Build query with filters
+      let query = supabase
+        .from('auditions')
+        .select(`
+          id, title, description, location, audition_date, deadline, compensation,
+          requirements, status, category, experience_level, gender, age_range,
+          tags, creator_id, created_at, 
+          profiles!auditions_creator_id_fkey(full_name)
+        `)
+        .eq('status', 'open');
 
       const filters = {
         category: searchParams.get('category') || '',
@@ -119,15 +106,6 @@ const Auditions = () => {
         ageRange: searchParams.get('ageRange') || '',
       };
 
-      let query = supabase
-        .from('auditions')
-        .select(`
-          id, title, description, location, audition_date, deadline, compensation,
-          requirements, status, category, experience_level, gender, age_range,
-          tags, creator_id, created_at, creator_profile:profiles(full_name)
-        `)
-        .eq('status', 'open');
-
       if (filters.category) query = query.eq('category', filters.category);
       if (filters.location) query = query.ilike('location', `%${filters.location}%`);
       if (filters.experience) query = query.eq('experience_level', filters.experience);
@@ -135,20 +113,15 @@ const Auditions = () => {
       if (filters.ageRange) query = query.eq('age_range', filters.ageRange);
       if (selectedTags.length > 0) query = query.contains('tags', selectedTags);
 
-      const auditionsFetchPromise = query.order('created_at', { ascending: false }).range(from, to);
+      const { data: auditionsData, error: auditionsError } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
-      const fetchResult = await Promise.race([
-        auditionsFetchPromise,
-        timeoutPromise
-      ]) as { data: SupabaseAuditionEntry[] | null, error: any | null }; 
-
-      if (fetchResult.error) {
-        console.error('Database error fetching auditions:', fetchResult.error);
-        throw new Error(`Database error: ${fetchResult.error.message}`);
+      if (auditionsError) {
+        console.error('Database error fetching auditions:', auditionsError);
+        throw new Error(`Database error: ${auditionsError.message}`);
       }
       
-      const auditionsData = fetchResult.data;
-
       if (!auditionsData || auditionsData.length === 0) {
         if (isInitialLoad) setAuditions([]);
         setHasMore(false);
@@ -157,31 +130,31 @@ const Auditions = () => {
       
       console.log(`Fetched ${auditionsData.length} auditions, processing...`);
 
-      const auditionsWithCreators = auditionsData.map((audition: SupabaseAuditionEntry): AuditionData => {
+      const processedAuditions = auditionsData.map((audition: any): AuditionData => {
         return {
           ...audition,
-          description: audition.description ?? '',
-          location: audition.location ?? '',
-          audition_date: audition.audition_date ?? '',
-          deadline: audition.deadline ?? '',
-          compensation: audition.compensation ?? '',
-          requirements: audition.requirements ?? '',
-          status: audition.status ?? 'open',
-          category: audition.category ?? '',
-          experience_level: audition.experience_level ?? '',
-          gender: audition.gender ?? '',
-          age_range: audition.age_range ?? '',
+          description: audition.description || '',
+          location: audition.location || '',
+          audition_date: audition.audition_date || '',
+          deadline: audition.deadline || '',
+          compensation: audition.compensation || '',
+          requirements: audition.requirements || '',
+          status: audition.status || 'open',
+          category: audition.category || '',
+          experience_level: audition.experience_level || '',
+          gender: audition.gender || '',
+          age_range: audition.age_range || '',
           tags: audition.tags || [],
           creator_profile: { 
-            full_name: audition.creator_profile?.full_name || 'Unknown Creator' 
+            full_name: audition.profiles?.full_name || 'Unknown Creator' 
           },
           created_at: audition.created_at || new Date().toISOString(),
-          creator_id: audition.creator_id ?? undefined,
+          creator_id: audition.creator_id || undefined,
         };
       });
 
-      console.log(`Successfully processed ${auditionsWithCreators.length} auditions with creator names`);
-      setAuditions(prev => isInitialLoad ? auditionsWithCreators : [...prev, ...auditionsWithCreators]);
+      console.log(`Successfully processed ${processedAuditions.length} auditions`);
+      setAuditions(prev => isInitialLoad ? processedAuditions : [...prev, ...processedAuditions]);
 
       if (auditionsData.length < AUDITIONS_PER_PAGE) {
         setHasMore(false);
@@ -191,7 +164,9 @@ const Auditions = () => {
 
     } catch (error: any) {
       console.error('Error in fetchAuditions process:', error);
-      setError(error.message || 'Failed to load auditions');
+      const errorMessage = error.message || 'Failed to load auditions';
+      setError(errorMessage);
+      toast.error("Failed to load auditions. Please try again.");
       if (isInitialLoad) setAuditions([]);
     } finally {
       setLoading(false);
@@ -199,28 +174,31 @@ const Auditions = () => {
     }
   };
 
-  const fetchUniqueTags = async () => {
+  const fetchUniqueData = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_unique_tags' as any);
-      if (error) throw error;
-      if (data) setUniqueTags((data as string[]).filter(Boolean));
-    } catch (error) {
-      console.error("Error fetching unique tags:", error);
-    }
-  };
+      // Fetch unique categories
+      const { data: categoriesData } = await supabase.rpc('get_unique_categories');
+      if (categoriesData) setUniqueCategories(categoriesData as string[]);
 
-  const fetchUniqueCategories = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_unique_categories');
-      if (error) throw error;
-      if (data) setUniqueCategories(data as string[]);
+      // Fetch unique tags with a simple query
+      const { data: tagsData } = await supabase
+        .from('auditions')
+        .select('tags')
+        .not('tags', 'is', null);
+      
+      if (tagsData) {
+        const allTags = tagsData
+          .flatMap(item => item.tags || [])
+          .filter(tag => tag && tag.trim().length > 0);
+        const uniqueTagsList = Array.from(new Set(allTags)).sort();
+        setUniqueTags(uniqueTagsList);
+      }
     } catch (error) {
-      console.error("Error fetching unique categories:", error);
+      console.error("Error fetching unique data:", error);
     }
   };
 
   useEffect(() => {
-    // Reset and fetch when filters change
     setAuditions([]);
     setPage(1);
     setHasMore(true);
@@ -228,8 +206,7 @@ const Auditions = () => {
   }, [searchParams, selectedTags]);
 
   useEffect(() => {
-    fetchUniqueTags();
-    fetchUniqueCategories();
+    fetchUniqueData();
   }, []);
 
   const handleLoadMore = () => {
@@ -281,7 +258,6 @@ const Auditions = () => {
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-gray-600">Loading auditions...</p>
-            <p className="mt-2 text-sm text-gray-500">This may take a moment</p>
           </div>
         </main>
         <Footer />

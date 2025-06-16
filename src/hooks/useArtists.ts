@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchAllArtists } from '@/services/artistService';
+import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
 
 interface UseArtistsOptions {
@@ -8,6 +8,92 @@ interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
   staleTime?: number;
 }
+
+const fetchArtistsOptimized = async (): Promise<Artist[]> => {
+  console.log('Fetching artists with optimized query...');
+  
+  try {
+    // Use a simpler query with shorter timeout
+    const { data: artists, error } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        email,
+        bio,
+        profile_picture_url,
+        city,
+        state,
+        country,
+        category,
+        experience_level,
+        verified,
+        special_skills!inner(skill)
+      `)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Database error:', error);
+      throw new Error(`Failed to fetch artists: ${error.message}`);
+    }
+
+    if (!artists || artists.length === 0) {
+      console.log('No artists found');
+      return [];
+    }
+
+    console.log(`Successfully fetched ${artists.length} artists`);
+    
+    // Transform the data to match our Artist interface
+    const transformedArtists = artists.map((artist: any) => {
+      const skills = artist.special_skills?.map((s: any) => s.skill) || [];
+      
+      return {
+        id: artist.id,
+        full_name: artist.full_name || 'Unknown Artist',
+        email: artist.email,
+        bio: artist.bio,
+        profile_picture_url: artist.profile_picture_url,
+        city: artist.city,
+        state: artist.state,
+        country: artist.country,
+        category: artist.category,
+        experience_level: artist.experience_level,
+        verified: artist.verified || false,
+        skills: skills,
+        special_skills: artist.special_skills || [],
+        // Add default values for required fields
+        phone_number: null,
+        date_of_birth: null,
+        gender: null,
+        willing_to_relocate: false,
+        work_preference: "any",
+        years_of_experience: 0,
+        association_membership: null,
+        personal_website: null,
+        instagram: null,
+        linkedin: null,
+        youtube_vimeo: null,
+        role: 'artist',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        projects: [],
+        education_training: [],
+        media_assets: [],
+        language_skills: [],
+        tools_software: []
+      } as Artist;
+    });
+
+    return transformedArtists;
+  } catch (error: any) {
+    console.error('Error in fetchArtistsOptimized:', error);
+    throw error;
+  }
+};
 
 export const useArtists = (options: UseArtistsOptions = {}) => {
   const {
@@ -18,15 +104,15 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const query = useQuery({
     queryKey: ['artists'],
-    queryFn: fetchAllArtists,
+    queryFn: fetchArtistsOptimized,
     enabled,
     staleTime,
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
       console.error(`Artists fetch attempt ${failureCount + 1} failed:`, error);
-      return failureCount < 2; // Retry up to 2 times
+      return failureCount < 1; // Only retry once
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: 2000, // 2 seconds between retries
   });
 
   // Filter and search functionality
@@ -47,8 +133,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         const searchTerm = filters.search.toLowerCase();
         const matchesName = artist.full_name?.toLowerCase().includes(searchTerm);
         const matchesBio = artist.bio?.toLowerCase().includes(searchTerm);
-        const matchesSkills = artist.special_skills?.some(skill => 
-          skill.skill?.toLowerCase().includes(searchTerm)
+        const matchesSkills = artist.skills?.some(skill => 
+          skill.toLowerCase().includes(searchTerm)
         );
         
         if (!matchesName && !matchesBio && !matchesSkills) {

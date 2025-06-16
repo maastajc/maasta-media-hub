@@ -4,27 +4,104 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchFeaturedArtists } from "@/services/optimizedArtistService";
+import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 
 const FeaturedArtists = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchFeaturedArtists = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching featured artists...');
+      
+      const { data: artistsData, error: fetchError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          bio,
+          profile_picture_url,
+          city,
+          state,
+          country,
+          category,
+          experience_level,
+          verified,
+          special_skills(skill)
+        `)
+        .eq('status', 'active')
+        .not('profile_picture_url', 'is', null)
+        .limit(4);
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      if (!artistsData || artistsData.length === 0) {
+        console.log('No featured artists found');
+        setArtists([]);
+        return;
+      }
+
+      console.log(`Successfully fetched ${artistsData.length} featured artists`);
+      
+      const transformedArtists = artistsData.map((artist: any) => {
+        const skills = artist.special_skills?.map((s: any) => s.skill) || [];
+        
+        return {
+          id: artist.id,
+          full_name: artist.full_name || "Unknown Artist",
+          email: artist.email,
+          category: artist.category,
+          experience_level: artist.experience_level || 'beginner',
+          bio: artist.bio,
+          profile_picture_url: artist.profile_picture_url,
+          city: artist.city,
+          state: artist.state,
+          country: artist.country,
+          verified: artist.verified || false,
+          skills: skills,
+          // Add required default values
+          phone_number: null,
+          date_of_birth: null,
+          gender: null,
+          willing_to_relocate: false,
+          work_preference: "any",
+          years_of_experience: 0,
+          association_membership: null,
+          personal_website: null,
+          instagram: null,
+          linkedin: null,
+          youtube_vimeo: null,
+          role: 'artist',
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          projects: [],
+          education_training: [],
+          media_assets: [],
+          language_skills: [],
+          tools_software: [],
+          special_skills: []
+        } as Artist;
+      });
+
+      setArtists(transformedArtists);
+    } catch (error: any) {
+      console.error('Failed to load featured artists:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadFeaturedArtists = async () => {
-      try {
-        setLoading(true);
-        const featuredArtists = await fetchFeaturedArtists(4);
-        setArtists(featuredArtists);
-      } catch (error) {
-        console.error('Failed to load featured artists:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFeaturedArtists();
+    fetchFeaturedArtists();
   }, []);
 
   const LoadingSkeleton = () => (
@@ -59,6 +136,37 @@ const FeaturedArtists = () => {
             </Link>
           </div>
           <LoadingSkeleton />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Featured Artists</h2>
+            <Link to="/artists">
+              <Button variant="ghost" className="text-maasta-purple hover:text-maasta-purple/90 hover:bg-maasta-purple/10">
+                View all artists
+              </Button>
+            </Link>
+          </div>
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium mb-2">Unable to load featured artists</h3>
+            <p className="text-gray-500 mb-4">Please check your connection and try again</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={fetchFeaturedArtists} variant="outline">
+                Try Again
+              </Button>
+              <Link to="/artists">
+                <Button variant="outline" className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple/10">
+                  Browse All Artists
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     );
