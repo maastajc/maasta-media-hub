@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { PlusCircle, Calendar, Users, ClipboardList } from "lucide-react";
+import { PlusCircle, Calendar, Users, ClipboardList, FileText } from "lucide-react";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -146,13 +145,24 @@ const Dashboard = () => {
                 <p className="text-3xl font-bold">
                   {isLoading ? "-" : registeredEvents.length + auditionApplications.length}
                 </p>
-                <Button 
-                  onClick={() => navigate("/artists")} 
-                  variant="outline"
-                  className="mt-4 border-green-600 text-green-600 hover:bg-green-50 w-full"
-                >
-                  View Artists
-                </Button>
+                {profile?.role === 'recruiter' ? (
+                  <Button 
+                    onClick={() => navigate("/auditions/applications")} 
+                    variant="outline"
+                    className="mt-4 border-green-600 text-green-600 hover:bg-green-50 w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Applications
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => navigate("/artists")} 
+                    variant="outline"
+                    className="mt-4 border-green-600 text-green-600 hover:bg-green-50 w-full"
+                  >
+                    View Artists
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

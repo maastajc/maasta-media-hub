@@ -20,6 +20,7 @@ import Artists from "./pages/Artists";
 import Dashboard from "./pages/Dashboard";
 import CreateEvent from "./pages/CreateEvent";
 import CreateAudition from "./pages/CreateAudition";
+import AuditionApplications from "./pages/AuditionApplications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function App() {
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/auditions/create" element={<ProtectedRoute requiredRole="recruiter"><CreateAudition /></ProtectedRoute>} />
               <Route path="/events/create" element={<ProtectedRoute requiredRole="recruiter"><CreateEvent /></ProtectedRoute>} />
+              <Route path="/auditions/applications" element={<ProtectedRoute requiredRole="recruiter"><AuditionApplications /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
