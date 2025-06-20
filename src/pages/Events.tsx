@@ -1,158 +1,171 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-// Mock data for events
-const allEvents = [
-  {
-    id: 1,
-    title: "Master Class with Filmmaking Legends",
-    organizer: "Film Academy India",
-    date: "2025-06-15",
-    time: "10:00 AM - 4:00 PM",
-    location: "Mumbai Film City",
-    image: "https://images.unsplash.com/photo-1581905764498-f1b60bae941a?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "workshop",
-    tags: ["Direction", "Filmmaking", "Masterclass"],
-  },
-  {
-    id: 2,
-    title: "Music Production Intensive Course",
-    organizer: "Rhythm Studios",
-    date: "2025-06-20",
-    time: "Weekends for 4 weeks",
-    location: "Online",
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "course",
-    tags: ["Music", "Production", "Online"],
-  },
-  {
-    id: 3,
-    title: "National Dance Competition 2025",
-    organizer: "Dance India Dance",
-    date: "2025-07-10",
-    time: "9:00 AM onwards",
-    location: "Delhi Convention Center",
-    image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "contest",
-    tags: ["Dance", "Competition", "Performance"],
-  },
-  {
-    id: 4,
-    title: "Photography Workshop: Natural Light",
-    organizer: "Capture Collective",
-    date: "2025-06-25",
-    time: "2:00 PM - 6:00 PM",
-    location: "Bangalore",
-    image: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "workshop",
-    tags: ["Photography", "Outdoor"],
-  },
-  {
-    id: 5,
-    title: "Documentary Filmmaking Course",
-    organizer: "Documentary Guild",
-    date: "2025-07-05",
-    time: "10:00 AM - 1:00 PM",
-    location: "Chennai Film Institute",
-    image: "https://images.unsplash.com/photo-1601710208082-16673411d2bc?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "course",
-    tags: ["Documentary", "Filmmaking", "Storytelling"],
-  },
-  {
-    id: 6,
-    title: "Classical Music Concert Series",
-    organizer: "Harmony Foundation",
-    date: "2025-07-15",
-    time: "6:30 PM onwards",
-    location: "National Centre for Performing Arts, Mumbai",
-    image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "concert",
-    tags: ["Music", "Classical", "Live Performance"],
-  },
-  {
-    id: 7,
-    title: "Annual Art & Photography Exhibition",
-    organizer: "Creative Minds Gallery",
-    date: "2025-06-30",
-    time: "11:00 AM - 8:00 PM",
-    location: "Lalit Kala Akademi, New Delhi",
-    image: "https://images.unsplash.com/photo-1531058020387-3be344556be6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "event",
-    tags: ["Art", "Photography", "Exhibition"],
-  },
-  {
-    id: 8,
-    title: "Scriptwriting Workshop with Industry Experts",
-    organizer: "Screenplay Association",
-    date: "2025-07-08",
-    time: "11:00 AM - 5:00 PM",
-    location: "Hyderabad",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3",
-    category: "workshop",
-    tags: ["Writing", "Screenplay", "Film"],
-  },
-];
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  is_online: boolean;
+  date_start: string;
+  date_end: string;
+  ticket_type: string;
+  ticket_price: number | null;
+  ticket_limit: number | null;
+  image_url: string | null;
+  status: string;
+  creator_id: string;
+  registration_deadline: string | null;
+  is_talent_needed: boolean;
+}
 
 const Events = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [currentTab, setCurrentTab] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedTicketType, setSelectedTicketType] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const [sortOption, setSortOption] = useState("upcoming");
   const navigate = useNavigate();
-  
-  // Extract unique tags from all events
-  const uniqueTags = Array.from(
-    new Set(allEvents.flatMap((event) => event.tags))
-  ).sort();
-  
-  // Filter and sort events
-  const filteredEvents = allEvents
-    .filter((event) => {
-      const matchesSearch = 
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        event.organizer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesTags = 
-        selectedTags.length === 0 || 
-        selectedTags.some((tag) => event.tags.includes(tag));
-      
-      const matchesCategory = 
-        currentTab === "all" || event.category === currentTab;
-      
-      return matchesSearch && matchesTags && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortOption === "upcoming") {
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      }
-      return 0;
-    });
-  
-  // Toggle tag selection
-  const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
+  const { user } = useAuth();
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "published")
+        .order("date_start", { ascending: true });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching events:", error);
+      toast.error("Failed to load events");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // Get unique categories and locations for filters
+  const uniqueCategories = Array.from(new Set(events.map(event => event.category).filter(Boolean)));
+  const uniqueLocations = Array.from(new Set(events.map(event => 
+    event.is_online ? "Online" : event.location
+  ).filter(Boolean)));
+
+  // Filter and sort events
+  const filteredEvents = events
+    .filter((event) => {
+      const matchesSearch = 
+        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
+      const matchesTicketType = selectedTicketType === "all" || event.ticket_type === selectedTicketType;
+      const matchesLocation = selectedLocation === "all" || 
+        (selectedLocation === "Online" ? event.is_online : event.location.includes(selectedLocation));
+      
+      return matchesSearch && matchesCategory && matchesTicketType && matchesLocation;
+    })
+    .sort((a, b) => {
+      if (sortOption === "upcoming") {
+        return new Date(a.date_start).getTime() - new Date(b.date_start).getTime();
+      }
+      return 0;
+    });
+
   const handleCreateEvent = () => {
+    if (!user) {
+      toast.error("Please sign in to create events");
+      navigate("/sign-in");
+      return;
+    }
     navigate("/events/create");
   };
 
-  const handleViewEventDetails = (eventId: number) => {
+  const handleViewEventDetails = (eventId: string) => {
     navigate(`/events/${eventId}`);
   };
+
+  const isEventExpired = (eventDate: string) => {
+    return new Date(eventDate) < new Date();
+  };
+
+  const isRegistrationClosed = (event: Event) => {
+    if (event.registration_deadline) {
+      return new Date(event.registration_deadline) < new Date();
+    }
+    return isEventExpired(event.date_start);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow">
+          <section className="bg-maasta-purple/5 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">Media Events</h1>
+                  <p className="text-lg text-gray-600">
+                    Discover workshops, courses, contests, and more
+                  </p>
+                </div>
+                <Button className="bg-maasta-orange hover:bg-maasta-orange/90">
+                  Create Event
+                </Button>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4">
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 w-20" />
+              </div>
+            </div>
+          </section>
+          
+          <section className="py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array(6).fill(0).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <Skeleton className="h-48 w-full" />
+                    <CardContent className="p-4">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-3" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -176,21 +189,16 @@ const Events = () => {
               </Button>
             </div>
             
-            {/* Search and filter */}
+            {/* Search */}
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="Search events by title, organizer, or location..."
+                  placeholder="Search events by title, description, or location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
                 />
-              </div>
-              <div className="hidden md:block">
-                <Button className="bg-maasta-orange hover:bg-maasta-orange/90">
-                  Search
-                </Button>
               </div>
             </div>
           </div>
@@ -199,52 +207,56 @@ const Events = () => {
         {/* Events Listing */}
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Category tabs */}
-            <Tabs defaultValue="all" className="mb-8" onValueChange={setCurrentTab}>
-              <TabsList className="grid grid-cols-4 lg:grid-cols-7">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="workshop">Workshops</TabsTrigger>
-                <TabsTrigger value="course">Courses</TabsTrigger>
-                <TabsTrigger value="contest">Contests</TabsTrigger>
-                <TabsTrigger value="concert">Concerts</TabsTrigger>
-                <TabsTrigger value="event">Events</TabsTrigger>
-                <TabsTrigger value="audition">Auditions</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            {/* Tags filter and sorting */}
-            <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
-              <div className="flex-1">
-                <h3 className="text-sm font-medium mb-2">Filter by tags:</h3>
-                <div className="flex flex-wrap gap-2">
-                  {uniqueTags.map((tag) => (
-                    <Button
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      size="sm"
-                      className={selectedTags.includes(tag) 
-                        ? "bg-maasta-purple hover:bg-maasta-purple/90" 
-                        : "hover:bg-maasta-purple/10 hover:text-maasta-purple"
-                      }
-                      onClick={() => toggleTag(tag)}
-                    >
-                      {tag}
-                    </Button>
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {uniqueCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
-              
-              <div className="w-full md:w-48">
-                <h3 className="text-sm font-medium mb-2">Sort by:</h3>
-                <Select value={sortOption} onValueChange={setSortOption}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="upcoming">Upcoming</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedTicketType} onValueChange={setSelectedTicketType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="Online">Online</SelectItem>
+                  {uniqueLocations.filter(loc => loc !== "Online").map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={sortOption} onValueChange={setS ortOption}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upcoming">Upcoming First</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             {/* Results display */}
@@ -255,61 +267,81 @@ const Events = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredEvents.map((event) => {
-                  // Format date
-                  const eventDate = new Date(event.date);
+                  const eventDate = new Date(event.date_start);
                   const formattedDate = eventDate.toLocaleDateString('en-US', { 
                     day: 'numeric', 
                     month: 'short', 
                     year: 'numeric' 
                   });
+                  const isExpired = isEventExpired(event.date_start);
+                  const regClosed = isRegistrationClosed(event);
                   
                   return (
                     <Card key={event.id} className="overflow-hidden card-hover">
                       <div className="relative h-48">
                         <img
-                          src={event.image}
+                          src={event.image_url || "https://images.unsplash.com/photo-1581905764498-f1b60bae941a?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3"}
                           alt={event.title}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute top-2 left-2">
-                          <span className="event-category">
-                            {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
-                          </span>
+                        <div className="absolute top-2 left-2 flex gap-2">
+                          <Badge variant="secondary" className="bg-white/90 text-black">
+                            {event.category?.charAt(0).toUpperCase() + event.category?.slice(1)}
+                          </Badge>
+                          <Badge 
+                            variant={event.ticket_type === "free" ? "secondary" : "default"}
+                            className={event.ticket_type === "free" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}
+                          >
+                            {event.ticket_type === "free" ? "Free" : `₹${event.ticket_price}`}
+                          </Badge>
                         </div>
+                        {isExpired && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <Badge variant="destructive">Event Ended</Badge>
+                          </div>
+                        )}
                       </div>
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-lg line-clamp-2">{event.title}</h3>
-                        <p className="text-maasta-purple text-sm mt-1">{event.organizer}</p>
+                        <h3 className="font-semibold text-lg line-clamp-2 mb-2">{event.title}</h3>
                         
-                        <div className="mt-3 flex items-center text-sm text-gray-500">
+                        <div className="flex items-center text-sm text-gray-500 mb-2">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                           </svg>
                           {formattedDate}
                         </div>
                         
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
+                        <div className="flex items-center text-sm text-gray-500 mb-3">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                           </svg>
-                          {event.location}
-                        </div>
-                        
-                        <div className="mt-3 flex flex-wrap">
-                          {event.tags.map((tag, idx) => (
-                            <span key={idx} className="tag">
-                              {tag}
+                          {event.is_online ? (
+                            <span className="flex items-center">
+                              <Badge variant="outline" className="mr-1">Online</Badge>
                             </span>
-                          ))}
+                          ) : (
+                            event.location
+                          )}
                         </div>
+
+                        {event.ticket_limit && (
+                          <p className="text-xs text-gray-400 mb-3">
+                            Limited to {event.ticket_limit} participants
+                          </p>
+                        )}
+
+                        {regClosed && !isExpired && (
+                          <p className="text-xs text-red-500 mb-3">Registration closed</p>
+                        )}
                         
                         <Button 
                           variant="outline" 
-                          className="w-full mt-4 border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
+                          className="w-full border-maasta-orange text-maasta-orange hover:bg-maasta-orange/5"
                           onClick={() => handleViewEventDetails(event.id)}
+                          disabled={isExpired}
                         >
-                          View Details
+                          {isExpired ? "Event Ended" : "View Details"}
                         </Button>
                       </CardContent>
                     </Card>
@@ -320,7 +352,13 @@ const Events = () => {
               {filteredEvents.length === 0 && (
                 <div className="text-center py-12">
                   <h3 className="text-lg font-medium mb-2">No events found</h3>
-                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                  <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
+                  <Button 
+                    onClick={handleCreateEvent}
+                    className="bg-maasta-orange hover:bg-maasta-orange/90"
+                  >
+                    Create the First Event
+                  </Button>
                 </div>
               )}
             </div>

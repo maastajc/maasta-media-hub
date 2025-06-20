@@ -185,48 +185,134 @@ export type Database = {
           },
         ]
       }
+      event_registrations: {
+        Row: {
+          confirmation_email_sent: boolean | null
+          event_id: string
+          id: string
+          joined_at: string
+          notes: string | null
+          participant_email: string | null
+          participant_name: string | null
+          participant_phone: string | null
+          payment_status: string | null
+          status: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          confirmation_email_sent?: boolean | null
+          event_id: string
+          id?: string
+          joined_at?: string
+          notes?: string | null
+          participant_email?: string | null
+          participant_name?: string | null
+          participant_phone?: string | null
+          payment_status?: string | null
+          status?: string | null
+          ticket_id?: string
+          user_id: string
+        }
+        Update: {
+          confirmation_email_sent?: boolean | null
+          event_id?: string
+          id?: string
+          joined_at?: string
+          notes?: string | null
+          participant_email?: string | null
+          participant_name?: string | null
+          participant_phone?: string | null
+          payment_status?: string | null
+          status?: string | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           banner_url: string | null
+          category: string | null
           created_at: string | null
           creator_id: string | null
+          date_end: string | null
+          date_start: string | null
           description: string | null
           event_date: string
           id: string
+          image_url: string | null
+          is_online: boolean | null
+          is_talent_needed: boolean | null
           location: string
           max_attendees: number | null
+          organizer_contact: string | null
           organizer_info: string | null
+          registration_deadline: string | null
+          status: string | null
+          ticket_limit: number | null
           ticket_price: number | null
+          ticket_type: string | null
           ticketing_enabled: boolean | null
           title: string
           updated_at: string | null
         }
         Insert: {
           banner_url?: string | null
+          category?: string | null
           created_at?: string | null
           creator_id?: string | null
+          date_end?: string | null
+          date_start?: string | null
           description?: string | null
           event_date: string
           id?: string
+          image_url?: string | null
+          is_online?: boolean | null
+          is_talent_needed?: boolean | null
           location: string
           max_attendees?: number | null
+          organizer_contact?: string | null
           organizer_info?: string | null
+          registration_deadline?: string | null
+          status?: string | null
+          ticket_limit?: number | null
           ticket_price?: number | null
+          ticket_type?: string | null
           ticketing_enabled?: boolean | null
           title: string
           updated_at?: string | null
         }
         Update: {
           banner_url?: string | null
+          category?: string | null
           created_at?: string | null
           creator_id?: string | null
+          date_end?: string | null
+          date_start?: string | null
           description?: string | null
           event_date?: string
           id?: string
+          image_url?: string | null
+          is_online?: boolean | null
+          is_talent_needed?: boolean | null
           location?: string
           max_attendees?: number | null
+          organizer_contact?: string | null
           organizer_info?: string | null
+          registration_deadline?: string | null
+          status?: string | null
+          ticket_limit?: number | null
           ticket_price?: number | null
+          ticket_type?: string | null
           ticketing_enabled?: boolean | null
           title?: string
           updated_at?: string | null
@@ -550,6 +636,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_event_stats: {
+        Args: { event_id_param: string }
+        Returns: {
+          total_registrations: number
+          confirmed_registrations: number
+          cancelled_registrations: number
+          is_full: boolean
+        }[]
+      }
       get_unique_categories: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -573,6 +668,10 @@ export type Database = {
       gtrgm_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      is_event_full: {
+        Args: { event_id_param: string }
+        Returns: boolean
       }
       set_limit: {
         Args: { "": number }
