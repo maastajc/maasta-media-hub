@@ -649,6 +649,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      get_unique_event_categories: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown

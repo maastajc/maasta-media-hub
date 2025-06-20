@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -119,6 +118,75 @@ const Auditions = () => {
 
       if (auditionsError) {
         console.error('Database error fetching auditions:', auditionsError);
+        
+        // If there's a foreign key error, try without the profiles join
+        if (auditionsError.message?.includes('foreign key') || auditionsError.message?.includes('relation')) {
+          console.log("Trying fallback query without profiles join...");
+          let fallbackQuery = supabase
+            .from('auditions')
+            .select(`
+              id, title, description, location, audition_date, deadline, compensation,
+              requirements, status, category, experience_level, gender, age_range,
+              tags, creator_id, created_at
+            `)
+            .eq('status', 'open');
+
+          // Apply the same filters
+          if (filters.category) fallbackQuery = fallbackQuery.eq('category', filters.category);
+          if (filters.location) fallbackQuery = fallbackQuery.ilike('location', `%${filters.location}%`);
+          if (filters.experience) fallbackQuery = fallbackQuery.eq('experience_level', filters.experience);
+          if (filters.gender) fallbackQuery = fallbackQuery.eq('gender', filters.gender);
+          if (filters.ageRange) fallbackQuery = fallbackQuery.eq('age_range', filters.ageRange);
+          if (selectedTags.length > 0) fallbackQuery = fallbackQuery.contains('tags', selectedTags);
+
+          const { data: fallbackData, error: fallbackError } = await fallbackQuery
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
+          if (fallbackError) {
+            throw new Error(`Database error: ${fallbackError.message}`);
+          }
+
+          if (!fallbackData || fallbackData.length === 0) {
+            if (isInitialLoad) setAuditions([]);
+            setHasMore(false);
+            return;
+          }
+
+          const processedAuditions = fallbackData.map((audition: any): AuditionData => {
+            return {
+              ...audition,
+              description: audition.description || '',
+              location: audition.location || '',
+              audition_date: audition.audition_date || '',
+              deadline: audition.deadline || '',
+              compensation: audition.compensation || '',
+              requirements: audition.requirements || '',
+              status: audition.status || 'open',
+              category: audition.category || '',
+              experience_level: audition.experience_level || '',
+              gender: audition.gender || '',
+              age_range: audition.age_range || '',
+              tags: audition.tags || [],
+              creator_profile: { 
+                full_name: 'Production Company' // Default company name
+              },
+              created_at: audition.created_at || new Date().toISOString(),
+              creator_id: audition.creator_id || undefined,
+            };
+          });
+
+          console.log(`Successfully processed ${processedAuditions.length} auditions (fallback)`);
+          setAuditions(prev => isInitialLoad ? processedAuditions : [...prev, ...processedAuditions]);
+
+          if (fallbackData.length < AUDITIONS_PER_PAGE) {
+            setHasMore(false);
+          } else {
+            setHasMore(true);
+          }
+          return;
+        }
+        
         throw new Error(`Database error: ${auditionsError.message}`);
       }
       
@@ -146,7 +214,7 @@ const Auditions = () => {
           age_range: audition.age_range || '',
           tags: audition.tags || [],
           creator_profile: { 
-            full_name: audition.profiles?.full_name || 'Unknown Creator' 
+            full_name: audition.profiles?.full_name || 'Production Company' 
           },
           created_at: audition.created_at || new Date().toISOString(),
           creator_id: audition.creator_id || undefined,
@@ -176,14 +244,30 @@ const Auditions = () => {
 
   const fetchUniqueData = async () => {
     try {
-      // Fetch unique categories
-      const { data: categoriesData } = await supabase.rpc('get_unique_categories');
-      if (categoriesData) setUniqueCategories(categoriesData as string[]);
+      // Fetch unique categories using the fixed function
+      const { data: categoriesData, error: categoriesError } = await supabase.rpc('get_unique_categories');
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        // Fallback: fetch categories directly
+        const { data: fallbackCategories } = await supabase
+          .from('auditions')
+          .select('category')
+          .eq('status', 'open')
+          .not('category', 'is', null);
+        
+        if (fallbackCategories) {
+          const uniqueCats = Array.from(new Set(fallbackCategories.map(item => item.category).filter(Boolean))).sort();
+          setUniqueCategories(uniqueCats as string[]);
+        }
+      } else if (categoriesData) {
+        setUniqueCategories(categoriesData as string[]);
+      }
 
       // Fetch unique tags with a simple query
       const { data: tagsData } = await supabase
         .from('auditions')
         .select('tags')
+        .eq('status', 'open')
         .not('tags', 'is', null);
       
       if (tagsData) {
