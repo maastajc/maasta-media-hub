@@ -249,7 +249,7 @@ const Events = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={sortOption} onValueChange={setS ortOption}>
+              <Select value={sortOption} onValueChange={setSortOption}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
