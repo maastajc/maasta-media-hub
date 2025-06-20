@@ -1,100 +1,46 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
-export type FileUploadResult = {
-  path: string;
+export interface UploadResult {
   url: string;
-  error: string | null;
+  fileName: string;
+}
+
+export const uploadMultipleFiles = async (
+  files: File[],
+  folder: string = 'uploads'
+): Promise<UploadResult[]> => {
+  const uploadPromises = files.map(file => uploadSingleFile(file, folder));
+  return Promise.all(uploadPromises);
 };
 
-/**
- * Uploads a file to the specified Supabase storage bucket
- */
-export async function uploadFile(
+export const uploadSingleFile = async (
   file: File,
-  bucketName: string,
-  folder: string = ""
-): Promise<FileUploadResult> {
-  try {
-    if (!file) {
-      return { path: "", url: "", error: "No file provided" };
-    }
+  folder: string = 'uploads'
+): Promise<UploadResult> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `${folder}/${fileName}`;
 
-    // Create a unique file name to prevent collisions
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${uuidv4()}.${fileExt}`;
-    const filePath = folder ? `${folder}/${fileName}` : fileName;
+  const { data, error } = await supabase.storage
+    .from('media-assets')
+    .upload(filePath, file);
 
-    // Upload file to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-
-    if (error) {
-      console.error("Error uploading file:", error);
-      return { path: "", url: "", error: error.message };
-    }
-
-    // Get the public URL
-    const { data: urlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(data.path);
-
-    return { 
-      path: data.path, 
-      url: urlData.publicUrl, 
-      error: null 
-    };
-  } catch (error: any) {
-    console.error("Unexpected error during file upload:", error);
-    return { 
-      path: "", 
-      url: "", 
-      error: error.message || "Failed to upload file" 
-    };
+  if (error) {
+    throw new Error(`Failed to upload ${file.name}: ${error.message}`);
   }
-}
 
-/**
- * Uploads a profile picture using the standardized bucket
- */
-export async function uploadProfilePicture(
-  file: File,
-  userId: string
-): Promise<FileUploadResult> {
-  return uploadFile(file, 'profile-pictures', userId);
-}
+  const { data: { publicUrl } } = supabase.storage
+    .from('media-assets')
+    .getPublicUrl(data.path);
 
-/**
- * Uploads an audition cover image using the photos bucket
- */
-export async function uploadAuditionCover(
-  file: File
-): Promise<FileUploadResult> {
-  return uploadFile(file, 'photos', 'audition-covers');
-}
+  return {
+    url: publicUrl,
+    fileName: file.name
+  };
+};
 
-/**
- * Deletes a file from Supabase storage
- */
-export async function deleteFile(path: string, bucketName: string): Promise<boolean> {
-  try {
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .remove([path]);
-
-    if (error) {
-      console.error("Error deleting file:", error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Unexpected error during file deletion:", error);
-    return false;
-  }
-}
+export const uploadAuditionCover = async (file: File): Promise<string> => {
+  const result = await uploadSingleFile(file, 'audition-covers');
+  return result.url;
+};
