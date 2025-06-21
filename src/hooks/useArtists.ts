@@ -13,8 +13,13 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
   console.log('Fetching artists with optimized query...');
   
   try {
-    // Use a simpler query with shorter timeout
-    const { data: artists, error } = await supabase
+    // Simplified timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Artists fetch timeout - please check your connection')), 8000)
+    );
+
+    // Optimized query with minimal joins
+    const fetchPromise = supabase
       .from('profiles')
       .select(`
         id,
@@ -31,15 +36,74 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
         special_skills!inner(skill)
       `)
       .eq('status', 'active')
-      .order('created_at', { ascending: false })
       .limit(50);
 
-    if (error) {
-      console.error('Database error:', error);
-      throw new Error(`Failed to fetch artists: ${error.message}`);
+    const result = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as { data: any[] | null; error: any };
+
+    if (result.error) {
+      console.error('Database error:', result.error);
+      
+      // Fallback query without joins if there's an error
+      console.log('Trying fallback query without special_skills join...');
+      const fallbackResult = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          bio,
+          profile_picture_url,
+          city,
+          state,
+          country,
+          category,
+          experience_level,
+          verified
+        `)
+        .eq('status', 'active')
+        .limit(50);
+
+      if (fallbackResult.error) {
+        throw new Error(`Failed to fetch artists: ${fallbackResult.error.message}`);
+      }
+
+      const artists = fallbackResult.data || [];
+      console.log(`Successfully fetched ${artists.length} artists (fallback)`);
+      
+      return artists.map((artist: any) => ({
+        ...artist,
+        full_name: artist.full_name || 'Unknown Artist',
+        skills: [],
+        special_skills: [],
+        // Add default values for required fields
+        phone_number: null,
+        date_of_birth: null,
+        gender: null,
+        willing_to_relocate: false,
+        work_preference: "any",
+        years_of_experience: 0,
+        association_membership: null,
+        personal_website: null,
+        instagram: null,
+        linkedin: null,
+        youtube_vimeo: null,
+        role: 'artist',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        projects: [],
+        education_training: [],
+        media_assets: [],
+        language_skills: [],
+        tools_software: []
+      } as Artist));
     }
 
-    if (!artists || artists.length === 0) {
+    const artists = result.data || [];
+    if (artists.length === 0) {
       console.log('No artists found');
       return [];
     }

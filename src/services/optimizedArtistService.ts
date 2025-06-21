@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset } from "@/types/artist";
 import { Database } from "@/integrations/supabase/types";
@@ -18,7 +19,6 @@ type ArtistByIdRow = ArtistDetailsRow & {
   language_skills: Database['public']['Tables']['language_skills']['Row'][];
   tools_software: Database['public']['Tables']['tools_software']['Row'][];
 };
-
 
 export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]> => {
   try {
@@ -51,11 +51,76 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
     const result = await Promise.race([
       fetchPromise,
       timeoutPromise
-    ]) as { data: FeaturedArtistRow[] | null; error: any }; // Use FeaturedArtistRow
+    ]) as { data: FeaturedArtistRow[] | null; error: any };
 
     if (result.error) {
       console.error('Database error fetching featured artists:', result.error);
-      return [];
+      
+      // Fallback query without special_skills join
+      console.log('Trying fallback query without special_skills join...');
+      const fallbackResult = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          bio,
+          profile_picture_url,
+          city,
+          state,
+          country,
+          category,
+          experience_level,
+          verified
+        `)
+        .eq('status', 'active')
+        .not('profile_picture_url', 'is', null)
+        .limit(limit);
+
+      if (fallbackResult.error) {
+        console.error('Fallback query also failed:', fallbackResult.error);
+        return [];
+      }
+
+      const artistsFromDb = fallbackResult.data || [];
+      console.log(`Successfully fetched ${artistsFromDb.length} featured artists (fallback)`);
+      
+      return artistsFromDb.map((artist): Artist => ({
+        ...artist,
+        id: artist.id,
+        full_name: artist.full_name || "Unknown Artist",
+        email: artist.email,
+        category: artist.category as ArtistCategory,
+        experience_level: (artist.experience_level as ExperienceLevel | null) ?? 'beginner',
+        bio: artist.bio || null,
+        profile_picture_url: artist.profile_picture_url || null,
+        city: artist.city || null,
+        state: artist.state || null,
+        country: artist.country || null,
+        verified: artist.verified || false,
+        phone_number: artist.phone_number ||  null,
+        date_of_birth: artist.date_of_birth || null,
+        gender: artist.gender || null,
+        willing_to_relocate: artist.willing_to_relocate || false,
+        work_preference: artist.work_preference || "any",
+        years_of_experience: artist.years_of_experience || 0,
+        association_membership: artist.association_membership || null,
+        personal_website: artist.personal_website || null,
+        instagram: artist.instagram || null,
+        linkedin: artist.linkedin || null,
+        youtube_vimeo: artist.youtube_vimeo || null,
+        role: artist.role || 'artist',
+        status: artist.status || 'active',
+        created_at: artist.created_at || new Date().toISOString(),
+        updated_at: artist.updated_at || new Date().toISOString(),
+        projects: [], 
+        education_training: [],
+        media_assets: [],
+        language_skills: [],
+        tools_software: [],
+        special_skills: [],
+        skills: []
+      } as Artist));
     }
 
     const artistsFromDb = result.data;
@@ -67,21 +132,18 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
 
     console.log(`Successfully fetched ${artistsFromDb.length} featured artists`);
     
-    return artistsFromDb.map((artist): Artist => { // artist is now FeaturedArtistRow
-      // No need to destructure special_skills separately if artist is correctly typed
-      // const { special_skills, ...artistData } = artist; // This might be problematic if special_skills isn't on ArtistDetailsRow itself
-
+    return artistsFromDb.map((artist): Artist => {
       const skillsArray = Array.isArray(artist.special_skills) 
         ? artist.special_skills.map((s: any) => s.skill as string) 
         : [];
 
       return {
-        ...artist, // Spread artist (which is FeaturedArtistRow)
+        ...artist,
         id: artist.id,
         full_name: artist.full_name || "Unknown Artist",
         email: artist.email,
-        category: artist.category as ArtistCategory, // Ensured ArtistCategory is imported and used
-        experience_level: (artist.experience_level as ExperienceLevel | null) ?? 'beginner', // Ensured ExperienceLevel is imported and used
+        category: artist.category as ArtistCategory,
+        experience_level: (artist.experience_level as ExperienceLevel | null) ?? 'beginner',
         bio: artist.bio || null,
         profile_picture_url: artist.profile_picture_url || null,
         city: artist.city || null,
@@ -108,7 +170,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
         media_assets: [],
         language_skills: [],
         tools_software: [],
-        special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill: skillName, artist_id: artist.id })), // artist_id is required by Skill type
+        special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill: skillName, artist_id: artist.id })),
         skills: skillsArray
       } as Artist;
     });
@@ -127,7 +189,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     }
     
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 10000)
+      setTimeout(() => reject(new Error('Profile loading timeout - please try again')), 8000)
     );
 
     const fetchPromise = supabase
@@ -182,18 +244,73 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     const result = await Promise.race([
       fetchPromise,
       timeoutPromise
-    ]) as { data: ArtistByIdRow | null; error: any }; // Use ArtistByIdRow
-
+    ]) as { data: ArtistByIdRow | null; error: any };
 
     if (result.error) {
       console.error('Database error fetching artist:', result.error);
       if (result.error.code === 'PGRST116') { 
         throw new Error(`Artist not found with ID: ${id}`);
       }
-      throw new Error(`Failed to load profile: ${result.error.message}`);
+      
+      // Try fallback query without joins
+      console.log('Trying fallback query without joins...');
+      const fallbackResult = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fallbackResult.error) {
+        throw new Error(`Failed to load profile: ${fallbackResult.error.message}`);
+      }
+
+      const artistFromDb = fallbackResult.data;
+      if (!artistFromDb) {
+        throw new Error(`No artist data returned for ID: ${id}`);
+      }
+
+      console.log(`Successfully fetched artist (fallback): ${artistFromDb.full_name}`);
+      
+      return {
+        ...artistFromDb,
+        id: artistFromDb.id,
+        full_name: artistFromDb.full_name || "Unknown Artist",
+        email: artistFromDb.email,
+        category: artistFromDb.category as ArtistCategory,
+        experience_level: (artistFromDb.experience_level as ExperienceLevel | null) ?? 'beginner',
+        bio: artistFromDb.bio || null,
+        profile_picture_url: artistFromDb.profile_picture_url || null,
+        city: artistFromDb.city || null,
+        state: artistFromDb.state || null,
+        country: artistFromDb.country || null,
+        verified: artistFromDb.verified || false,
+        phone_number: artistFromDb.phone_number || null,
+        date_of_birth: artistFromDb.date_of_birth || null,
+        gender: artistFromDb.gender || null,
+        willing_to_relocate: artistFromDb.willing_to_relocate || false,
+        work_preference: artistFromDb.work_preference || "any",
+        years_of_experience: artistFromDb.years_of_experience || 0,
+        association_membership: artistFromDb.association_membership || null,
+        personal_website: artistFromDb.personal_website || null,
+        instagram: artistFromDb.instagram || null,
+        linkedin: artistFromDb.linkedin || null,
+        youtube_vimeo: artistFromDb.youtube_vimeo || null,
+        role: artistFromDb.role || 'artist',
+        status: artistFromDb.status || 'active',
+        created_at: artistFromDb.created_at || new Date().toISOString(),
+        updated_at: artistFromDb.updated_at || new Date().toISOString(),
+        
+        special_skills: [],
+        language_skills: [],
+        tools_software: [],
+        projects: [],
+        education_training: [],
+        media_assets: [],
+        skills: []
+      } as Artist;
     }
 
-    const artistFromDb = result.data; // artistFromDb is now ArtistByIdRow
+    const artistFromDb = result.data;
 
     if (!artistFromDb) {
       throw new Error(`No artist data returned for ID: ${id}`);
@@ -212,16 +329,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       ...artistData 
     } = artistFromDb;
     
-    // Map relational data, ensuring artist_id is present if required by target types and not already there.
-    // Supabase generated types for rows (e.g., special_skills's rows) typically don't include the foreign key artist_id.
-    // The Artist type's Skill, Project etc. interfaces do expect artist_id.
-    // We'll add artist_id during mapping if necessary.
-
     const mappedSpecialSkills: Skill[] = Array.isArray(special_skills) 
       ? special_skills.map(s => ({ 
           id: s.id || crypto.randomUUID(), 
           skill: s.skill || "", 
-          artist_id: artistFromDb.id // Add artist_id
+          artist_id: artistFromDb.id
         })) 
       : [];
 
@@ -230,7 +342,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           id: l.id || crypto.randomUUID(), 
           language: l.language || "", 
           proficiency: l.proficiency || "beginner", 
-          artist_id: artistFromDb.id // Add artist_id
+          artist_id: artistFromDb.id
         })) 
       : [];
       
@@ -238,7 +350,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       ? tools_software.map(t => ({
           id: t.id || crypto.randomUUID(), 
           tool_name: t.tool_name || "", 
-          artist_id: artistFromDb.id // Add artist_id
+          artist_id: artistFromDb.id
         })) 
       : [];
 
@@ -248,8 +360,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           id: p.id || crypto.randomUUID(),
           project_name: p.project_name || "",
           role_in_project: p.role_in_project || "",
-          project_type: p.project_type || "other", // Ensure project_type is valid
-          artist_id: artistFromDb.id // Add artist_id
+          project_type: p.project_type || "other",
+          artist_id: artistFromDb.id
       }))
       : [];
 
@@ -258,7 +370,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           ...e,
           id: e.id || crypto.randomUUID(),
           qualification_name: e.qualification_name || "",
-          artist_id: artistFromDb.id // Add artist_id
+          artist_id: artistFromDb.id
       }))
       : [];
 
@@ -269,8 +381,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
           file_name: m.file_name || "",
           file_type: m.file_type || "",
           url: m.url || "",
-          file_size: m.file_size || 0, // Ensure file_size is present
-          artist_id: artistFromDb.id // Add artist_id
+          file_size: m.file_size || 0,
+          artist_id: artistFromDb.id
       }))
       : [];
 
