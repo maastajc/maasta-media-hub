@@ -1,36 +1,32 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Audition } from "@/types/audition";
-import { isUrgent } from "@/utils/auditionHelpers";
 
-// Define a type for the raw data structure returned by the Supabase query
-type SupabaseAuditionSelect = {
+export interface Audition {
   id: string;
   title: string;
+  description: string;
+  category: string;
   location: string;
-  deadline: string | null;
-  requirements: string | null;
-  tags: string[] | null;
-  creator_id: string | null;
-  category: string | null;
-  age_range: string | null;
-  gender: string | null;
-  experience_level: string | null;
-  description: string | null;
-  audition_date: string | null;
-  compensation: string | null;
-  status: string | null;
-  profiles: { full_name: string } | null;
-};
+  audition_date: string;
+  deadline: string;
+  requirements: string;
+  compensation: string;
+  status: string;
+  tags: string[];
+  creator_profile?: {
+    full_name: string;
+  };
+  created_at: string;
+}
 
 export const fetchRecentAuditions = async (): Promise<Audition[]> => {
   try {
     console.log("Fetching recent auditions...");
     
-    // Reduced timeout to 10 seconds and simplified query
+    // Increased timeout and simplified query
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 10000)
+      setTimeout(() => reject(new Error('Recent auditions fetch timeout')), 15000)
     );
 
     const fetchPromise = supabase
@@ -38,98 +34,86 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
       .select(`
         id,
         title,
+        description,
+        category,
         location,
+        audition_date,
         deadline,
         requirements,
-        tags,
-        creator_id,
-        category,
-        age_range,
-        gender,
-        experience_level,
-        description,
-        audition_date,
         compensation,
         status,
+        tags,
+        created_at,
         profiles!auditions_creator_id_fkey(full_name)
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(3);
 
-    // Type the result of the fetch operation
     const fetchResult = await Promise.race([
       fetchPromise,
       timeoutPromise
-    ]) as { data: SupabaseAuditionSelect[] | null; error: any | null };
+    ]) as { data: any[] | null; error: any | null };
 
     if (fetchResult.error) {
       console.error("Error fetching recent auditions data:", fetchResult.error);
       
-      // If there's a foreign key error, try without the profiles join
-      if (fetchResult.error.message?.includes('foreign key') || fetchResult.error.message?.includes('relation')) {
-        console.log("Trying fallback query without profiles join...");
-        const fallbackResult = await supabase
-          .from('auditions')
-          .select(`
-            id,
-            title,
-            location,
-            deadline,
-            requirements,
-            tags,
-            creator_id,
-            category,
-            age_range,
-            gender,
-            experience_level,
-            description,
-            audition_date,
-            compensation,
-            status
-          `)
-          .eq('status', 'open')
-          .order('created_at', { ascending: false })
-          .limit(3);
+      // Fallback query without profiles join
+      console.log("Trying fallback query without profiles join...");
+      const fallbackResult = await supabase
+        .from('auditions')
+        .select(`
+          id,
+          title,
+          description,
+          category,
+          location,
+          audition_date,
+          deadline,
+          requirements,
+          compensation,
+          status,
+          tags,
+          created_at
+        `)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-        if (fallbackResult.error) {
-          throw fallbackResult.error;
-        }
-
-        const auditionsData = fallbackResult.data;
-        if (!auditionsData || auditionsData.length === 0) {
-          console.log("No recent auditions found");
-          return [];
-        }
-
-        console.log(`Successfully fetched ${auditionsData.length} recent auditions (fallback). Processing...`);
-        
-        const auditionsWithCompany = auditionsData.map((item: any): Audition => {
-          return {
-            id: item.id,
-            title: item.title,
-            location: item.location,
-            deadline: item.deadline,
-            requirements: item.requirements,
-            tags: item.tags || [],
-            urgent: item.deadline ? isUrgent(item.deadline) : false,
-            company: 'Production Company', // Default company name
-            category: item.category,
-            age_range: item.age_range,
-            gender: item.gender,
-            experience_level: item.experience_level,
-            description: item.description ?? item.requirements ?? undefined, 
-            audition_date: item.audition_date || null,
-            compensation: item.compensation || undefined, 
-            status: item.status || 'open',
-          };
-        });
-        
-        console.log(`Processed ${auditionsWithCompany.length} recent auditions with default company names.`);
-        return auditionsWithCompany;
+      if (fallbackResult.error) {
+        throw fallbackResult.error;
       }
+
+      const auditionsData = fallbackResult.data;
+      if (!auditionsData || auditionsData.length === 0) {
+        console.log("No recent auditions found");
+        return [];
+      }
+
+      console.log(`Successfully fetched ${auditionsData.length} recent auditions (fallback). Processing...`);
       
-      throw fetchResult.error;
+      const auditionsWithCompany = auditionsData.map((item: any): Audition => {
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          category: item.category,
+          location: item.location,
+          audition_date: item.audition_date,
+          deadline: item.deadline,
+          requirements: item.requirements || '',
+          compensation: item.compensation || '',
+          status: item.status || 'open',
+          tags: item.tags || [],
+          creator_profile: {
+            full_name: 'Casting Director' // Default name
+          },
+          created_at: item.created_at,
+        };
+      });
+      
+      console.log(`Processed ${auditionsWithCompany.length} recent auditions with default creator names.`);
+      return auditionsWithCompany;
     }
     
     const auditionsData = fetchResult.data;
@@ -141,29 +125,28 @@ export const fetchRecentAuditions = async (): Promise<Audition[]> => {
 
     console.log(`Successfully fetched ${auditionsData.length} recent auditions. Processing...`);
     
-    const auditionsWithCompany = auditionsData.map((item: SupabaseAuditionSelect): Audition => {
-      const companyName = item.profiles?.full_name || 'Production Company';
+    const auditionsWithCompany = auditionsData.map((item: any): Audition => {
+      const creatorName = item.profiles?.full_name || 'Casting Director';
       return {
         id: item.id,
         title: item.title,
-        location: item.location,
-        deadline: item.deadline,
-        requirements: item.requirements,
-        tags: item.tags || [],
-        urgent: item.deadline ? isUrgent(item.deadline) : false,
-        company: companyName,
+        description: item.description || '',
         category: item.category,
-        age_range: item.age_range,
-        gender: item.gender,
-        experience_level: item.experience_level,
-        description: item.description ?? item.requirements ?? undefined, 
-        audition_date: item.audition_date || null,
-        compensation: item.compensation || undefined, 
+        location: item.location,
+        audition_date: item.audition_date,
+        deadline: item.deadline,
+        requirements: item.requirements || '',
+        compensation: item.compensation || '',
         status: item.status || 'open',
+        tags: item.tags || [],
+        creator_profile: {
+          full_name: creatorName
+        },
+        created_at: item.created_at,
       };
     });
     
-    console.log(`Processed ${auditionsWithCompany.length} recent auditions with company names.`);
+    console.log(`Processed ${auditionsWithCompany.length} recent auditions with creator names.`);
     return auditionsWithCompany;
   } catch (error: any) {
     console.error("Error in fetchRecentAuditions process:", error);

@@ -1,13 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const createTimeoutPromise = (message: string, timeout: number = 8000) => {
+export const createTimeoutPromise = (message: string, timeout: number = 15000) => {
   return new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error(message)), timeout)
   );
 };
 
 export const fetchFeaturedArtistsQuery = (limit: number) => {
+  console.log('Executing main featured artists query...');
   return supabase
     .from('profiles')
     .select(`
@@ -45,6 +46,7 @@ export const fetchFeaturedArtistsQuery = (limit: number) => {
 };
 
 export const fetchFeaturedArtistsFallbackQuery = (limit: number) => {
+  console.log('Executing fallback featured artists query...');
   return supabase
     .from('profiles')
     .select(`
@@ -81,6 +83,7 @@ export const fetchFeaturedArtistsFallbackQuery = (limit: number) => {
 };
 
 export const fetchArtistByIdQuery = (id: string) => {
+  console.log('Executing main artist by ID query...');
   return supabase
     .from('profiles')
     .select(`
@@ -132,6 +135,7 @@ export const fetchArtistByIdQuery = (id: string) => {
 };
 
 export const fetchArtistByIdFallbackQuery = (id: string) => {
+  console.log('Executing fallback artist by ID query...');
   return supabase
     .from('profiles')
     .select('*')
