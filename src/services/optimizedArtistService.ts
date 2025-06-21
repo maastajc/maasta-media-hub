@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset } from "@/types/artist";
 import { Database } from "@/integrations/supabase/types";
@@ -42,6 +41,21 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
         category,
         experience_level,
         verified,
+        phone_number,
+        date_of_birth,
+        gender,
+        willing_to_relocate,
+        work_preference,
+        years_of_experience,
+        association_membership,
+        personal_website,
+        instagram,
+        linkedin,
+        youtube_vimeo,
+        role,
+        status,
+        created_at,
+        updated_at,
         special_skills (skill)
       `)
       .eq('status', 'active')
@@ -56,7 +70,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
     if (result.error) {
       console.error('Database error fetching featured artists:', result.error);
       
-      // Fallback query without special_skills join
+      // Fallback query without special_skills join but with all required columns
       console.log('Trying fallback query without special_skills join...');
       const fallbackResult = await supabase
         .from('profiles')
@@ -71,7 +85,22 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
           country,
           category,
           experience_level,
-          verified
+          verified,
+          phone_number,
+          date_of_birth,
+          gender,
+          willing_to_relocate,
+          work_preference,
+          years_of_experience,
+          association_membership,
+          personal_website,
+          instagram,
+          linkedin,
+          youtube_vimeo,
+          role,
+          status,
+          created_at,
+          updated_at
         `)
         .eq('status', 'active')
         .not('profile_picture_url', 'is', null)
