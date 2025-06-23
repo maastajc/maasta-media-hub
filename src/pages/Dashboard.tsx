@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,15 +8,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { PlusCircle, Calendar, Users, ClipboardList, FileText } from "lucide-react";
+import { PlusCircle, Calendar, Users, ClipboardList, FileText, AlertCircle } from "lucide-react";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userEvents, setUserEvents] = useState<any[]>([]);
   const [userAuditions, setUserAuditions] = useState<any[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
@@ -27,61 +30,138 @@ const Dashboard = () => {
       return;
     }
     
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch events created by the user
-        const { data: events, error: eventsError } = await supabase
-          .from("events")
-          .select("*")
-          .eq("creator_id", user.id);
-          
-        if (eventsError) throw eventsError;
-        
-        // Fetch auditions posted by the user
-        const { data: auditions, error: auditionsError } = await supabase
-          .from("auditions")
-          .select("*")
-          .eq("creator_id", user.id);
-          
-        if (auditionsError) throw auditionsError;
-        
-        // Fetch events the user is registered for
-        const { data: registrations, error: registrationsError } = await supabase
-          .from("event_attendees")
-          .select("*, events(*)")
-          .eq("user_id", user.id);
-          
-        if (registrationsError) throw registrationsError;
-        
-        // Fetch auditions the user has applied to
-        const { data: applications, error: applicationsError } = await supabase
-          .from("audition_applications")
-          .select("*, auditions(*)")
-          .eq("artist_id", user.id);
-          
-        if (applicationsError) throw applicationsError;
-        
-        setUserEvents(events || []);
-        setUserAuditions(auditions || []);
-        setRegisteredEvents(registrations || []);
-        setAuditionApplications(applications || []);
-        
-      } catch (error: any) {
-        console.error("Error fetching user data:", error.message);
-        toast({
-          title: "Error",
-          description: "Failed to load your dashboard data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchUserData();
-  }, [user, navigate, toast]);
+  }, [user, navigate]);
+
+  const fetchUserData = async () => {
+    if (!user?.id) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('Fetching dashboard data for user:', user.id);
+      
+      // Use Promise.allSettled to handle partial failures gracefully
+      const results = await Promise.allSettled([
+        fetchUserEvents(),
+        fetchUserAuditions(),
+        fetchRegisteredEvents(),
+        fetchAuditionApplications()
+      ]);
+
+      // Check if any critical operations failed
+      const failures = results.filter(result => result.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn('Some dashboard data failed to load:', failures);
+        // Still continue with partial data rather than failing completely
+      }
+
+    } catch (error: any) {
+      console.error("Error fetching dashboard data:", error);
+      setError("Failed to load dashboard data. Please try refreshing the page.");
+      toast({
+        title: "Error",
+        description: "Some dashboard data may not be available",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUserEvents = async () => {
+    try {
+      console.log('Fetching user events...');
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, event_date, location, created_at, status")
+        .eq("creator_id", user!.id)
+        .order('created_at', { ascending: false })
+        .limit(10); // Limit results for better performance
+        
+      if (error) throw error;
+      setUserEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching user events:", error);
+      setUserEvents([]);
+    }
+  };
+
+  const fetchUserAuditions = async () => {
+    try {
+      console.log('Fetching user auditions...');
+      const { data, error } = await supabase
+        .from("auditions")
+        .select("id, title, status, created_at, location, deadline, description")
+        .eq("creator_id", user!.id)
+        .order('created_at', { ascending: false })
+        .limit(10); // Limit results for better performance
+        
+      if (error) throw error;
+      setUserAuditions(data || []);
+    } catch (error: any) {
+      console.error("Error fetching user auditions:", error);
+      setUserAuditions([]);
+    }
+  };
+
+  const fetchRegisteredEvents = async () => {
+    try {
+      console.log('Fetching registered events...');
+      const { data, error } = await supabase
+        .from("event_attendees")
+        .select(`
+          id,
+          attendance_status,
+          registered_at,
+          event_id,
+          events!inner(
+            id,
+            title,
+            event_date,
+            location
+          )
+        `)
+        .eq("user_id", user!.id)
+        .order('registered_at', { ascending: false })
+        .limit(10); // Limit results for better performance
+        
+      if (error) throw error;
+      setRegisteredEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching registered events:", error);
+      setRegisteredEvents([]);
+    }
+  };
+
+  const fetchAuditionApplications = async () => {
+    try {
+      console.log('Fetching audition applications...');
+      const { data, error } = await supabase
+        .from("audition_applications")
+        .select(`
+          id,
+          status,
+          application_date,
+          audition_id,
+          notes,
+          auditions!inner(
+            id,
+            title,
+            location
+          )
+        `)
+        .eq("artist_id", user!.id)
+        .order('application_date', { ascending: false })
+        .limit(10); // Limit results for better performance
+        
+      if (error) throw error;
+      setAuditionApplications(data || []);
+    } catch (error: any) {
+      console.error("Error fetching audition applications:", error);
+      setAuditionApplications([]);
+    }
+  };
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -90,6 +170,28 @@ const Dashboard = () => {
       day: 'numeric'
     });
   };
+
+  // If there's a critical error, show error state
+  if (error && isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-6 text-center">
+              <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
+              <h2 className="text-xl font-semibold mb-2">Dashboard Unavailable</h2>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <Button onClick={fetchUserData} className="w-full">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -100,6 +202,16 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold">My Dashboard</h1>
             <p className="text-gray-500 mt-2">Manage your events, auditions, and applications</p>
           </header>
+
+          {/* Show partial error if some data failed to load */}
+          {error && !isLoading && (
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Some dashboard data may not be up to date. <Button variant="link" onClick={fetchUserData} className="p-0 h-auto">Refresh</Button>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
@@ -180,14 +292,11 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[1, 2].map((i) => (
                     <Card key={i}>
-                      <CardContent className="p-0">
-                        <Skeleton className="h-48 rounded-t-lg" />
-                        <div className="p-4">
-                          <Skeleton className="h-6 w-3/4 mb-2" />
-                          <Skeleton className="h-4 w-1/2 mb-4" />
-                          <Skeleton className="h-4 w-full mb-2" />
-                          <Skeleton className="h-10 w-full mt-4" />
-                        </div>
+                      <CardContent className="p-4">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-10 w-full mt-4" />
                       </CardContent>
                     </Card>
                   ))}
@@ -221,12 +330,6 @@ const Dashboard = () => {
                             className="flex-1"
                           >
                             Edit
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                          >
-                            Delete
                           </Button>
                         </div>
                       </CardContent>
@@ -306,12 +409,6 @@ const Dashboard = () => {
                             className="flex-1"
                           >
                             Edit
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                          >
-                            Delete
                           </Button>
                         </div>
                       </CardContent>
