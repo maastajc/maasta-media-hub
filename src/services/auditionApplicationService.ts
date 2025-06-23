@@ -71,42 +71,91 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
   try {
     console.log('Fetching applications for creator:', creatorId);
     
-    const { data: applications, error } = await supabase
-      .from('audition_applications')
-      .select(`
-        *,
-        auditions!inner (
-          id,
-          title,
-          description,
-          location,
-          deadline,
-          audition_date,
-          creator_id,
-          status
-        ),
-        artist:profiles!inner (
-          id,
-          full_name,
-          email,
-          profile_picture_url,
-          category,
-          experience_level,
-          personal_website,
-          linkedin,
-          youtube_vimeo
-        )
-      `)
-      .eq('auditions.creator_id', creatorId)
-      .order('application_date', { ascending: false });
+    // First, get auditions created by this user
+    const { data: auditions, error: auditionsError } = await supabase
+      .from('auditions')
+      .select('id, title, description, location, deadline, audition_date, creator_id, status')
+      .eq('creator_id', creatorId);
 
-    if (error) {
-      console.error('Error fetching applications:', error);
-      throw new Error(`Failed to fetch applications: ${error.message}`);
+    if (auditionsError) {
+      console.error('Error fetching auditions:', auditionsError);
+      throw new Error(`Failed to fetch auditions: ${auditionsError.message}`);
     }
 
-    console.log(`Successfully fetched ${applications?.length || 0} applications`);
-    return (applications as any) || [];
+    if (!auditions || auditions.length === 0) {
+      console.log('No auditions found for creator');
+      return [];
+    }
+
+    const auditionIds = auditions.map(a => a.id);
+
+    // Then get applications for those auditions
+    const { data: applications, error: applicationsError } = await supabase
+      .from('audition_applications')
+      .select('*')
+      .in('audition_id', auditionIds)
+      .order('application_date', { ascending: false });
+
+    if (applicationsError) {
+      console.error('Error fetching applications:', applicationsError);
+      throw new Error(`Failed to fetch applications: ${applicationsError.message}`);
+    }
+
+    if (!applications || applications.length === 0) {
+      console.log('No applications found');
+      return [];
+    }
+
+    // Get artist profiles for the applications
+    const artistIds = [...new Set(applications.map(app => app.artist_id))];
+    const { data: artists, error: artistsError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, profile_picture_url, category, experience_level, personal_website, linkedin, youtube_vimeo')
+      .in('id', artistIds);
+
+    if (artistsError) {
+      console.error('Error fetching artists:', artistsError);
+      // Continue without artist data rather than failing completely
+    }
+
+    // Combine the data
+    const applicationsWithDetails = applications.map(app => {
+      const audition = auditions.find(a => a.id === app.audition_id);
+      const artist = artists?.find(a => a.id === app.artist_id);
+
+      return {
+        id: app.id,
+        audition_id: app.audition_id,
+        artist_id: app.artist_id,
+        status: app.status,
+        notes: app.notes,
+        application_date: app.application_date,
+        audition: audition ? {
+          id: audition.id,
+          title: audition.title,
+          description: audition.description || '',
+          location: audition.location,
+          deadline: audition.deadline,
+          audition_date: audition.audition_date,
+          creator_id: audition.creator_id,
+          status: audition.status
+        } : undefined,
+        artist: artist ? {
+          id: artist.id,
+          full_name: artist.full_name,
+          email: artist.email,
+          profile_picture_url: artist.profile_picture_url,
+          category: artist.category,
+          experience_level: artist.experience_level,
+          personal_website: artist.personal_website,
+          linkedin: artist.linkedin,
+          youtube_vimeo: artist.youtube_vimeo
+        } : undefined
+      };
+    });
+
+    console.log(`Successfully fetched ${applicationsWithDetails.length} applications with details`);
+    return applicationsWithDetails;
   } catch (error: any) {
     console.error('Error in fetchApplicationsForCreator:', error);
     throw error;

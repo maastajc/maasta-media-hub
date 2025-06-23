@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,18 +29,10 @@ const AuditionApplications = () => {
       return;
     }
 
-    if (profile?.role !== 'recruiter') {
-      toast({
-        title: "Access Denied",
-        description: "You must be a recruiter to view audition applications.",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
+    // Allow access if user is recruiter or if they have created auditions
+    // We'll let the service handle the data fetching
     fetchApplications();
-  }, [user, profile, navigate, toast]);
+  }, [user, navigate]);
 
   const fetchApplications = async () => {
     if (!user?.id) return;
@@ -49,14 +40,20 @@ const AuditionApplications = () => {
     try {
       setIsLoading(true);
       setError(null);
+      console.log('Fetching applications for user:', user.id);
       const data = await fetchApplicationsForCreator(user.id);
       setApplications(data);
+      
+      // If no applications found and user is not a recruiter, show helpful message
+      if (data.length === 0 && profile?.role !== 'recruiter') {
+        console.log('No applications found, user role:', profile?.role);
+      }
     } catch (error: any) {
       console.error('Error fetching applications:', error);
       setError(error.message || 'Failed to load applications');
       toast({
         title: "Error",
-        description: "Failed to load audition applications",
+        description: "Failed to load audition applications. " + (error.message || ''),
         variant: "destructive",
       });
     } finally {
@@ -97,7 +94,7 @@ const AuditionApplications = () => {
   };
 
   const handleViewProfile = (artistId: string) => {
-    navigate(`/artists/${artistId}`);
+    navigate(`/artist/${artistId}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -171,7 +168,10 @@ const AuditionApplications = () => {
                 <User className="mx-auto mb-4 text-gray-400" size={64} />
                 <h3 className="text-xl font-semibold mb-2">No Applications Yet</h3>
                 <p className="text-gray-600 mb-6">
-                  You haven't received any applications for your auditions yet.
+                  {profile?.role === 'recruiter' 
+                    ? "You haven't received any applications for your auditions yet."
+                    : "You need to create auditions first to receive applications."
+                  }
                 </p>
                 <Button onClick={() => navigate("/auditions/create")}>
                   Create New Audition
@@ -219,7 +219,6 @@ const AuditionApplications = () => {
                       </Badge>
                     </div>
 
-                    {/* Audition Details */}
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="font-semibold mb-2">Applied for:</h4>
                       <p className="text-lg font-medium text-maasta-purple mb-1">
@@ -239,7 +238,6 @@ const AuditionApplications = () => {
                       </div>
                     </div>
 
-                    {/* Application Notes */}
                     {application.notes && (
                       <div className="mb-4">
                         <h4 className="font-semibold mb-2">Application Notes:</h4>
@@ -249,7 +247,6 @@ const AuditionApplications = () => {
                       </div>
                     )}
 
-                    {/* Action Buttons */}
                     <div className="flex flex-wrap gap-3">
                       <Button
                         onClick={() => handleViewProfile(application.artist_id)}
