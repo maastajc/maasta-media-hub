@@ -11,11 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Plus } from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -35,6 +35,8 @@ const Navbar = () => {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  const isRecruiter = profile?.role === 'recruiter';
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -60,6 +62,16 @@ const Navbar = () => {
             >
               Auditions
             </Link>
+
+            {user && isRecruiter && (
+              <Link
+                to="/auditions/create"
+                className="bg-maasta-purple text-white hover:bg-maasta-purple/90 px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Post Audition
+              </Link>
+            )}
 
             {user ? (
               <DropdownMenu>
@@ -90,6 +102,15 @@ const Navbar = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
+                  {isRecruiter && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/auditions/create')}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Post Audition
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -138,6 +159,16 @@ const Navbar = () => {
               >
                 Auditions
               </Link>
+
+              {user && isRecruiter && (
+                <Link
+                  to="/auditions/create"
+                  className="block px-3 py-2 text-base font-medium text-maasta-purple bg-maasta-purple/10 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Post Audition
+                </Link>
+              )}
 
               {user ? (
                 <div className="border-t pt-4 mt-4">

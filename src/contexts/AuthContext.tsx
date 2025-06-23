@@ -58,7 +58,7 @@ const ensureProfileExists = async (userId: string): Promise<void> => {
           id: userId,
           full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'New User',
           email: user?.email || '',
-          role: 'artist',
+          role: 'recruiter', // Changed from 'artist' to 'recruiter'
           category: 'actor',
           experience_level: 'beginner',
           years_of_experience: 0,
