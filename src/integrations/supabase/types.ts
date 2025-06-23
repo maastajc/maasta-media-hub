@@ -153,6 +153,33 @@ export type Database = {
           },
         ]
       }
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       event_attendees: {
         Row: {
           attendance_status: string | null
@@ -446,6 +473,8 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           email: string
+          email_verified: boolean | null
+          email_verified_at: string | null
           experience_level: string | null
           full_name: string
           gender: string | null
@@ -461,6 +490,8 @@ export type Database = {
           state: string | null
           status: string | null
           updated_at: string | null
+          verification_token: string | null
+          verification_token_expires_at: string | null
           verified: boolean | null
           willing_to_relocate: boolean | null
           work_preference: string | null
@@ -476,6 +507,8 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           email: string
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           experience_level?: string | null
           full_name?: string
           gender?: string | null
@@ -491,6 +524,8 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          verification_token?: string | null
+          verification_token_expires_at?: string | null
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
@@ -506,6 +541,8 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           email?: string
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           experience_level?: string | null
           full_name?: string
           gender?: string | null
@@ -521,6 +558,8 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          verification_token?: string | null
+          verification_token_expires_at?: string | null
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
@@ -636,6 +675,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_email_verification_token: {
+        Args: { user_id_param: string }
+        Returns: string
+      }
       get_event_stats: {
         Args: { event_id_param: string }
         Returns: {
@@ -691,6 +734,10 @@ export type Database = {
       }
       user_has_role: {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
+      verify_email_token: {
+        Args: { token_param: string }
         Returns: boolean
       }
     }
