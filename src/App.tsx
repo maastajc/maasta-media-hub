@@ -5,20 +5,23 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import PublicRoute from "@/components/auth/PublicRoute";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+import Artists from "./pages/Artists";
 import ArtistProfile from "./pages/ArtistProfile";
 import Auditions from "./pages/Auditions";
 import AuditionDetails from "./pages/AuditionDetails";
-import Artists from "./pages/Artists";
-import Dashboard from "./pages/Dashboard";
 import CreateAudition from "./pages/CreateAudition";
+import EditAudition from "./pages/EditAudition";
 import AuditionApplications from "./pages/AuditionApplications";
+import Dashboard from "./pages/Dashboard";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,30 +30,84 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
-          <ScrollToTop />
           <AuthProvider>
+            <ScrollToTop />
             <Routes>
-              {/* Public routes - no authentication required */}
               <Route path="/" element={<Index />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/artists" element={<Artists />} />
-              <Route path="/artists/:artistId" element={<ArtistProfile />} />
+              <Route path="/artist/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
-              <Route path="/auditions/:id" element={<AuditionDetails />} />
-              
-              {/* Protected routes - authentication required */}
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/auditions/create" element={<ProtectedRoute requiredRole="recruiter"><CreateAudition /></ProtectedRoute>} />
-              <Route path="/auditions/applications" element={<ProtectedRoute requiredRole="recruiter"><AuditionApplications /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              
+              <Route path="/audition/:id" element={<AuditionDetails />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route 
+                path="/sign-in" 
+                element={
+                  <PublicRoute>
+                    <SignIn />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/sign-up" 
+                element={
+                  <PublicRoute>
+                    <SignUp />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/reset-password" 
+                element={
+                  <PublicRoute>
+                    <ResetPassword />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/auditions/create" 
+                element={
+                  <ProtectedRoute>
+                    <CreateAudition />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/auditions/:id/edit" 
+                element={
+                  <ProtectedRoute>
+                    <EditAudition />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/auditions/:id/applications" 
+                element={
+                  <ProtectedRoute>
+                    <AuditionApplications />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <Toaster />
+            <Sonner />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
