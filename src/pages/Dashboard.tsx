@@ -19,9 +19,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userEvents, setUserEvents] = useState<any[]>([]);
   const [userAuditions, setUserAuditions] = useState<any[]>([]);
-  const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [auditionApplications, setAuditionApplications] = useState<any[]>([]);
   
   useEffect(() => {
@@ -43,9 +41,7 @@ const Dashboard = () => {
       
       // Use Promise.allSettled to handle partial failures gracefully
       const results = await Promise.allSettled([
-        fetchUserEvents(),
         fetchUserAuditions(),
-        fetchRegisteredEvents(),
         fetchAuditionApplications()
       ]);
 
@@ -53,7 +49,6 @@ const Dashboard = () => {
       const failures = results.filter(result => result.status === 'rejected');
       if (failures.length > 0) {
         console.warn('Some dashboard data failed to load:', failures);
-        // Still continue with partial data rather than failing completely
       }
 
     } catch (error: any) {
@@ -66,24 +61,6 @@ const Dashboard = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchUserEvents = async () => {
-    try {
-      console.log('Fetching user events...');
-      const { data, error } = await supabase
-        .from("events")
-        .select("id, title, event_date, location, created_at, status")
-        .eq("creator_id", user!.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-        
-      if (error) throw error;
-      setUserEvents(data || []);
-    } catch (error: any) {
-      console.error("Error fetching user events:", error);
-      setUserEvents([]);
     }
   };
 
@@ -102,35 +79,6 @@ const Dashboard = () => {
     } catch (error: any) {
       console.error("Error fetching user auditions:", error);
       setUserAuditions([]);
-    }
-  };
-
-  const fetchRegisteredEvents = async () => {
-    try {
-      console.log('Fetching registered events...');
-      const { data, error } = await supabase
-        .from("event_attendees")
-        .select(`
-          id,
-          attendance_status,
-          registered_at,
-          event_id,
-          events!inner(
-            id,
-            title,
-            event_date,
-            location
-          )
-        `)
-        .eq("user_id", user!.id)
-        .order('registered_at', { ascending: false })
-        .limit(10);
-        
-      if (error) throw error;
-      setRegisteredEvents(data || []);
-    } catch (error: any) {
-      console.error("Error fetching registered events:", error);
-      setRegisteredEvents([]);
     }
   };
 
@@ -206,18 +154,14 @@ const Dashboard = () => {
           
           <DashboardStats 
             isLoading={isLoading}
-            userEvents={userEvents}
             userAuditions={userAuditions}
-            registeredEvents={registeredEvents}
             auditionApplications={auditionApplications}
             userRole={profile?.role}
           />
           
           <DashboardTabs 
             isLoading={isLoading}
-            userEvents={userEvents}
             userAuditions={userAuditions}
-            registeredEvents={registeredEvents}
             auditionApplications={auditionApplications}
             formatDate={formatDate}
           />
