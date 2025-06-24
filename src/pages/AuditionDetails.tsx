@@ -109,7 +109,7 @@ const AuditionDetails = () => {
       // Fetch poster profile information
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, profile_picture_url, company, bio')
+        .select('id, full_name, profile_picture_url, bio')
         .eq('id', data.creator_id)
         .single();
 
@@ -120,7 +120,7 @@ const AuditionDetails = () => {
           id: profileData.id,
           full_name: profileData.full_name,
           profile_picture: profileData.profile_picture_url,
-          company: profileData.company,
+          company: undefined, // Company field doesn't exist in profiles table
           bio: profileData.bio
         });
       }

@@ -23,7 +23,7 @@ export const AuditionPosterProfile = ({ posterProfile }: AuditionPosterProfilePr
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Posted By</h3>
         <Link 
-          to={`/artists/${posterProfile.id}`}
+          to={`/artist/${posterProfile.id}`}
           className="flex items-center space-x-4 hover:bg-gray-50 p-3 rounded-lg transition-colors"
         >
           <Avatar className="h-12 w-12">
@@ -40,9 +40,6 @@ export const AuditionPosterProfile = ({ posterProfile }: AuditionPosterProfilePr
             <p className="text-base font-medium text-gray-900 hover:text-maasta-purple transition-colors">
               {posterProfile.full_name}
             </p>
-            {posterProfile.company && (
-              <p className="text-sm text-gray-600">{posterProfile.company}</p>
-            )}
             <p className="text-sm text-maasta-purple font-medium">View Profile →</p>
           </div>
         </Link>
