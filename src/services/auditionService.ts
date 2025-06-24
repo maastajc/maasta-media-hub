@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Audition } from "@/types/audition";
 
-const createTimeoutPromise = (message: string, timeout: number = 8000) => {
+const createTimeoutPromise = (message: string, timeout: number = 6000) => {
   return new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error(message)), timeout)
   );
@@ -12,7 +12,7 @@ export const fetchRecentAuditions = async (limit: number = 6): Promise<Audition[
   try {
     console.log('Fetching recent auditions...');
     
-    const timeoutPromise = createTimeoutPromise('Recent auditions fetch timeout', 8000);
+    const timeoutPromise = createTimeoutPromise('Recent auditions fetch timeout', 6000);
     
     // Simplified query without complex joins
     const fetchPromise = supabase
@@ -32,8 +32,7 @@ export const fetchRecentAuditions = async (limit: number = 6): Promise<Audition[
         gender,
         age_range,
         tags,
-        creator_id,
-        created_at
+        creator_id
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -68,7 +67,6 @@ export const fetchRecentAuditions = async (limit: number = 6): Promise<Audition[
       age_range: audition.age_range || '',
       tags: audition.tags || [],
       company: 'Production Company', // Default company name
-      created_at: audition.created_at || new Date().toISOString(),
       creator_id: audition.creator_id
     }));
   } catch (error: any) {
