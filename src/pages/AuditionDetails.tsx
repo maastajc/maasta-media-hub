@@ -109,14 +109,20 @@ const AuditionDetails = () => {
       // Fetch poster profile information
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, profile_picture, company, bio')
+        .select('id, full_name, profile_picture_url, company, bio')
         .eq('id', data.creator_id)
         .single();
 
       if (profileError) {
         console.error('Error fetching poster profile:', profileError);
       } else if (profileData) {
-        setPosterProfile(profileData);
+        setPosterProfile({
+          id: profileData.id,
+          full_name: profileData.full_name,
+          profile_picture: profileData.profile_picture_url,
+          company: profileData.company,
+          bio: profileData.bio
+        });
       }
     } catch (error: any) {
       console.error('Error fetching audition:', error);
