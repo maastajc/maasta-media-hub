@@ -1,12 +1,11 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import FeaturedArtists from "@/components/home/FeaturedArtists";
+import OptimizedFeaturedArtists from "@/components/home/OptimizedFeaturedArtists";
 import UpcomingEvents from "@/components/home/UpcomingEvents";
-import RecentAuditions from "@/components/home/RecentAuditions";
+import OptimizedRecentAuditions from "@/components/home/OptimizedRecentAuditions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -48,7 +47,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        {/* Enhanced Hero Section */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-maasta-purple/5 via-white to-maasta-orange/5 py-20 md:py-32">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
@@ -203,15 +202,15 @@ const Index = () => {
         </section>
 
         {/* Featured Artists Section */}
-        <FeaturedArtists />
+        <OptimizedFeaturedArtists />
 
         {/* Recent Auditions Section */}
-        <RecentAuditions />
+        <OptimizedRecentAuditions />
 
         {/* Upcoming Events Section */}
         <UpcomingEvents />
 
-        {/* Enhanced CTA Section */}
+        {/* CTA Section */}
         <section className="relative py-16 bg-gradient-to-r from-maasta-purple/10 via-white to-maasta-orange/10 overflow-hidden">
           <div className="absolute inset-0">
             <div className="absolute top-0 left-1/4 w-64 h-64 bg-maasta-orange/5 rounded-full blur-3xl animate-pulse"></div>

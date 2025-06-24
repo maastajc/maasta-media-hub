@@ -1,434 +1,125 @@
+
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
 import AuditionFilters from "@/components/auditions/AuditionFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
+import { fetchAuditionsLightweight } from "@/services/optimizedAuditionService";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchApplicationsForArtist } from "@/services/auditionApplicationService";
-import { AuditionApplication } from "@/services/auditionApplicationService";
-import { toast } from "sonner";
-
-interface AuditionData {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  audition_date: string;
-  deadline: string;
-  compensation: string;
-  requirements: string;
-  status: string;
-  category: string;
-  experience_level: string;
-  gender: string;
-  age_range: string;
-  tags: string[];
-  creator_profile: {
-    full_name: string;
-  };
-  created_at: string;
-  creator_id?: string; 
-}
-
-const AUDITIONS_PER_PAGE = 12;
 
 const Auditions = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [auditions, setAuditions] = useState<AuditionData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [applicationStatusMap, setApplicationStatusMap] = useState(new Map<string, string>());
   const { user } = useAuth();
-  const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
 
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [uniqueTags, setUniqueTags] = useState<string[]>([]);
-  const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
+  const {
+    data: auditions = [],
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['auditions-page'],
+    queryFn: () => fetchAuditionsLightweight(50),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-  const selectedCategory = searchParams.get('category') || '';
-
+  // Fetch application statuses for authenticated users
   useEffect(() => {
-    const fetchUserApplications = async () => {
-      if (user?.id) {
+    if (user && auditions.length > 0) {
+      const fetchApplicationStatuses = async () => {
         try {
-          const applications = await fetchApplicationsForArtist(user.id);
-          setUserApplications(applications);
-        } catch (err) {
-          console.error("Failed to fetch user applications:", err);
+          const { data, error } = await supabase
+            .from('audition_applications')
+            .select('audition_id, status')
+            .eq('artist_id', user.id)
+            .in('audition_id', auditions.map(a => a.id));
+
+          if (!error && data) {
+            const statusMap = new Map();
+            data.forEach(app => {
+              statusMap.set(app.audition_id, app.status);
+            });
+            setApplicationStatusMap(statusMap);
+          }
+        } catch (error) {
+          console.error('Error fetching application statuses:', error);
         }
-      }
-    };
-    fetchUserApplications();
-  }, [user]);
-
-  const fetchAuditions = async (currentPage: number, isInitialLoad = false) => {
-    if (!isInitialLoad && loadingMore) return;
-
-    if (isInitialLoad) {
-      setLoading(true);
-      setError(null);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      console.log(`Fetching auditions page ${currentPage}...`);
-      
-      const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
-      const to = from + AUDITIONS_PER_PAGE - 1;
-
-      // Build query with filters
-      let query = supabase
-        .from('auditions')
-        .select(`
-          id, title, description, location, audition_date, deadline, compensation,
-          requirements, status, category, experience_level, gender, age_range,
-          tags, creator_id, created_at, 
-          profiles!auditions_creator_id_fkey(full_name)
-        `)
-        .eq('status', 'open');
-
-      const filters = {
-        category: searchParams.get('category') || '',
-        location: searchParams.get('location') || '',
-        experience: searchParams.get('experience') || '',
-        gender: searchParams.get('gender') || '',
-        ageRange: searchParams.get('ageRange') || '',
       };
 
-      if (filters.category) query = query.eq('category', filters.category);
-      if (filters.location) query = query.ilike('location', `%${filters.location}%`);
-      if (filters.experience) query = query.eq('experience_level', filters.experience);
-      if (filters.gender) query = query.eq('gender', filters.gender);
-      if (filters.ageRange) query = query.eq('age_range', filters.ageRange);
-      if (selectedTags.length > 0) query = query.contains('tags', selectedTags);
-
-      const { data: auditionsData, error: auditionsError } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (auditionsError) {
-        console.error('Database error fetching auditions:', auditionsError);
-        
-        // If there's a foreign key error, try without the profiles join
-        if (auditionsError.message?.includes('foreign key') || auditionsError.message?.includes('relation')) {
-          console.log("Trying fallback query without profiles join...");
-          let fallbackQuery = supabase
-            .from('auditions')
-            .select(`
-              id, title, description, location, audition_date, deadline, compensation,
-              requirements, status, category, experience_level, gender, age_range,
-              tags, creator_id, created_at
-            `)
-            .eq('status', 'open');
-
-          // Apply the same filters
-          if (filters.category) fallbackQuery = fallbackQuery.eq('category', filters.category);
-          if (filters.location) fallbackQuery = fallbackQuery.ilike('location', `%${filters.location}%`);
-          if (filters.experience) fallbackQuery = fallbackQuery.eq('experience_level', filters.experience);
-          if (filters.gender) fallbackQuery = fallbackQuery.eq('gender', filters.gender);
-          if (filters.ageRange) fallbackQuery = fallbackQuery.eq('age_range', filters.ageRange);
-          if (selectedTags.length > 0) fallbackQuery = fallbackQuery.contains('tags', selectedTags);
-
-          const { data: fallbackData, error: fallbackError } = await fallbackQuery
-            .order('created_at', { ascending: false })
-            .range(from, to);
-
-          if (fallbackError) {
-            throw new Error(`Database error: ${fallbackError.message}`);
-          }
-
-          if (!fallbackData || fallbackData.length === 0) {
-            if (isInitialLoad) setAuditions([]);
-            setHasMore(false);
-            return;
-          }
-
-          const processedAuditions = fallbackData.map((audition: any): AuditionData => {
-            return {
-              ...audition,
-              description: audition.description || '',
-              location: audition.location || '',
-              audition_date: audition.audition_date || '',
-              deadline: audition.deadline || '',
-              compensation: audition.compensation || '',
-              requirements: audition.requirements || '',
-              status: audition.status || 'open',
-              category: audition.category || '',
-              experience_level: audition.experience_level || '',
-              gender: audition.gender || '',
-              age_range: audition.age_range || '',
-              tags: audition.tags || [],
-              creator_profile: { 
-                full_name: 'Production Company' // Default company name
-              },
-              created_at: audition.created_at || new Date().toISOString(),
-              creator_id: audition.creator_id || undefined,
-            };
-          });
-
-          console.log(`Successfully processed ${processedAuditions.length} auditions (fallback)`);
-          setAuditions(prev => isInitialLoad ? processedAuditions : [...prev, ...processedAuditions]);
-
-          if (fallbackData.length < AUDITIONS_PER_PAGE) {
-            setHasMore(false);
-          } else {
-            setHasMore(true);
-          }
-          return;
-        }
-        
-        throw new Error(`Database error: ${auditionsError.message}`);
-      }
-      
-      if (!auditionsData || auditionsData.length === 0) {
-        if (isInitialLoad) setAuditions([]);
-        setHasMore(false);
-        return;
-      }
-      
-      console.log(`Fetched ${auditionsData.length} auditions, processing...`);
-
-      const processedAuditions = auditionsData.map((audition: any): AuditionData => {
-        return {
-          ...audition,
-          description: audition.description || '',
-          location: audition.location || '',
-          audition_date: audition.audition_date || '',
-          deadline: audition.deadline || '',
-          compensation: audition.compensation || '',
-          requirements: audition.requirements || '',
-          status: audition.status || 'open',
-          category: audition.category || '',
-          experience_level: audition.experience_level || '',
-          gender: audition.gender || '',
-          age_range: audition.age_range || '',
-          tags: audition.tags || [],
-          creator_profile: { 
-            full_name: audition.profiles?.full_name || 'Production Company' 
-          },
-          created_at: audition.created_at || new Date().toISOString(),
-          creator_id: audition.creator_id || undefined,
-        };
-      });
-
-      console.log(`Successfully processed ${processedAuditions.length} auditions`);
-      setAuditions(prev => isInitialLoad ? processedAuditions : [...prev, ...processedAuditions]);
-
-      if (auditionsData.length < AUDITIONS_PER_PAGE) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
-
-    } catch (error: any) {
-      console.error('Error in fetchAuditions process:', error);
-      const errorMessage = error.message || 'Failed to load auditions';
-      setError(errorMessage);
-      toast.error("Failed to load auditions. Please try again.");
-      if (isInitialLoad) setAuditions([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      fetchApplicationStatuses();
     }
-  };
+  }, [user, auditions]);
 
-  const fetchUniqueData = async () => {
-    try {
-      // Fetch unique categories using the fixed function
-      const { data: categoriesData, error: categoriesError } = await supabase.rpc('get_unique_categories');
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-        // Fallback: fetch categories directly
-        const { data: fallbackCategories } = await supabase
-          .from('auditions')
-          .select('category')
-          .eq('status', 'open')
-          .not('category', 'is', null);
-        
-        if (fallbackCategories) {
-          const uniqueCats = Array.from(new Set(fallbackCategories.map(item => item.category).filter(Boolean))).sort();
-          setUniqueCategories(uniqueCats as string[]);
-        }
-      } else if (categoriesData) {
-        setUniqueCategories(categoriesData as string[]);
-      }
-
-      // Fetch unique tags with a simple query
-      const { data: tagsData } = await supabase
-        .from('auditions')
-        .select('tags')
-        .eq('status', 'open')
-        .not('tags', 'is', null);
-      
-      if (tagsData) {
-        const allTags = tagsData
-          .flatMap(item => item.tags || [])
-          .filter(tag => tag && tag.trim().length > 0);
-        const uniqueTagsList = Array.from(new Set(allTags)).sort();
-        setUniqueTags(uniqueTagsList);
-      }
-    } catch (error) {
-      console.error("Error fetching unique data:", error);
+  // Filter auditions
+  const filteredAuditions = auditions.filter(audition => {
+    if (searchTerm && !audition.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
     }
-  };
-
-  useEffect(() => {
-    setAuditions([]);
-    setPage(1);
-    setHasMore(true);
-    fetchAuditions(1, true);
-  }, [searchParams, selectedTags]);
-
-  useEffect(() => {
-    fetchUniqueData();
-  }, []);
-
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchAuditions(nextPage, false);
+    if (selectedCategory && audition.category !== selectedCategory) {
+      return false;
     }
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("");
   };
 
   const handleRetry = () => {
-    setPage(1);
-    fetchAuditions(1, true);
+    refetch();
   };
 
-  const clearFilters = () => {
-    setSearchParams(new URLSearchParams());
-    setSelectedTags([]);
-  };
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setSearchParams(prev => {
-      if (category) {
-        prev.set('category', category);
-      } else {
-        prev.delete('category');
-      }
-      return prev;
-    }, { replace: true });
-  };
-
-  const applicationStatusMap = new Map(
-    userApplications.map((app) => [app.audition_id, app.status])
-  );
-
-  if (loading && auditions.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">Loading auditions...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  // Transform data for AuditionsGrid
+  const transformedAuditions = filteredAuditions.map(audition => ({
+    ...audition,
+    requirements: '',
+    gender: '',
+    age_range: '',
+    tags: [],
+    creator_profile: {
+      full_name: 'Production Company',
+      profile_picture: undefined,
+      company: undefined
+    },
+    created_at: new Date().toISOString()
+  }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <AuditionsHeader />
+        <AuditionsHeader 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onRefresh={handleRetry}
+        />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {error && (
-            <Alert className="mb-6 border-red-200 bg-red-50">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                <div className="flex items-center justify-between">
-                  <span>Error loading auditions: {error}</span>
-                  <Button 
-                    onClick={handleRetry}
-                    size="sm"
-                    variant="outline"
-                    className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Again
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="lg:w-80 flex-shrink-0">
-              <AuditionFilters 
-                uniqueCategories={uniqueCategories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={handleCategoryChange}
-                uniqueTags={uniqueTags}
-                selectedTags={selectedTags}
-                toggleTag={toggleTag}
-                isLoading={loading && auditions.length === 0}
-              />
-            </aside>
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <AuditionFilters
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              isLoading={isLoading}
+            />
             
-            <div className="flex-1">
-              <AuditionsGrid 
-                auditions={auditions} 
-                loading={loading && auditions.length === 0}
-                error={null}
-                onClearFilters={clearFilters}
-                onRetry={handleRetry}
-                applicationStatusMap={applicationStatusMap}
-              />
-              
-              {loadingMore && (
-                <div className="mt-8 text-center">
-                  <LoadingSpinner size="md" />
-                </div>
-              )}
-              
-              {!loadingMore && hasMore && auditions.length > 0 && (
-                <div className="mt-8 text-center">
-                  <Button onClick={handleLoadMore} className="w-40">
-                    Load More
-                  </Button>
-                </div>
-              )}
-
-              {!loading && !error && auditions.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
-                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
-                  <Button 
-                    onClick={clearFilters}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    Clear All Filters
-                  </Button>
-                </div>
-              )}
-            </div>
+            <AuditionsGrid
+              auditions={transformedAuditions}
+              loading={isLoading}
+              error={isError ? (error?.message || 'Failed to load auditions') : null}
+              onClearFilters={handleClearFilters}
+              onRetry={handleRetry}
+              applicationStatusMap={applicationStatusMap}
+            />
           </div>
-        </div>
+        </section>
       </main>
       <Footer />
     </div>
