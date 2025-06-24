@@ -75,7 +75,7 @@ const Index = () => {
                 </h1>
                 
                 <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0 animate-slide-up">
-                  Connect with artists, discover genuine auditions, and promote your events—all in one place.
+                  Connect with artists and discover genuine auditions—all in one place.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 animate-slide-up">
@@ -101,7 +101,7 @@ const Index = () => {
                 </div>
 
                 {/* Stats Section */}
-                <div className="mt-12 grid grid-cols-3 gap-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+                <div className="mt-12 grid grid-cols-2 gap-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                   <div className="text-center">
                     <div className="text-2xl md:text-3xl font-bold text-maasta-orange">1000+</div>
                     <div className="text-sm text-gray-600">Artists</div>
@@ -109,10 +109,6 @@ const Index = () => {
                   <div className="text-center">
                     <div className="text-2xl md:text-3xl font-bold text-maasta-purple">500+</div>
                     <div className="text-sm text-gray-600">Auditions</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-orange">200+</div>
-                    <div className="text-sm text-gray-600">Events</div>
                   </div>
                 </div>
               </div>
@@ -150,8 +146,8 @@ const Index = () => {
                       <span className="text-white text-xs font-bold">🎪</span>
                     </div>
                     <div>
-                      <div className="text-sm font-medium">New Event</div>
-                      <div className="text-xs text-gray-500">Starting soon</div>
+                      <div className="text-sm font-medium">New Opportunity</div>
+                      <div className="text-xs text-gray-500">Apply now</div>
                     </div>
                   </div>
                 </div>
@@ -172,7 +168,7 @@ const Index = () => {
               <p className="text-lg text-gray-600 animate-fade-in" style={{ animationDelay: '0.2s' }}>Everything you need to succeed in the media industry</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-t-4 border-t-maasta-orange animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <CardContent className="p-6">
                   <div className="h-16 w-16 rounded-full bg-gradient-to-r from-maasta-orange/10 to-maasta-orange/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -199,21 +195,6 @@ const Index = () => {
                   <p className="text-gray-600 mb-4">Post, discover & apply for genuine casting calls for talents and casting directors.</p>
                   <Link to="/auditions" className="text-maasta-purple hover:text-maasta-purple/80 font-medium group-hover:underline transition-all duration-300">
                     Browse Auditions →
-                  </Link>
-                </CardContent>
-              </Card>
-              
-              <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-t-4 border-t-maasta-orange animate-fade-in" style={{ animationDelay: '0.7s' }}>
-                <CardContent className="p-6">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-maasta-orange/10 to-maasta-orange/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-maasta-orange">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Event Platform</h3>
-                  <p className="text-gray-600 mb-4">Showcase and promote media-specific events, workshops, courses, and contests.</p>
-                  <Link to="/events" className="text-maasta-orange hover:text-maasta-orange/80 font-medium group-hover:underline transition-all duration-300">
-                    Discover Events →
                   </Link>
                 </CardContent>
               </Card>

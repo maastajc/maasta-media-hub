@@ -13,12 +13,12 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
   console.log('Fetching artists with optimized query...');
   
   try {
-    // Simplified timeout promise
+    // Reduced timeout
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Artists fetch timeout - please check your connection')), 8000)
+      setTimeout(() => reject(new Error('Artists fetch timeout - please check your connection')), 6000)
     );
 
-    // Optimized query with minimal joins
+    // Simplified query without joins
     const fetchPromise = supabase
       .from('profiles')
       .select(`
@@ -33,7 +33,9 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
         category,
         experience_level,
         verified,
-        special_skills!inner(skill)
+        status,
+        created_at,
+        updated_at
       `)
       .eq('status', 'active')
       .limit(50);
@@ -45,38 +47,32 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
 
     if (result.error) {
       console.error('Database error:', result.error);
-      
-      // Fallback query without joins if there's an error
-      console.log('Trying fallback query without special_skills join...');
-      const fallbackResult = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          email,
-          bio,
-          profile_picture_url,
-          city,
-          state,
-          country,
-          category,
-          experience_level,
-          verified
-        `)
-        .eq('status', 'active')
-        .limit(50);
+      return [];
+    }
 
-      if (fallbackResult.error) {
-        throw new Error(`Failed to fetch artists: ${fallbackResult.error.message}`);
-      }
+    const artists = result.data || [];
+    if (artists.length === 0) {
+      console.log('No artists found');
+      return [];
+    }
 
-      const artists = fallbackResult.data || [];
-      console.log(`Successfully fetched ${artists.length} artists (fallback)`);
-      
-      return artists.map((artist: any) => ({
-        ...artist,
+    console.log(`Successfully fetched ${artists.length} artists`);
+    
+    // Transform the data to match our Artist interface
+    const transformedArtists = artists.map((artist: any) => {
+      return {
+        id: artist.id,
         full_name: artist.full_name || 'Unknown Artist',
-        skills: [],
+        email: artist.email,
+        bio: artist.bio,
+        profile_picture_url: artist.profile_picture_url,
+        city: artist.city,
+        state: artist.state,
+        country: artist.country,
+        category: artist.category,
+        experience_level: artist.experience_level,
+        verified: artist.verified || false,
+        skills: [], // Empty array since we're not fetching skills to avoid timeout
         special_skills: [],
         // Add default values for required fields
         phone_number: null,
@@ -92,58 +88,8 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
         youtube_vimeo: null,
         role: 'artist',
         status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        projects: [],
-        education_training: [],
-        media_assets: [],
-        language_skills: [],
-        tools_software: []
-      } as Artist));
-    }
-
-    const artists = result.data || [];
-    if (artists.length === 0) {
-      console.log('No artists found');
-      return [];
-    }
-
-    console.log(`Successfully fetched ${artists.length} artists`);
-    
-    // Transform the data to match our Artist interface
-    const transformedArtists = artists.map((artist: any) => {
-      const skills = artist.special_skills?.map((s: any) => s.skill) || [];
-      
-      return {
-        id: artist.id,
-        full_name: artist.full_name || 'Unknown Artist',
-        email: artist.email,
-        bio: artist.bio,
-        profile_picture_url: artist.profile_picture_url,
-        city: artist.city,
-        state: artist.state,
-        country: artist.country,
-        category: artist.category,
-        experience_level: artist.experience_level,
-        verified: artist.verified || false,
-        skills: skills,
-        special_skills: artist.special_skills || [],
-        // Add default values for required fields
-        phone_number: null,
-        date_of_birth: null,
-        gender: null,
-        willing_to_relocate: false,
-        work_preference: "any",
-        years_of_experience: 0,
-        association_membership: null,
-        personal_website: null,
-        instagram: null,
-        linkedin: null,
-        youtube_vimeo: null,
-        role: 'artist',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: artist.created_at || new Date().toISOString(),
+        updated_at: artist.updated_at || new Date().toISOString(),
         projects: [],
         education_training: [],
         media_assets: [],
@@ -155,7 +101,7 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
     return transformedArtists;
   } catch (error: any) {
     console.error('Error in fetchArtistsOptimized:', error);
-    throw error;
+    return [];
   }
 };
 
@@ -176,7 +122,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       console.error(`Artists fetch attempt ${failureCount + 1} failed:`, error);
       return failureCount < 1; // Only retry once
     },
-    retryDelay: 2000, // 2 seconds between retries
+    retryDelay: 1000, // 1 second between retries
   });
 
   // Filter and search functionality
