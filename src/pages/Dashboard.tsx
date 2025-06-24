@@ -11,16 +11,19 @@ import Footer from "@/components/layout/Footer";
 import { AlertCircle } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { OptimizedDashboardTabs } from "@/components/dashboard/OptimizedDashboardTabs";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userAuditions, setUserAuditions] = useState<any[]>([]);
-  const [auditionApplications, setAuditionApplications] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    auditionsCount: 0,
+    applicationsCount: 0,
+    pendingApplicationsCount: 0
+  });
   
   useEffect(() => {
     if (!user) {
@@ -28,32 +31,60 @@ const Dashboard = () => {
       return;
     }
     
-    fetchUserData();
+    // Only fetch basic stats initially for faster load
+    fetchDashboardStats();
   }, [user, navigate]);
 
-  const fetchUserData = async () => {
+  const fetchDashboardStats = async () => {
     if (!user?.id) return;
 
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Fetching dashboard data for user:', user.id);
+      console.log('Fetching optimized dashboard stats for user:', user.id);
       
-      // Use Promise.allSettled to handle partial failures gracefully
-      const results = await Promise.allSettled([
-        fetchUserAuditions(),
-        fetchAuditionApplications()
+      // Fetch only counts for initial load - much faster
+      const [auditionsResult, applicationsResult] = await Promise.allSettled([
+        supabase
+          .from("auditions")
+          .select("id", { count: 'exact', head: true })
+          .eq("creator_id", user.id),
+        supabase
+          .from("audition_applications")
+          .select("id", { count: 'exact', head: true })
+          .eq("artist_id", user.id)
       ]);
 
-      // Check if any critical operations failed
-      const failures = results.filter(result => result.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn('Some dashboard data failed to load:', failures);
+      let auditionsCount = 0;
+      let applicationsCount = 0;
+      let pendingApplicationsCount = 0;
+
+      if (auditionsResult.status === 'fulfilled' && auditionsResult.value.count !== null) {
+        auditionsCount = auditionsResult.value.count;
       }
 
+      if (applicationsResult.status === 'fulfilled' && applicationsResult.value.count !== null) {
+        applicationsCount = applicationsResult.value.count;
+        
+        // Get pending applications count
+        const pendingResult = await supabase
+          .from("audition_applications")
+          .select("id", { count: 'exact', head: true })
+          .eq("artist_id", user.id)
+          .eq("status", "pending");
+        
+        pendingApplicationsCount = pendingResult.count || 0;
+      }
+
+      setDashboardStats({
+        auditionsCount,
+        applicationsCount,
+        pendingApplicationsCount
+      });
+
     } catch (error: any) {
-      console.error("Error fetching dashboard data:", error);
-      setError("Failed to load dashboard data. Please try refreshing the page.");
+      console.error("Error fetching dashboard stats:", error);
+      setError("Failed to load dashboard statistics.");
       toast({
         title: "Error",
         description: "Some dashboard data may not be available",
@@ -61,53 +92,6 @@ const Dashboard = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchUserAuditions = async () => {
-    try {
-      console.log('Fetching user auditions...');
-      const { data, error } = await supabase
-        .from("auditions")
-        .select("id, title, status, created_at, location, deadline, description")
-        .eq("creator_id", user!.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-        
-      if (error) throw error;
-      setUserAuditions(data || []);
-    } catch (error: any) {
-      console.error("Error fetching user auditions:", error);
-      setUserAuditions([]);
-    }
-  };
-
-  const fetchAuditionApplications = async () => {
-    try {
-      console.log('Fetching audition applications...');
-      const { data, error } = await supabase
-        .from("audition_applications")
-        .select(`
-          id,
-          status,
-          application_date,
-          audition_id,
-          notes,
-          auditions!inner(
-            id,
-            title,
-            location
-          )
-        `)
-        .eq("artist_id", user!.id)
-        .order('application_date', { ascending: false })
-        .limit(10);
-        
-      if (error) throw error;
-      setAuditionApplications(data || []);
-    } catch (error: any) {
-      console.error("Error fetching audition applications:", error);
-      setAuditionApplications([]);
     }
   };
   
@@ -130,7 +114,7 @@ const Dashboard = () => {
               <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
               <h2 className="text-xl font-semibold mb-2">Dashboard Unavailable</h2>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={fetchUserData} className="w-full">
+              <Button onClick={fetchDashboardStats} className="w-full">
                 Try Again
               </Button>
             </CardContent>
@@ -149,20 +133,19 @@ const Dashboard = () => {
           <DashboardHeader 
             error={error}
             isLoading={isLoading}
-            onRefresh={fetchUserData}
+            onRefresh={fetchDashboardStats}
           />
           
           <DashboardStats 
             isLoading={isLoading}
-            userAuditions={userAuditions}
-            auditionApplications={auditionApplications}
+            userAuditions={[]} // Will be loaded lazily in tabs
+            auditionApplications={[]} // Will be loaded lazily in tabs
             userRole={profile?.role}
+            dashboardStats={dashboardStats}
           />
           
-          <DashboardTabs 
-            isLoading={isLoading}
-            userAuditions={userAuditions}
-            auditionApplications={auditionApplications}
+          <OptimizedDashboardTabs 
+            userId={user.id}
             formatDate={formatDate}
           />
         </div>
