@@ -77,6 +77,9 @@ const Auditions = () => {
     refetch();
   };
 
+  // Get unique categories from auditions
+  const uniqueCategories = Array.from(new Set(auditions.map(a => a.category).filter(Boolean)));
+
   // Transform data for AuditionsGrid
   const transformedAuditions = filteredAuditions.map(audition => ({
     ...audition,
@@ -96,17 +99,17 @@ const Auditions = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <AuditionsHeader 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          onRefresh={handleRetry}
-        />
+        <AuditionsHeader />
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <AuditionFilters
+              uniqueCategories={uniqueCategories}
               selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+              onCategoryChange={setSelectedCategory}
+              uniqueTags={[]}
+              selectedTags={[]}
+              toggleTag={() => {}}
               isLoading={isLoading}
             />
             
