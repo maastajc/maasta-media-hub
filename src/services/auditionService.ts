@@ -66,8 +66,7 @@ export const fetchRecentAuditions = async (limit: number = 6): Promise<Audition[
       gender: audition.gender || '',
       age_range: audition.age_range || '',
       tags: audition.tags || [],
-      company: 'Production Company', // Default company name
-      creator_id: audition.creator_id
+      company: 'Production Company' // Default company name
     }));
   } catch (error: any) {
     console.error('Error in fetchRecentAuditions process:', error);
