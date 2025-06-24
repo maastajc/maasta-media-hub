@@ -115,6 +115,7 @@ const AuditionDetails = () => {
 
       if (profileError) {
         console.error('Error fetching poster profile:', profileError);
+        // Don't throw here, just continue without poster profile
       } else if (profileData) {
         setPosterProfile({
           id: profileData.id,
