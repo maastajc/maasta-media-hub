@@ -22,6 +22,8 @@ interface AuditionData {
   tags: string[];
   creator_profile: {
     full_name: string;
+    profile_picture?: string;
+    company?: string;
   };
   created_at: string;
 }

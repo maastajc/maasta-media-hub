@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import AuditionApplicationDialog from '@/components/auditions/AuditionApplicationDialog';
+import { AuditionPosterProfile } from '@/components/auditions/AuditionPosterProfile';
 
 interface Audition {
   id: string;
@@ -49,9 +49,18 @@ interface Audition {
   updated_at: string;
 }
 
+interface PosterProfile {
+  id: string;
+  full_name: string;
+  profile_picture?: string;
+  company?: string;
+  bio?: string;
+}
+
 const AuditionDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [audition, setAudition] = useState<Audition | null>(null);
+  const [posterProfile, setPosterProfile] = useState<PosterProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
@@ -96,6 +105,19 @@ const AuditionDetails = () => {
       
       console.log('Audition data loaded:', data.title);
       setAudition(data);
+
+      // Fetch poster profile information
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, profile_picture, company, bio')
+        .eq('id', data.creator_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching poster profile:', profileError);
+      } else if (profileData) {
+        setPosterProfile(profileData);
+      }
     } catch (error: any) {
       console.error('Error fetching audition:', error);
       const errorMessage = error?.message || 'Failed to load audition details';
@@ -318,6 +340,7 @@ const AuditionDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
+              {/* About This Opportunity */}
               <Card className="overflow-hidden shadow-lg">
                 <CardContent className="p-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">About This Opportunity</h2>
@@ -327,6 +350,7 @@ const AuditionDetails = () => {
                 </CardContent>
               </Card>
 
+              {/* Requirements */}
               <Card className="overflow-hidden shadow-lg">
                 <CardContent className="p-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Requirements</h2>
@@ -336,6 +360,7 @@ const AuditionDetails = () => {
                 </CardContent>
               </Card>
 
+              {/* Project Details */}
               {audition.project_details && (
                 <Card className="overflow-hidden shadow-lg">
                   <CardContent className="p-8">
@@ -347,6 +372,7 @@ const AuditionDetails = () => {
                 </Card>
               )}
 
+              {/* Compensation */}
               {audition.compensation && (
                 <Card className="overflow-hidden shadow-lg border-l-4 border-l-green-500">
                   <CardContent className="p-8">
@@ -361,6 +387,7 @@ const AuditionDetails = () => {
                 </Card>
               )}
 
+              {/* Skills & Tags */}
               {audition.tags && audition.tags.length > 0 && (
                 <Card className="overflow-hidden shadow-lg">
                   <CardContent className="p-8">
@@ -379,6 +406,11 @@ const AuditionDetails = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Poster Profile */}
+              {posterProfile && (
+                <AuditionPosterProfile posterProfile={posterProfile} />
+              )}
+
               <Card className="sticky top-6 shadow-lg">
                 <CardContent className="p-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">Key Information</h3>

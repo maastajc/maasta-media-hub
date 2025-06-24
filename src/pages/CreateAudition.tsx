@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,14 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, AlertCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadAuditionCover } from '@/utils/fileUpload';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmailVerificationCard } from '@/components/auth/EmailVerificationCard';
-import { getEmailVerificationStatus } from '@/services/emailVerificationService';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -40,8 +37,6 @@ const CreateAudition = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -64,27 +59,6 @@ const CreateAudition = () => {
       experience_level: '',
     },
   });
-
-  useEffect(() => {
-    const checkEmailVerification = async () => {
-      if (!user) {
-        setIsCheckingVerification(false);
-        return;
-      }
-
-      try {
-        const status = await getEmailVerificationStatus();
-        setIsEmailVerified(status?.isVerified || false);
-      } catch (error) {
-        console.error('Error checking email verification:', error);
-        setIsEmailVerified(false);
-      } finally {
-        setIsCheckingVerification(false);
-      }
-    };
-
-    checkEmailVerification();
-  }, [user]);
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -109,15 +83,6 @@ const CreateAudition = () => {
       toast({
         title: "Authentication required",
         description: "Please sign in to create an audition",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isEmailVerified) {
-      toast({
-        title: "Email verification required",
-        description: "Please verify your email address before posting an audition",
         variant: "destructive",
       });
       return;
@@ -211,29 +176,7 @@ const CreateAudition = () => {
               <p className="text-gray-600">Post a new audition opportunity for artists</p>
             </div>
 
-            {/* Email Verification Section */}
-            <div className="mb-6">
-              <EmailVerificationCard onVerificationChange={setIsEmailVerified} />
-            </div>
-
-            {/* Verification Warning */}
-            {!isCheckingVerification && !isEmailVerified && (
-              <Card className="mb-6 border-orange-200 bg-orange-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-orange-500" />
-                    <div>
-                      <p className="font-medium text-orange-800">Email verification required</p>
-                      <p className="text-sm text-orange-700">
-                        You must verify your email address before you can post auditions.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className={!isEmailVerified ? 'opacity-50 pointer-events-none' : ''}>
+            <Card>
               <CardHeader>
                 <CardTitle>Audition Details</CardTitle>
                 <CardDescription>
@@ -503,7 +446,7 @@ const CreateAudition = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-maasta-purple hover:bg-maasta-purple/90"
-                      disabled={isSubmitting || !isEmailVerified}
+                      disabled={isSubmitting}
                     >
                       {isSubmitting ? 'Creating Audition...' : 'Create Audition'}
                     </Button>
