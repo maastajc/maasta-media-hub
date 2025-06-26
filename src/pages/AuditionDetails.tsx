@@ -21,7 +21,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
-import { EnhancedAuditionApplicationDialog } from "@/components/auditions/EnhancedAuditionApplicationDialog";
+import { AuditionApplicationButton } from "@/components/auditions/AuditionApplicationButton";
 import { AuditionPosterProfile } from "@/components/auditions/AuditionPosterProfile";
 
 const AuditionDetails = () => {
@@ -154,7 +154,7 @@ const AuditionDetails = () => {
                       </div>
                     </div>
                     {!isExpired && (
-                      <EnhancedAuditionApplicationDialog 
+                      <AuditionApplicationButton 
                         auditionId={audition.id}
                         auditionTitle={audition.title}
                       />
@@ -311,7 +311,7 @@ const AuditionDetails = () => {
                     <p className="mb-4 text-white/90">
                       Don't miss this opportunity! Submit your application now.
                     </p>
-                    <EnhancedAuditionApplicationDialog 
+                    <AuditionApplicationButton 
                       auditionId={audition.id}
                       auditionTitle={audition.title}
                       variant="secondary"
