@@ -36,7 +36,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/artists" element={<Artists />} />
+              {/* Support both singular and plural routes for artist profiles */}
               <Route path="/artist/:id" element={<ArtistProfile />} />
+              <Route path="/artists/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/audition/:id" element={<AuditionDetails />} />
               <Route path="/verify-email" element={<VerifyEmail />} />

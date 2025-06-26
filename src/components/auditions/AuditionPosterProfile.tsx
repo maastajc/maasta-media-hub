@@ -9,7 +9,6 @@ interface PosterProfile {
   id: string;
   full_name: string;
   profile_picture?: string;
-  company?: string;
   bio?: string;
 }
 
@@ -40,9 +39,6 @@ export const AuditionPosterProfile = ({ posterProfile }: AuditionPosterProfilePr
             <p className="text-base font-medium text-gray-900 hover:text-maasta-purple transition-colors">
               {posterProfile.full_name}
             </p>
-            {posterProfile.company && (
-              <p className="text-sm text-gray-600">{posterProfile.company}</p>
-            )}
             <p className="text-sm text-maasta-purple font-medium">View Profile →</p>
           </div>
         </Link>
