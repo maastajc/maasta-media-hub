@@ -40,7 +40,9 @@ function App() {
               <Route path="/artist/:id" element={<ArtistProfile />} />
               <Route path="/artists/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
+              {/* Support both singular and plural routes for audition details */}
               <Route path="/audition/:id" element={<AuditionDetails />} />
+              <Route path="/auditions/:id" element={<AuditionDetails />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route 
                 path="/sign-in" 
