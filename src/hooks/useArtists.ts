@@ -13,13 +13,13 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
   console.log('Fetching artists with optimized query...');
   
   try {
-    // Simplified timeout promise
+    // Increased timeout to 20 seconds for better reliability
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Artists fetch timeout - please check your connection')), 8000)
+      setTimeout(() => reject(new Error('Artists fetch timeout - please check your connection')), 20000)
     );
 
-    // Optimized query with minimal joins
-    const fetchPromise = supabase
+    // Simplified query without joins first to test connectivity
+    const simpleQuery = supabase
       .from('profiles')
       .select(`
         id,
@@ -32,74 +32,20 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
         country,
         category,
         experience_level,
-        verified,
-        special_skills!inner(skill)
+        verified
       `)
       .eq('status', 'active')
       .limit(50);
 
+    console.log('Executing simplified profiles query...');
     const result = await Promise.race([
-      fetchPromise,
+      simpleQuery,
       timeoutPromise
     ]) as { data: any[] | null; error: any };
 
     if (result.error) {
       console.error('Database error:', result.error);
-      
-      // Fallback query without joins if there's an error
-      console.log('Trying fallback query without special_skills join...');
-      const fallbackResult = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          email,
-          bio,
-          profile_picture_url,
-          city,
-          state,
-          country,
-          category,
-          experience_level,
-          verified
-        `)
-        .eq('status', 'active')
-        .limit(50);
-
-      if (fallbackResult.error) {
-        throw new Error(`Failed to fetch artists: ${fallbackResult.error.message}`);
-      }
-
-      const artists = fallbackResult.data || [];
-      console.log(`Successfully fetched ${artists.length} artists (fallback)`);
-      
-      return artists.map((artist: any) => ({
-        ...artist,
-        full_name: artist.full_name || 'Unknown Artist',
-        skills: [],
-        special_skills: [],
-        // Add default values for required fields
-        phone_number: null,
-        date_of_birth: null,
-        gender: null,
-        willing_to_relocate: false,
-        work_preference: "any",
-        years_of_experience: 0,
-        association_membership: null,
-        personal_website: null,
-        instagram: null,
-        linkedin: null,
-        youtube_vimeo: null,
-        role: 'artist',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        projects: [],
-        education_training: [],
-        media_assets: [],
-        language_skills: [],
-        tools_software: []
-      } as Artist));
+      throw new Error(`Failed to fetch artists: ${result.error.message}`);
     }
 
     const artists = result.data || [];
@@ -110,47 +56,43 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
 
     console.log(`Successfully fetched ${artists.length} artists`);
     
-    // Transform the data to match our Artist interface
-    const transformedArtists = artists.map((artist: any) => {
-      const skills = artist.special_skills?.map((s: any) => s.skill) || [];
-      
-      return {
-        id: artist.id,
-        full_name: artist.full_name || 'Unknown Artist',
-        email: artist.email,
-        bio: artist.bio,
-        profile_picture_url: artist.profile_picture_url,
-        city: artist.city,
-        state: artist.state,
-        country: artist.country,
-        category: artist.category,
-        experience_level: artist.experience_level,
-        verified: artist.verified || false,
-        skills: skills,
-        special_skills: artist.special_skills || [],
-        // Add default values for required fields
-        phone_number: null,
-        date_of_birth: null,
-        gender: null,
-        willing_to_relocate: false,
-        work_preference: "any",
-        years_of_experience: 0,
-        association_membership: null,
-        personal_website: null,
-        instagram: null,
-        linkedin: null,
-        youtube_vimeo: null,
-        role: 'artist',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        projects: [],
-        education_training: [],
-        media_assets: [],
-        language_skills: [],
-        tools_software: []
-      } as Artist;
-    });
+    // Transform the data to match our Artist interface with default values
+    const transformedArtists = artists.map((artist: any) => ({
+      id: artist.id,
+      full_name: artist.full_name || 'Unknown Artist',
+      email: artist.email,
+      bio: artist.bio,
+      profile_picture_url: artist.profile_picture_url,
+      city: artist.city,
+      state: artist.state,
+      country: artist.country,
+      category: artist.category,
+      experience_level: artist.experience_level,
+      verified: artist.verified || false,
+      skills: [], // Will be empty for now to avoid join complexity
+      special_skills: [],
+      // Add default values for required fields
+      phone_number: null,
+      date_of_birth: null,
+      gender: null,
+      willing_to_relocate: false,
+      work_preference: "any",
+      years_of_experience: 0,
+      association_membership: null,
+      personal_website: null,
+      instagram: null,
+      linkedin: null,
+      youtube_vimeo: null,
+      role: 'artist',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      projects: [],
+      education_training: [],
+      media_assets: [],
+      language_skills: [],
+      tools_software: []
+    } as Artist));
 
     return transformedArtists;
   } catch (error: any) {
@@ -163,7 +105,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 5 * 60 * 1000 // 5 minutes
+    staleTime = 10 * 60 * 1000 // 10 minutes
   } = options;
 
   const query = useQuery({
@@ -174,9 +116,9 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
       console.error(`Artists fetch attempt ${failureCount + 1} failed:`, error);
-      return failureCount < 1; // Only retry once
+      return failureCount < 2; // Retry up to 2 times
     },
-    retryDelay: 2000, // 2 seconds between retries
+    retryDelay: 3000, // 3 seconds between retries
   });
 
   // Filter and search functionality
