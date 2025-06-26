@@ -6,7 +6,7 @@ import Footer from "@/components/layout/Footer";
 import ArtistsHeader from "@/components/artists/ArtistsHeader";
 import ArtistFilters from "@/components/artists/ArtistFilters";
 import ArtistsGrid from "@/components/artists/ArtistsGrid";
-import { useOptimizedArtists } from "@/hooks/useOptimizedArtists";
+import { useArtists } from "@/hooks/useArtists";
 import { toast } from "sonner";
 
 const Artists = () => {
@@ -16,30 +16,45 @@ const Artists = () => {
   const navigate = useNavigate();
 
   const {
-    data: artists = [],
+    artists,
     isLoading,
     isError,
     error,
-    refetch
-  } = useOptimizedArtists();
-
-  // Filter artists based on search term and current tab
-  const filteredArtists = artists.filter(artist => {
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesName = artist.full_name?.toLowerCase().includes(searchLower);
-      const matchesBio = artist.bio?.toLowerCase().includes(searchLower);
-      if (!matchesName && !matchesBio) return false;
-    }
-
-    // Category filter
-    if (currentTab !== "all" && artist.category !== currentTab) {
-      return false;
-    }
-
-    return true;
+    refetch,
+    filterArtists
+  } = useArtists({
+    refetchOnWindowFocus: false,
+    staleTime: 10 * 60 * 1000 // 10 minutes
   });
+
+  // Extract unique tags from artists data
+  const uniqueTags = Array.from(
+    new Set(
+      artists
+        .flatMap(artist => artist.skills || [])
+        .filter(skill => skill && skill.trim().length > 0)
+    )
+  ).sort();
+
+  // Filter artists based on search term, selected tags, and current tab
+  const filteredArtists = filterArtists(artists, {
+    search: searchTerm,
+    category: currentTab === "all" ? undefined : currentTab,
+    experienceLevel: undefined,
+    location: undefined
+  }).filter(artist => {
+    // Additional tag filtering
+    if (selectedTags.length === 0) return true;
+    return selectedTags.some(tag => artist.skills?.includes(tag));
+  });
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
 
   const handleViewProfile = (artistId: string) => {
     navigate(`/artists/${artistId}`);
@@ -78,9 +93,9 @@ const Artists = () => {
             <ArtistFilters
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
-              uniqueTags={[]}
+              uniqueTags={uniqueTags}
               selectedTags={selectedTags}
-              toggleTag={() => {}}
+              toggleTag={toggleTag}
               isLoading={isLoading}
             />
             

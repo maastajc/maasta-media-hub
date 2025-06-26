@@ -1,14 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const createTimeoutPromise = (message: string, timeout: number = 8000) => {
+export const createTimeoutPromise = (message: string, timeout: number = 15000) => {
   return new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error(message)), timeout)
   );
 };
 
 export const fetchFeaturedArtistsQuery = (limit: number) => {
-  console.log('Executing optimized featured artists query...');
+  console.log('Executing main featured artists query...');
   return supabase
     .from('profiles')
     .select(`
@@ -23,9 +23,22 @@ export const fetchFeaturedArtistsQuery = (limit: number) => {
       category,
       experience_level,
       verified,
+      phone_number,
+      date_of_birth,
+      gender,
+      willing_to_relocate,
+      work_preference,
+      years_of_experience,
+      association_membership,
+      personal_website,
+      instagram,
+      linkedin,
+      youtube_vimeo,
+      role,
       status,
       created_at,
-      updated_at
+      updated_at,
+      special_skills (skill)
     `)
     .eq('status', 'active')
     .not('profile_picture_url', 'is', null)
@@ -48,16 +61,29 @@ export const fetchFeaturedArtistsFallbackQuery = (limit: number) => {
       category,
       experience_level,
       verified,
+      phone_number,
+      date_of_birth,
+      gender,
+      willing_to_relocate,
+      work_preference,
+      years_of_experience,
+      association_membership,
+      personal_website,
+      instagram,
+      linkedin,
+      youtube_vimeo,
+      role,
       status,
       created_at,
       updated_at
     `)
     .eq('status', 'active')
+    .not('profile_picture_url', 'is', null)
     .limit(limit);
 };
 
 export const fetchArtistByIdQuery = (id: string) => {
-  console.log('Executing optimized artist by ID query...');
+  console.log('Executing main artist by ID query...');
   return supabase
     .from('profiles')
     .select(`

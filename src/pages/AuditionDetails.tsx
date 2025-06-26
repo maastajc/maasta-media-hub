@@ -109,19 +109,18 @@ const AuditionDetails = () => {
       // Fetch poster profile information
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, profile_picture_url, bio')
+        .select('id, full_name, profile_picture_url, company, bio')
         .eq('id', data.creator_id)
         .single();
 
       if (profileError) {
         console.error('Error fetching poster profile:', profileError);
-        // Don't throw here, just continue without poster profile
       } else if (profileData) {
         setPosterProfile({
           id: profileData.id,
           full_name: profileData.full_name,
           profile_picture: profileData.profile_picture_url,
-          company: undefined, // Company field doesn't exist in profiles table
+          company: profileData.company,
           bio: profileData.bio
         });
       }

@@ -1,90 +1,70 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Briefcase, Clock, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, ClipboardList, FileText } from "lucide-react";
 
 interface DashboardStatsProps {
   isLoading: boolean;
   userAuditions: any[];
   auditionApplications: any[];
   userRole?: string;
-  dashboardStats?: {
-    auditionsCount: number;
-    applicationsCount: number;
-    pendingApplicationsCount: number;
-  };
 }
 
 export const DashboardStats = ({ 
   isLoading, 
-  userRole,
-  dashboardStats 
+  userAuditions, 
+  auditionApplications,
+  userRole 
 }: DashboardStatsProps) => {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-24" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  const stats = dashboardStats || {
-    auditionsCount: 0,
-    applicationsCount: 0,
-    pendingApplicationsCount: 0
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            {userRole === 'recruiter' ? 'Auditions Posted' : 'Auditions Created'}
-          </CardTitle>
-          <Briefcase className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.auditionsCount}</div>
-          <p className="text-xs text-muted-foreground">
-            Total auditions you've created
-          </p>
+        <CardContent className="p-6 flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-maasta-purple/10 flex items-center justify-center mb-4">
+            <ClipboardList className="h-6 w-6 text-maasta-purple" />
+          </div>
+          <h3 className="font-medium text-lg mb-1">My Auditions</h3>
+          <p className="text-3xl font-bold">{isLoading ? "-" : userAuditions.length}</p>
+          <Button 
+            onClick={() => navigate("/auditions/create")} 
+            className="mt-4 bg-maasta-purple hover:bg-maasta-purple/90 w-full"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Post Audition
+          </Button>
         </CardContent>
       </Card>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Applications Submitted</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.applicationsCount}</div>
-          <p className="text-xs text-muted-foreground">
-            Total applications you've made
+        <CardContent className="p-6 flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <FileText className="h-6 w-6 text-green-600" />
+          </div>
+          <h3 className="font-medium text-lg mb-1">Applications</h3>
+          <p className="text-3xl font-bold">
+            {isLoading ? "-" : auditionApplications.length}
           </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.pendingApplicationsCount}</div>
-          <p className="text-xs text-muted-foreground">
-            Awaiting response
-          </p>
+          {userRole === 'recruiter' ? (
+            <Button 
+              onClick={() => navigate("/auditions/applications")} 
+              variant="outline"
+              className="mt-4 border-green-600 text-green-600 hover:bg-green-50 w-full"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              View Applications
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => navigate("/auditions")} 
+              variant="outline"
+              className="mt-4 border-green-600 text-green-600 hover:bg-green-50 w-full"
+            >
+              Browse Auditions
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
