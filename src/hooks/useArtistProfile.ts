@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
@@ -30,42 +31,24 @@ export const useArtistProfile = (
     queryKey: ['artistProfile', targetId],
     queryFn: async () => {
       if (!targetId) {
-        throw new Error('No artist ID provided - user may not be logged in');
+        throw new Error('No artist ID provided');
       }
       
-      console.log('useArtistProfile: Starting fetch for ID:', targetId);
+      console.log('Fetching artist profile for ID:', targetId);
       
-      try {
-        const profile = await fetchArtistById(targetId);
-        
-        if (!profile) {
-          throw new Error(`Artist profile not found for ID: ${targetId}`);
-        }
-        
-        return profile;
-      } catch (error: any) {
-        console.error('useArtistProfile: Fetch failed with error:', error.message);
-        throw error;
+      const profile = await fetchArtistById(targetId);
+      
+      if (!profile) {
+        throw new Error(`Artist profile not found for ID: ${targetId}`);
       }
+      
+      return profile;
     },
     enabled: !!targetId && enabled,
     staleTime,
     refetchOnWindowFocus,
-    retry: (failureCount, error) => {
-      console.log(`useArtistProfile: Retry attempt ${failureCount + 1}, error:`, error?.message);
-      
-      // Don't retry on specific errors
-      if (error?.message?.includes('not found') || 
-          error?.message?.includes('Invalid artist ID') ||
-          error?.message?.includes('user may not be logged in')) {
-        return false;
-      }
-      
-      // Retry up to 3 times for other errors
-      return failureCount < 3;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
-    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
+    retry: 2,
+    retryDelay: 1000,
   });
   
   const updateProfileMutation = useMutation({
@@ -78,7 +61,6 @@ export const useArtistProfile = (
         throw new Error('No profile data provided for update');
       }
       
-      // The updateArtistProfile function now handles the type conversion internally
       const result = await updateArtistProfile(user.id, profileData);
       
       if (!result) {
@@ -105,12 +87,7 @@ export const useArtistProfile = (
   const refreshProfile = async () => {
     try {
       console.log('Refreshing profile data...');
-      const result = await Promise.race([
-        profileQuery.refetch(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Refresh timeout')), 15000)
-        )
-      ]);
+      const result = await profileQuery.refetch();
       return result;
     } catch (error: any) {
       console.error('Error refreshing profile:', error.message);
