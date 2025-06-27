@@ -17,14 +17,9 @@ import ProfileHero from "@/components/profile/ProfileHero";
 import UnifiedProfileView from "@/components/profile/UnifiedProfileView";
 
 const ArtistProfile = () => {
-  const { id: artistId } = useParams(); // Extract 'id' from URL params and alias it to artistId
+  const { id: artistId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Add debug logging for profile page loading
-  console.log('ArtistProfile component loaded - starting profile fetch');
-  console.log('URL artistId:', artistId);
-  console.log('Current location:', window.location.href);
 
   // Use the unified hook for data fetching with enhanced error handling
   const { 
@@ -41,7 +36,6 @@ const ArtistProfile = () => {
 
   // Handle missing artist ID
   if (!artistId) {
-    console.error('No artistId found in URL params');
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -65,9 +59,8 @@ const ArtistProfile = () => {
     );
   }
 
-  // Loading state with detailed logs
+  // Loading state
   if (isLoading) {
-    console.log('Loading artist profile for ID:', artistId);
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -83,20 +76,9 @@ const ArtistProfile = () => {
     );
   }
 
-  // Enhanced error handling with detailed error information
+  // Enhanced error handling with sanitized error messages
   if (isError || !artistData) {
-    const errorMessage = error?.message || "Artist profile not found";
-    const isNotFound = errorMessage.includes('not found') || 
-                       errorMessage.includes('NOT_FOUND') || 
-                       !artistData;
-    
-    console.error('Artist profile error details:', {
-      error: errorMessage,
-      artistId,
-      isNotFound,
-      currentUrl: window.location.href,
-      errorObject: error
-    });
+    const isNotFound = !artistData || error?.message?.includes('not found');
     
     return (
       <div className="min-h-screen flex flex-col">
@@ -109,8 +91,8 @@ const ArtistProfile = () => {
             </h2>
             <p className="text-gray-600 mb-4">
               {isNotFound 
-                ? `We couldn't find an artist with ID: ${artistId}. The profile may have been removed or the link might be incorrect.`
-                : `Error: ${errorMessage}`
+                ? `We couldn't find an artist with the requested ID. The profile may have been removed or the link might be incorrect.`
+                : "We're having trouble loading this profile. Please try again."
               }
             </p>
             
@@ -136,8 +118,6 @@ const ArtistProfile = () => {
   }
 
   // Success state - render the profile
-  console.log('Successfully loaded artist profile:', artistData.full_name);
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />

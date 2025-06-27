@@ -16,6 +16,22 @@ interface FileUploadProps {
   buttonText?: string;
 }
 
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg', 
+  'image/png',
+  'image/gif',
+  'image/webp'
+];
+
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/avi',
+  'video/mov',
+  'video/wmv',
+  'video/webm'
+];
+
 export function FileUpload({
   onFileUpload,
   acceptedTypes = "image/*",
@@ -31,6 +47,37 @@ export function FileUpload({
   const { toast } = useToast();
   
   const maxSizeBytes = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+  
+  const validateFileType = (file: File): boolean => {
+    // Determine allowed types based on acceptedTypes prop
+    let allowedTypes: string[] = [];
+    
+    if (acceptedTypes.includes('image')) {
+      allowedTypes = [...allowedTypes, ...ALLOWED_IMAGE_TYPES];
+    }
+    
+    if (acceptedTypes.includes('video')) {
+      allowedTypes = [...allowedTypes, ...ALLOWED_VIDEO_TYPES];
+    }
+    
+    // If no specific types defined, fall back to basic validation
+    if (allowedTypes.length === 0) {
+      return file.type.startsWith('image/') || file.type.startsWith('video/');
+    }
+    
+    return allowedTypes.includes(file.type.toLowerCase());
+  };
+  
+  const validateFileSize = (file: File): boolean => {
+    return file.size <= maxSizeBytes;
+  };
+  
+  const validateFileName = (fileName: string): boolean => {
+    // Check for potentially dangerous file extensions
+    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.scr', '.pif', '.vbs', '.js'];
+    const fileExtension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    return !dangerousExtensions.includes(fileExtension);
+  };
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -62,8 +109,28 @@ export function FileUpload({
   };
   
   const validateAndHandleFile = (file: File) => {
-    // Check file size
-    if (file.size > maxSizeBytes) {
+    // Validate file name
+    if (!validateFileName(file.name)) {
+      toast({
+        title: "Invalid file type",
+        description: "This file type is not allowed for security reasons",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate file type
+    if (!validateFileType(file)) {
+      toast({
+        title: "Invalid file type",
+        description: `Please upload a valid ${acceptedTypes} file`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate file size
+    if (!validateFileSize(file)) {
       toast({
         title: "File too large",
         description: `The file size should not exceed ${maxSizeMB}MB`,
@@ -72,11 +139,11 @@ export function FileUpload({
       return;
     }
     
-    // Check file type
-    if (!file.type.match(acceptedTypes.replace("*", ".*"))) {
+    // Additional security check: ensure file has content
+    if (file.size === 0) {
       toast({
-        title: "Invalid file type",
-        description: `Please upload a file of type: ${acceptedTypes}`,
+        title: "Invalid file",
+        description: "The selected file appears to be empty",
         variant: "destructive",
       });
       return;

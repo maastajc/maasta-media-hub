@@ -16,6 +16,10 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
+import { isValidEmail, sanitizeErrorMessage, RateLimiter } from '@/utils/securityUtils';
+
+// Create rate limiter for sign-in attempts
+const signInRateLimiter = new RateLimiter(5, 300000); // 5 attempts per 5 minutes
 
 export const SignInForm = () => {
   const [email, setEmail] = useState('');
@@ -30,18 +34,13 @@ export const SignInForm = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const validateSignInForm = () => {
     let isValid = true;
     
     if (!email.trim()) {
       setEmailError('Email is required');
       isValid = false;
-    } else if (!validateEmail(email)) {
+    } else if (!isValidEmail(email.trim())) {
       setEmailError('Please enter a valid email address');
       isValid = false;
     } else {
@@ -65,7 +64,7 @@ export const SignInForm = () => {
     if (!resetEmail.trim()) {
       setResetEmailError('Email is required');
       return false;
-    } else if (!validateEmail(resetEmail)) {
+    } else if (!isValidEmail(resetEmail.trim())) {
       setResetEmailError('Please enter a valid email address');
       return false;
     } else {
@@ -80,21 +79,22 @@ export const SignInForm = () => {
     if (!validateSignInForm()) {
       return;
     }
+
+    // Check rate limiting
+    if (!signInRateLimiter.canProceed(email.trim())) {
+      toast.error('Too many sign-in attempts. Please wait a few minutes before trying again.');
+      return;
+    }
     
     setIsLoading(true);
     
     try {
       await signIn(email.trim(), password);
+      signInRateLimiter.reset(email.trim()); // Reset on successful login
       navigate('/');
     } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Invalid email or password. Please check your credentials and try again.');
-      } else if (error.message.includes('Email not confirmed')) {
-        toast.error('Please check your email and confirm your account before signing in.');
-      } else {
-        toast.error(error.message || 'Failed to sign in. Please try again.');
-      }
+      const sanitizedError = sanitizeErrorMessage(error.message);
+      toast.error(sanitizedError);
     } finally {
       setIsLoading(false);
     }
@@ -104,13 +104,10 @@ export const SignInForm = () => {
     try {
       setIsLoading(true);
       
-      // Use the current domain instead of localhost for redirect
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
         ? 'https://preview--maasta-media-hub.lovable.app/'
         : `${currentDomain}/`;
-
-      console.log('Google sign-in redirect URL:', redirectUrl);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -120,10 +117,9 @@ export const SignInForm = () => {
       });
       
       if (error) {
-        toast.error(error.message);
+        toast.error(sanitizeErrorMessage(error.message));
       }
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
       toast.error('Failed to sign in with Google');
     } finally {
       setIsLoading(false);
@@ -139,26 +135,17 @@ export const SignInForm = () => {
 
     setIsResetLoading(true);
     try {
-      // Get the current application URL (not localhost)
       const currentUrl = window.location.origin;
       const redirectUrl = currentUrl.includes('localhost') 
         ? 'https://preview--maasta-media-hub.lovable.app/reset-password'
         : `${currentUrl}/reset-password`;
-
-      console.log('Sending password reset to:', redirectUrl);
 
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: redirectUrl
       });
 
       if (error) {
-        if (error.message.includes('rate limit')) {
-          toast.error('Too many password reset requests. Please wait a few minutes before trying again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Please confirm your email address before requesting a password reset.');
-        } else {
-          toast.error(error.message);
-        }
+        toast.error(sanitizeErrorMessage(error.message));
       } else {
         toast.success('Password reset email sent! Check your inbox and spam folder.');
         setShowForgotPassword(false);
@@ -166,7 +153,6 @@ export const SignInForm = () => {
         setResetEmailError('');
       }
     } catch (error: any) {
-      console.error('Password reset error:', error);
       toast.error('Failed to send reset email. Please try again later.');
     } finally {
       setIsResetLoading(false);
@@ -194,6 +180,7 @@ export const SignInForm = () => {
               }}
               required
               className={emailError ? 'border-red-500' : ''}
+              maxLength={254}
             />
             {emailError && <p className="text-sm text-red-500">{emailError}</p>}
           </div>
@@ -210,6 +197,7 @@ export const SignInForm = () => {
               }}
               required
               className={passwordError ? 'border-red-500' : ''}
+              maxLength={128}
             />
             {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
           </div>
@@ -274,6 +262,7 @@ export const SignInForm = () => {
                       }}
                       required
                       className={resetEmailError ? 'border-red-500' : ''}
+                      maxLength={254}
                     />
                     {resetEmailError && <p className="text-sm text-red-500">{resetEmailError}</p>}
                   </div>

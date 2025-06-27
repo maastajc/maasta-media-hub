@@ -10,8 +10,6 @@ interface UseArtistsOptions {
 }
 
 const fetchArtistsOptimized = async (): Promise<Artist[]> => {
-  console.log('Fetching artists with optimized query...');
-  
   try {
     // Increased timeout to 20 seconds for better reliability
     const timeoutPromise = new Promise<never>((_, reject) => 
@@ -37,24 +35,19 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
       .eq('status', 'active')
       .limit(50);
 
-    console.log('Executing simplified profiles query...');
     const result = await Promise.race([
       simpleQuery,
       timeoutPromise
     ]) as { data: any[] | null; error: any };
 
     if (result.error) {
-      console.error('Database error:', result.error);
       throw new Error(`Failed to fetch artists: ${result.error.message}`);
     }
 
     const artists = result.data || [];
     if (artists.length === 0) {
-      console.log('No artists found');
       return [];
     }
-
-    console.log(`Successfully fetched ${artists.length} artists`);
     
     // Transform the data to match our Artist interface with default values
     const transformedArtists = artists.map((artist: any) => ({
@@ -69,7 +62,7 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
       category: artist.category,
       experience_level: artist.experience_level,
       verified: artist.verified || false,
-      skills: [], // Will be empty for now to avoid join complexity
+      skills: [],
       special_skills: [],
       // Add default values for required fields
       phone_number: null,
@@ -96,7 +89,7 @@ const fetchArtistsOptimized = async (): Promise<Artist[]> => {
 
     return transformedArtists;
   } catch (error: any) {
-    console.error('Error in fetchArtistsOptimized:', error);
+    console.error('Error fetching artists');
     throw error;
   }
 };
@@ -115,7 +108,6 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     staleTime,
     refetchOnWindowFocus,
     retry: (failureCount, error) => {
-      console.error(`Artists fetch attempt ${failureCount + 1} failed:`, error);
       return failureCount < 2; // Retry up to 2 times
     },
     retryDelay: 3000, // 3 seconds between retries

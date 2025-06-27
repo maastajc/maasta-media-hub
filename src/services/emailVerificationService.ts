@@ -23,7 +23,7 @@ export const getEmailVerificationStatus = async (): Promise<EmailVerificationSta
       .single();
 
     if (error) {
-      console.error('Error fetching verification status:', error);
+      console.error('Error fetching verification status');
       return null;
     }
 
@@ -33,7 +33,7 @@ export const getEmailVerificationStatus = async (): Promise<EmailVerificationSta
       verifiedAt: profile.email_verified_at
     };
   } catch (error) {
-    console.error('Error in getEmailVerificationStatus:', error);
+    console.error('Error in getEmailVerificationStatus');
     return null;
   }
 };
@@ -52,20 +52,17 @@ export const sendVerificationEmail = async (): Promise<boolean> => {
       .rpc('generate_email_verification_token', { user_id_param: user.id });
 
     if (tokenError) {
-      console.error('Error generating token:', tokenError);
+      console.error('Error generating token');
       toast.error("Failed to generate verification token");
       return false;
     }
 
     // TODO: Call edge function to send email when API key is available
-    // For now, just show the verification link in console/toast
-    const verificationUrl = `${window.location.origin}/verify-email?token=${token}`;
-    console.log('Verification URL:', verificationUrl);
-    
+    // For now, show success message without exposing the token
     toast.success("Verification email sent! Check your email inbox.");
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error('Error sending verification email');
     toast.error("Failed to send verification email");
     return false;
   }
@@ -77,7 +74,7 @@ export const verifyEmailToken = async (token: string): Promise<boolean> => {
       .rpc('verify_email_token', { token_param: token });
 
     if (error) {
-      console.error('Error verifying token:', error);
+      console.error('Error verifying token');
       toast.error("Invalid or expired verification token");
       return false;
     }
@@ -90,7 +87,7 @@ export const verifyEmailToken = async (token: string): Promise<boolean> => {
       return false;
     }
   } catch (error) {
-    console.error('Error in verifyEmailToken:', error);
+    console.error('Error in verifyEmailToken');
     toast.error("Failed to verify email");
     return false;
   }
