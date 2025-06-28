@@ -13,6 +13,9 @@ const Artists = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("");
   const navigate = useNavigate();
 
   const {
@@ -24,7 +27,7 @@ const Artists = () => {
     filterArtists
   } = useArtists({
     refetchOnWindowFocus: false,
-    staleTime: 10 * 60 * 1000 // 10 minutes
+    staleTime: 10 * 60 * 1000
   });
 
   // Extract unique tags from artists data
@@ -36,17 +39,38 @@ const Artists = () => {
     )
   ).sort();
 
-  // Filter artists based on search term, selected tags, and current tab
-  const filteredArtists = filterArtists(artists, {
-    search: searchTerm,
-    category: currentTab === "all" ? undefined : currentTab,
-    experienceLevel: undefined,
-    location: undefined
-  }).filter(artist => {
-    // Additional tag filtering
-    if (selectedTags.length === 0) return true;
-    return selectedTags.some(tag => artist.skills?.includes(tag));
-  });
+  // Filter and sort artists
+  const filteredAndSortedArtists = (() => {
+    let filtered = filterArtists(artists, {
+      search: searchTerm,
+      category: currentTab === "all" ? undefined : currentTab,
+      experienceLevel: experienceFilter || undefined,
+      location: locationFilter || undefined
+    }).filter(artist => {
+      // Additional tag filtering
+      if (selectedTags.length === 0) return true;
+      return selectedTags.some(tag => artist.skills?.includes(tag));
+    });
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "name_asc":
+          return (a.full_name || "").localeCompare(b.full_name || "");
+        case "name_desc":
+          return (b.full_name || "").localeCompare(a.full_name || "");
+        case "experience_desc":
+          return (b.years_of_experience || 0) - (a.years_of_experience || 0);
+        case "experience_asc":
+          return (a.years_of_experience || 0) - (b.years_of_experience || 0);
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  })();
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -64,6 +88,9 @@ const Artists = () => {
     setSearchTerm("");
     setSelectedTags([]);
     setCurrentTab("all");
+    setSortBy("newest");
+    setLocationFilter("");
+    setExperienceFilter("");
   };
 
   const handleRefresh = () => {
@@ -71,7 +98,6 @@ const Artists = () => {
     toast.success("Refreshing artists...");
   };
 
-  // Show error toast when there's an error
   useEffect(() => {
     if (isError && error) {
       toast.error("Failed to load artists. Please try again.");
@@ -97,10 +123,16 @@ const Artists = () => {
               selectedTags={selectedTags}
               toggleTag={toggleTag}
               isLoading={isLoading}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              locationFilter={locationFilter}
+              setLocationFilter={setLocationFilter}
+              experienceFilter={experienceFilter}
+              setExperienceFilter={setExperienceFilter}
             />
             
             <ArtistsGrid
-              artists={filteredArtists}
+              artists={filteredAndSortedArtists}
               isLoading={isLoading}
               isError={isError}
               error={error}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -46,6 +45,10 @@ const Auditions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("newest");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("");
+  const [compensationFilter, setCompensationFilter] = useState("");
   const { user } = useAuth();
   const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
   const [page, setPage] = useState(1);
@@ -86,7 +89,6 @@ const Auditions = () => {
       const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
       const to = from + AUDITIONS_PER_PAGE - 1;
 
-      // Build query
       let query = supabase
         .from('auditions')
         .select(`
@@ -99,8 +101,8 @@ const Auditions = () => {
       // Apply filters
       const filters = {
         category: searchParams.get('category') || '',
-        location: searchParams.get('location') || '',
-        experience: searchParams.get('experience') || '',
+        location: locationFilter,
+        experience: experienceFilter,
         gender: searchParams.get('gender') || '',
         ageRange: searchParams.get('ageRange') || '',
       };
@@ -111,9 +113,45 @@ const Auditions = () => {
       if (filters.gender) query = query.eq('gender', filters.gender);
       if (filters.ageRange) query = query.eq('age_range', filters.ageRange);
       if (selectedTags.length > 0) query = query.contains('tags', selectedTags);
+      if (compensationFilter) {
+        if (compensationFilter === 'paid') {
+          query = query.not('compensation', 'ilike', '%unpaid%');
+        } else if (compensationFilter === 'unpaid') {
+          query = query.ilike('compensation', '%unpaid%');
+        }
+      }
+
+      // Apply sorting
+      let orderColumn = 'created_at';
+      let ascending = false;
+      
+      switch (sortBy) {
+        case 'oldest':
+          ascending = true;
+          break;
+        case 'deadline_soon':
+          orderColumn = 'deadline';
+          ascending = true;
+          break;
+        case 'audition_date_soon':
+          orderColumn = 'audition_date';
+          ascending = true;
+          break;
+        case 'title_asc':
+          orderColumn = 'title';
+          ascending = true;
+          break;
+        case 'title_desc':
+          orderColumn = 'title';
+          ascending = false;
+          break;
+        case 'newest':
+        default:
+          break;
+      }
 
       const { data: auditionsData, error: auditionsError } = await query
-        .order('created_at', { ascending: false })
+        .order(orderColumn, { ascending })
         .range(from, to);
 
       if (auditionsError) {
@@ -207,7 +245,7 @@ const Auditions = () => {
     setPage(1);
     setHasMore(true);
     fetchAuditions(1, true);
-  }, [searchParams, selectedTags]);
+  }, [searchParams, selectedTags, sortBy, locationFilter, experienceFilter, compensationFilter]);
 
   useEffect(() => {
     fetchUniqueData();
@@ -229,6 +267,10 @@ const Auditions = () => {
   const clearFilters = () => {
     setSearchParams(new URLSearchParams());
     setSelectedTags([]);
+    setSortBy("newest");
+    setLocationFilter("");
+    setExperienceFilter("");
+    setCompensationFilter("");
   };
 
   const toggleTag = (tag: string) => {
@@ -283,7 +325,7 @@ const Auditions = () => {
                 <div className="flex items-center justify-between">
                   <span>Error loading auditions: {error}</span>
                   <Button 
-                    onClick={handleRetry}
+                    onClick={() => fetchAuditions(1, true)}
                     size="sm"
                     variant="outline"
                     className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
@@ -301,11 +343,34 @@ const Auditions = () => {
               <AuditionFilters 
                 uniqueCategories={uniqueCategories}
                 selectedCategory={selectedCategory}
-                onCategoryChange={handleCategoryChange}
+                onCategoryChange={(category) => {
+                  setSearchParams(prev => {
+                    if (category) {
+                      prev.set('category', category);
+                    } else {
+                      prev.delete('category');
+                    }
+                    return prev;
+                  }, { replace: true });
+                }}
                 uniqueTags={uniqueTags}
                 selectedTags={selectedTags}
-                toggleTag={toggleTag}
+                toggleTag={(tag) => {
+                  setSelectedTags(prev => 
+                    prev.includes(tag) 
+                      ? prev.filter(t => t !== tag)
+                      : [...prev, tag]
+                  );
+                }}
                 isLoading={loading && auditions.length === 0}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                locationFilter={locationFilter}
+                setLocationFilter={setLocationFilter}
+                experienceFilter={experienceFilter}
+                setExperienceFilter={setExperienceFilter}
+                compensationFilter={compensationFilter}
+                setCompensationFilter={setCompensationFilter}
               />
             </aside>
             
@@ -314,8 +379,15 @@ const Auditions = () => {
                 auditions={auditions} 
                 loading={loading && auditions.length === 0}
                 error={null}
-                onClearFilters={clearFilters}
-                onRetry={handleRetry}
+                onClearFilters={() => {
+                  setSearchParams(new URLSearchParams());
+                  setSelectedTags([]);
+                  setSortBy("newest");
+                  setLocationFilter("");
+                  setExperienceFilter("");
+                  setCompensationFilter("");
+                }}
+                onRetry={() => fetchAuditions(1, true)}
                 applicationStatusMap={applicationStatusMap}
               />
               
@@ -327,7 +399,11 @@ const Auditions = () => {
               
               {!loadingMore && hasMore && auditions.length > 0 && (
                 <div className="mt-8 text-center">
-                  <Button onClick={handleLoadMore} className="w-40">
+                  <Button onClick={() => {
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    fetchAuditions(nextPage, false);
+                  }} className="w-40">
                     Load More
                   </Button>
                 </div>
@@ -337,13 +413,6 @@ const Auditions = () => {
                 <div className="text-center py-12">
                   <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
                   <p className="text-gray-500 mt-2">Try adjusting your filters</p>
-                  <Button 
-                    onClick={clearFilters}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    Clear All Filters
-                  </Button>
                 </div>
               )}
             </div>
