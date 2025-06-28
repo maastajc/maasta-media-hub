@@ -119,13 +119,13 @@ const Index = () => {
 
               {/* Enhanced Visual Content with Tamil Artists */}
               <div className="relative lg:ml-8">
-                {/* Main Hero Image Container - Tamil Artist */}
+                {/* Main Hero Image Container - Using uploaded image */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/20 to-maasta-purple/20 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
                   <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500">
                     <img 
-                      src="https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600&h=400&fit=crop&crop=faces" 
-                      alt="Tamil artist performing classical dance" 
+                      src="/lovable-uploads/df74f021-0d9a-46ae-9655-df4ed65824da.png" 
+                      alt="Tamil film production scene with director and actors" 
                       className="w-full h-64 md:h-80 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
@@ -156,21 +156,21 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Traditional Tamil Art Decorative Elements */}
+                {/* Entertainment Industry Decorative Elements */}
                 <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-red-500/10 to-yellow-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
-                  <span className="text-2xl">🪔</span>
+                  <span className="text-2xl">🎭</span>
                 </div>
                 <div className="absolute bottom-1/4 -right-8 w-12 h-12 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '1.5s' }}>
-                  <span className="text-xl">🕉️</span>
+                  <span className="text-xl">💃</span>
                 </div>
 
-                {/* Additional Tamil Cultural Elements */}
+                {/* Additional Tamil Entertainment Elements */}
                 <div className="absolute top-1/2 right-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
-                  <img 
-                    src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=80&fit=crop&crop=center" 
-                    alt="Tamil classical music" 
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  <span className="text-2xl">🎬</span>
+                </div>
+                
+                <div className="absolute bottom-1/3 left-4 w-14 h-14 bg-maasta-orange/10 rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '2s' }}>
+                  <span className="text-xl">🎤</span>
                 </div>
               </div>
             </div>
