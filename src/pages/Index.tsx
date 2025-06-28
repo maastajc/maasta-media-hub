@@ -9,6 +9,7 @@ import UpcomingEvents from "@/components/home/UpcomingEvents";
 import RecentAuditions from "@/components/home/RecentAuditions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Music, Video, Users, Mic } from "lucide-react";
 
 const Index = () => {
   const { user } = useAuth();
@@ -124,8 +125,8 @@ const Index = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/20 to-maasta-purple/20 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
                   <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500">
                     <img 
-                      src="https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600&h=400&fit=crop&crop=faces" 
-                      alt="Tamil artist performing classical dance" 
+                      src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=600&h=400&fit=crop&crop=faces" 
+                      alt="Tamil artist performing on stage" 
                       className="w-full h-64 md:h-80 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
@@ -156,19 +157,19 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Traditional Tamil Art Decorative Elements */}
-                <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-red-500/10 to-yellow-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
-                  <span className="text-2xl">🪔</span>
+                {/* Entertainment Art Decorative Elements */}
+                <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-maasta-orange/10 to-maasta-purple/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
+                  <Music className="w-8 h-8 text-maasta-orange" />
                 </div>
-                <div className="absolute bottom-1/4 -right-8 w-12 h-12 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '1.5s' }}>
-                  <span className="text-xl">🕉️</span>
+                <div className="absolute bottom-1/4 -right-8 w-12 h-12 bg-gradient-to-r from-maasta-purple/10 to-maasta-orange/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '1.5s' }}>
+                  <Video className="w-6 h-6 text-maasta-purple" />
                 </div>
 
-                {/* Additional Tamil Cultural Elements */}
+                {/* Additional Entertainment Elements */}
                 <div className="absolute top-1/2 right-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
                   <img 
-                    src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=80&fit=crop&crop=center" 
-                    alt="Tamil classical music" 
+                    src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&crop=center" 
+                    alt="Tamil music performance" 
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 </div>
@@ -177,7 +178,7 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Enhanced Features Section - Removed Event Platform */}
+        {/* Enhanced Features Section */}
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -189,9 +190,7 @@ const Index = () => {
               <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-t-4 border-t-maasta-orange animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <CardContent className="p-8">
                   <div className="h-20 w-20 rounded-full bg-gradient-to-r from-maasta-orange/10 to-maasta-orange/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 mx-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-maasta-orange">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
+                    <Users className="w-10 h-10 text-maasta-orange" />
                   </div>
                   <h3 className="text-2xl font-semibold mb-4 text-center">Tamil Artist Portfolio</h3>
                   <p className="text-gray-600 mb-6 text-center leading-relaxed">Create a comprehensive verified profile showcasing your Tamil cinema work, classical performances, and artistic journey with photos, videos, and social media links.</p>
@@ -206,9 +205,7 @@ const Index = () => {
               <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-t-4 border-t-maasta-purple animate-fade-in" style={{ animationDelay: '0.5s' }}>
                 <CardContent className="p-8">
                   <div className="h-20 w-20 rounded-full bg-gradient-to-r from-maasta-purple/10 to-maasta-purple/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 mx-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-maasta-purple">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
-                    </svg>
+                    <Mic className="w-10 h-10 text-maasta-purple" />
                   </div>
                   <h3 className="text-2xl font-semibold mb-4 text-center">Kolywood Audition Platform</h3>
                   <p className="text-gray-600 mb-6 text-center leading-relaxed">Discover and apply for genuine casting calls from verified Tamil production houses, directors, and casting agents across Tamil Nadu and Tamil cinema worldwide.</p>
@@ -242,7 +239,7 @@ const Index = () => {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="mb-8">
               <img 
-                src="https://images.unsplash.com/photo-1524863479829-916d8e77f114?w=120&h=120&fit=crop&crop=center" 
+                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop&crop=center" 
                 alt="Tamil cultural heritage" 
                 className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
               />

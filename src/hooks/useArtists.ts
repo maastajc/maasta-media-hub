@@ -57,19 +57,19 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       const transformedData = (data || []).map(profile => ({
         id: profile.id,
         full_name: profile.full_name || 'Unknown Artist',
-        email: profile.email,
+        email: profile.email || '',
         profile_picture_url: profile.profile_picture_url,
         category: profile.category || 'actor',
         experience_level: profile.experience_level || 'beginner',
         bio: profile.bio,
-        location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state,
+        location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state || '',
         city: profile.city,
         state: profile.state,
         country: profile.country,
         years_of_experience: profile.years_of_experience || 0,
         skills: [], // TODO: Add skills relation
-        created_at: profile.created_at,
-        status: profile.status,
+        created_at: profile.created_at || new Date().toISOString(),
+        status: profile.status || 'active',
         personal_website: profile.personal_website,
         linkedin: profile.linkedin,
         youtube_vimeo: profile.youtube_vimeo,
@@ -82,6 +82,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       console.error('Error in fetchArtists:', err);
       setIsError(true);
       setError(err);
+      // Set empty array on error to prevent blank page
+      setArtists([]);
     } finally {
       setIsLoading(false);
     }
