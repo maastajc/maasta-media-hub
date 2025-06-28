@@ -26,6 +26,10 @@ import AuditionReview from "./pages/AuditionReview";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import Networking from "./pages/Networking";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -53,6 +57,10 @@ function App() {
               <Route path="/artists/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
