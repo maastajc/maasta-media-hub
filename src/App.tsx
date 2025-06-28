@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/layout/ScrollToTop";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import PublicRoute from "@/components/auth/PublicRoute";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PublicRoute } from "@/components/auth/PublicRoute";
 
 // Pages
 import Index from "./pages/Index";
