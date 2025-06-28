@@ -9,6 +9,7 @@ import ChatInterface from "@/components/networking/ChatInterface";
 import { useAuth } from "@/contexts/AuthContext";
 import { useArtists } from "@/hooks/useArtists";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "sonner";
 
 const Networking = () => {
@@ -23,32 +24,70 @@ const Networking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const { artists, isLoading } = useArtists();
+  const { artists, isLoading, isError, error } = useArtists();
 
-  // Filter artists for networking (exclude current user)
-  const filteredArtists = artists
-    .filter(artist => artist.id !== user?.id)
-    .filter(artist => {
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          artist.full_name?.toLowerCase().includes(searchLower) ||
-          artist.bio?.toLowerCase().includes(searchLower)
-        );
+  // Filter artists for networking (exclude current user and handle filtering properly)
+  const filteredArtists = (() => {
+    console.log('Networking page - Current user:', user?.id);
+    console.log('Networking page - All artists:', artists.length);
+    
+    if (!artists || !Array.isArray(artists)) {
+      console.warn('Artists data is not an array:', artists);
+      return [];
+    }
+
+    // First filter out current user
+    const otherArtists = artists.filter(artist => {
+      if (!artist || !artist.id) {
+        console.warn('Invalid artist object:', artist);
+        return false;
       }
+      return artist.id !== user?.id;
+    });
+
+    console.log('Artists after removing current user:', otherArtists.length);
+
+    // Then apply other filters
+    const filtered = otherArtists.filter(artist => {
+      // Search filter
+      if (searchTerm && searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase();
+        const nameMatch = artist.full_name?.toLowerCase().includes(searchLower);
+        const bioMatch = artist.bio?.toLowerCase().includes(searchLower);
+        if (!nameMatch && !bioMatch) {
+          return false;
+        }
+      }
+
+      // Category filter
+      if (categoryFilter && artist.category !== categoryFilter) {
+        return false;
+      }
+
+      // Location filter
+      if (locationFilter && locationFilter.trim()) {
+        const locationLower = locationFilter.toLowerCase();
+        const locationMatch = artist.location?.toLowerCase().includes(locationLower);
+        const cityMatch = artist.city?.toLowerCase().includes(locationLower);
+        const stateMatch = artist.state?.toLowerCase().includes(locationLower);
+        const countryMatch = artist.country?.toLowerCase().includes(locationLower);
+        
+        if (!locationMatch && !cityMatch && !stateMatch && !countryMatch) {
+          return false;
+        }
+      }
+
+      // Experience filter
+      if (experienceFilter && artist.experience_level !== experienceFilter) {
+        return false;
+      }
+
       return true;
-    })
-    .filter(artist => !categoryFilter || artist.category === categoryFilter)
-    .filter(artist => {
-      if (!locationFilter) return true;
-      const locationLower = locationFilter.toLowerCase();
-      return (
-        artist.city?.toLowerCase().includes(locationLower) ||
-        artist.state?.toLowerCase().includes(locationLower) ||
-        artist.country?.toLowerCase().includes(locationLower)
-      );
-    })
-    .filter(artist => !experienceFilter || artist.experience_level === experienceFilter);
+    });
+
+    console.log('Final filtered artists for networking:', filtered.length);
+    return filtered;
+  })();
 
   const handleConnect = (userId: string) => {
     // Simulate connection request
@@ -63,12 +102,12 @@ const Networking = () => {
   };
 
   const handleMessage = (userId: string) => {
-    const user = artists.find(a => a.id === userId);
-    if (user) {
+    const artist = artists.find(a => a.id === userId);
+    if (artist) {
       setSelectedChatUser({
-        id: user.id,
-        full_name: user.full_name,
-        profile_picture_url: user.profile_picture_url
+        id: artist.id,
+        full_name: artist.full_name,
+        profile_picture_url: artist.profile_picture_url
       });
       // Load messages for this user (simulate for demo)
       setMessages([
@@ -102,6 +141,7 @@ const Networking = () => {
     navigate(`/artists/${userId}`);
   };
 
+  // Show sign in prompt if user is not authenticated
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -111,6 +151,35 @@ const Networking = () => {
             <h2 className="text-2xl font-bold mb-4">Sign in to Network</h2>
             <p className="text-gray-600">You need to be signed in to connect with other artists.</p>
           </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state if there's an error
+  if (isError) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow">
+          <div className="bg-maasta-purple/10 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">Network & Connect</h1>
+              <p className="text-lg text-gray-600">
+                Discover and connect with talented professionals in the entertainment industry
+              </p>
+            </div>
+          </div>
+          
+          <section className="py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center py-12">
+                <p className="text-red-600 text-lg">Error loading artists: {error?.message || 'Unknown error'}</p>
+                <p className="text-gray-500 mt-2">Please try refreshing the page.</p>
+              </div>
+            </div>
+          </section>
         </main>
         <Footer />
       </div>
@@ -152,11 +221,12 @@ const Networking = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {isLoading ? (
-                    Array(8).fill(0).map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-gray-200 rounded-lg h-64"></div>
+                    <div className="col-span-full flex justify-center py-12">
+                      <div className="text-center">
+                        <LoadingSpinner size="lg" />
+                        <p className="mt-4 text-gray-600">Loading artists...</p>
                       </div>
-                    ))
+                    </div>
                   ) : filteredArtists.length > 0 ? (
                     filteredArtists.map((artist) => (
                       <ConnectionCard
@@ -171,6 +241,9 @@ const Networking = () => {
                   ) : (
                     <div className="col-span-full text-center py-12">
                       <p className="text-gray-500">No artists found matching your criteria</p>
+                      {(searchTerm || categoryFilter || locationFilter || experienceFilter) && (
+                        <p className="text-gray-400 mt-2">Try adjusting your filters to see more results</p>
+                      )}
                     </div>
                   )}
                 </div>

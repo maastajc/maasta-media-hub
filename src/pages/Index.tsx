@@ -118,15 +118,15 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Enhanced Visual Content with Tamil Artists */}
+              {/* Enhanced Visual Content with Human Avatar */}
               <div className="relative lg:ml-8">
-                {/* Main Hero Image Container - Tamil Artist */}
+                {/* Main Hero Image Container - Human Avatar */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/20 to-maasta-purple/20 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
                   <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500">
                     <img 
-                      src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=600&h=400&fit=crop&crop=faces" 
-                      alt="Tamil artist performing on stage" 
+                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=face" 
+                      alt="Professional Tamil artist" 
                       className="w-full h-64 md:h-80 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
@@ -165,11 +165,11 @@ const Index = () => {
                   <Video className="w-6 h-6 text-maasta-purple" />
                 </div>
 
-                {/* Additional Entertainment Elements */}
+                {/* Additional Entertainment Elements with Human Avatar */}
                 <div className="absolute top-1/2 right-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
                   <img 
-                    src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&crop=center" 
-                    alt="Tamil music performance" 
+                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face" 
+                    alt="Tamil artist portrait" 
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 </div>
@@ -239,8 +239,8 @@ const Index = () => {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="mb-8">
               <img 
-                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop&crop=center" 
-                alt="Tamil cultural heritage" 
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face" 
+                alt="Tamil artist representative" 
                 className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
               />
             </div>
