@@ -2,6 +2,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AuditionsTab } from "./AuditionsTab";
 import { ApplicationsTab } from "./ApplicationsTab";
+import { ReviewTab } from "./ReviewTab";
 
 interface DashboardTabsProps {
   isLoading: boolean;
@@ -18,9 +19,10 @@ export const DashboardTabs = ({
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="auditions" className="mt-6">
-      <TabsList className="grid grid-cols-2 mb-6">
+      <TabsList className="grid grid-cols-3 mb-6">
         <TabsTrigger value="auditions">My Auditions</TabsTrigger>
-        <TabsTrigger value="applications">Audition Applications</TabsTrigger>
+        <TabsTrigger value="applications">Applications</TabsTrigger>
+        <TabsTrigger value="review">Review</TabsTrigger>
       </TabsList>
       
       <TabsContent value="auditions">
@@ -35,6 +37,14 @@ export const DashboardTabs = ({
         <ApplicationsTab 
           isLoading={isLoading}
           auditionApplications={auditionApplications}
+          formatDate={formatDate}
+        />
+      </TabsContent>
+      
+      <TabsContent value="review">
+        <ReviewTab 
+          isLoading={isLoading}
+          userAuditions={userAuditions}
           formatDate={formatDate}
         />
       </TabsContent>

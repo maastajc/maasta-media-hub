@@ -1,9 +1,15 @@
 
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tag } from "lucide-react"
 
 interface ArtistFiltersProps {
   currentTab: string;
@@ -20,107 +26,125 @@ interface ArtistFiltersProps {
   setExperienceFilter: (experience: string) => void;
 }
 
-const ArtistFilters = ({ 
-  currentTab, 
-  setCurrentTab, 
-  uniqueTags, 
-  selectedTags, 
-  toggleTag, 
+const ArtistFilters = ({
+  currentTab,
+  setCurrentTab,
+  uniqueTags,
+  selectedTags,
+  toggleTag,
   isLoading,
   sortBy,
   setSortBy,
   locationFilter,
   setLocationFilter,
   experienceFilter,
-  setExperienceFilter
+  setExperienceFilter,
 }: ArtistFiltersProps) => {
+  const categoryTabs = [
+    { key: "all", label: "All Artists" },
+    { key: "actor", label: "Actors" },
+    { key: "director", label: "Directors" },
+    { key: "cinematographer", label: "Cinematographers" },
+    { key: "musician", label: "Musicians" },
+    { key: "editor", label: "Editors" },
+    { key: "producer", label: "Producers" },
+    { key: "writer", label: "Writers" },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Category tabs */}
-      <Tabs defaultValue="all" className="w-full" onValueChange={setCurrentTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">All Artists</TabsTrigger>
-          <TabsTrigger value="actor">Actors</TabsTrigger>
-          <TabsTrigger value="director">Directors</TabsTrigger>
-          <TabsTrigger value="musician">Musicians</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      
-      {/* Sorting and Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="text-sm font-medium mb-2 block">Sort by</label>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select sorting" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name_asc">Name A-Z</SelectItem>
-              <SelectItem value="name_desc">Name Z-A</SelectItem>
-              <SelectItem value="experience_desc">Most Experienced</SelectItem>
-              <SelectItem value="experience_asc">Least Experienced</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium mb-2 block">Location</label>
-          <Input
-            placeholder="Filter by location..."
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium mb-2 block">Experience Level</label>
-          <Select value={experienceFilter} onValueChange={setExperienceFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="All levels" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All levels</SelectItem>
-              <SelectItem value="beginner">Beginner</SelectItem>
-              <SelectItem value="intermediate">Intermediate</SelectItem>
-              <SelectItem value="advanced">Advanced</SelectItem>
-              <SelectItem value="professional">Professional</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="mb-8 space-y-6">
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {categoryTabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant={currentTab === tab.key ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCurrentTab(tab.key)}
+            disabled={isLoading}
+            className="rounded-full"
+          >
+            {tab.label}
+          </Button>
+        ))}
       </div>
-      
-      {/* Tags filter */}
-      {uniqueTags.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium mb-2">Filter by skills:</h3>
-          <div className="flex flex-wrap gap-2">
-            {isLoading ? (
-              Array(8).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-20 rounded-full" />
-              ))
-            ) : (
-              uniqueTags.map((tag) => (
+
+      {/* Filters Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filter & Sort Artists</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">Sort by</h3>
+            <Select value={sortBy} onValueChange={setSortBy} disabled={isLoading}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select sorting" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="name_asc">Name A-Z</SelectItem>
+                <SelectItem value="name_desc">Name Z-A</SelectItem>
+                <SelectItem value="experience_desc">Most Experienced</SelectItem>
+                <SelectItem value="experience_asc">Least Experienced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">Location</h3>
+            <Input
+              placeholder="Filter by location..."
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">Experience Level</h3>
+            <Select value={experienceFilter || "all_levels"} onValueChange={(value) => setExperienceFilter(value === "all_levels" ? "" : value)} disabled={isLoading}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all_levels">All levels</SelectItem>
+                <SelectItem value="beginner">Beginner</SelectItem>
+                <SelectItem value="intermediate">Intermediate</SelectItem>
+                <SelectItem value="advanced">Advanced</SelectItem>
+                <SelectItem value="professional">Professional</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold mb-2 flex items-center text-gray-700">
+              <Tag className="w-4 h-4 mr-2" />
+              Skills
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {uniqueTags.map((tag) => (
                 <Button
                   key={tag}
                   variant={selectedTags.includes(tag) ? "default" : "outline"}
                   size="sm"
-                  className={selectedTags.includes(tag) 
-                    ? "bg-maasta-purple hover:bg-maasta-purple/90" 
-                    : "hover:bg-maasta-purple/10 hover:text-maasta-purple"
-                  }
                   onClick={() => toggleTag(tag)}
+                  disabled={isLoading}
+                  className="rounded-full px-3 py-1 text-xs"
                 >
                   {tag}
                 </Button>
-              ))
-            )}
+              ))}
+              {uniqueTags.length === 0 && !isLoading && (
+                <p className="text-sm text-gray-500">No skills available.</p>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
-  );
-};
+  )
+}
 
 export default ArtistFilters;
