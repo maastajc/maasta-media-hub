@@ -22,6 +22,7 @@ import CreateAudition from "./pages/CreateAudition";
 import EditAudition from "./pages/EditAudition";
 import Dashboard from "./pages/Dashboard";
 import AuditionApplications from "./pages/AuditionApplications";
+import AuditionReview from "./pages/AuditionReview";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import Networking from "./pages/Networking";
@@ -66,6 +67,7 @@ function App() {
               <Route path="/edit-audition/:id" element={<ProtectedRoute><EditAudition /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/applications/:auditionId" element={<ProtectedRoute><AuditionApplications /></ProtectedRoute>} />
+              <Route path="/review/:auditionId" element={<ProtectedRoute><AuditionReview /></ProtectedRoute>} />
               
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />

@@ -7,6 +7,7 @@ export interface AuditionApplication {
   artist_id: string;
   status: string;
   notes: string | null;
+  organizer_notes?: string | null;
   application_date: string;
   audition?: {
     id: string;
@@ -218,6 +219,31 @@ export const updateApplicationStatus = async (
     return true;
   } catch (error: any) {
     console.error('Error in updateApplicationStatus:', error);
+    throw error;
+  }
+};
+
+export const updateApplicationNotes = async (
+  applicationId: string,
+  notes: string
+): Promise<boolean> => {
+  try {
+    console.log('Updating application notes:', applicationId, notes);
+    
+    const { error } = await supabase
+      .from('audition_applications')
+      .update({ organizer_notes: notes })
+      .eq('id', applicationId);
+
+    if (error) {
+      console.error('Error updating application notes:', error);
+      throw new Error(`Failed to update notes: ${error.message}`);
+    }
+
+    console.log('Successfully updated application notes');
+    return true;
+  } catch (error: any) {
+    console.error('Error in updateApplicationNotes:', error);
     throw error;
   }
 };

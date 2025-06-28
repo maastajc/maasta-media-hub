@@ -157,9 +157,19 @@ const AuditionApplications = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Audition Applications</h1>
-            <p className="text-gray-500 mt-2">
-              Review and manage applications for your auditions
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-gray-500">
+                Review and manage applications for your auditions
+              </p>
+              {applications.length > 0 && (
+                <Button 
+                  onClick={() => navigate(`/review/${applications[0]?.audition_id}`)}
+                  className="bg-maasta-purple hover:bg-maasta-purple/90"
+                >
+                  One-by-One Review
+                </Button>
+              )}
+            </div>
           </div>
 
           {applications.length === 0 ? (
