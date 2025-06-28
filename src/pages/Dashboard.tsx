@@ -12,6 +12,7 @@ import { AlertCircle } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
@@ -37,7 +38,7 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Fetching dashboard data for user:', user.id);
+      console.log('Fetching dashboard data for user:', user.id, 'with profile role:', profile?.role);
       
       // Use Promise.allSettled to handle partial failures gracefully
       const results = await Promise.allSettled([
@@ -49,6 +50,11 @@ const Dashboard = () => {
       const failures = results.filter(result => result.status === 'rejected');
       if (failures.length > 0) {
         console.warn('Some dashboard data failed to load:', failures);
+        failures.forEach((failure, index) => {
+          if (failure.status === 'rejected') {
+            console.error(`Operation ${index} failed:`, failure.reason);
+          }
+        });
       }
 
     } catch (error: any) {
@@ -66,7 +72,7 @@ const Dashboard = () => {
 
   const fetchUserAuditions = async () => {
     try {
-      console.log('Fetching user auditions...');
+      console.log('Fetching user auditions for creator_id:', user!.id);
       const { data, error } = await supabase
         .from("auditions")
         .select("id, title, status, created_at, location, deadline, description")
@@ -74,17 +80,23 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(10);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user auditions:', error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} user auditions`);
       setUserAuditions(data || []);
     } catch (error: any) {
       console.error("Error fetching user auditions:", error);
       setUserAuditions([]);
+      throw error; // Re-throw to be caught by Promise.allSettled
     }
   };
 
   const fetchAuditionApplications = async () => {
     try {
-      console.log('Fetching audition applications...');
+      console.log('Fetching audition applications for artist_id:', user!.id);
       const { data, error } = await supabase
         .from("audition_applications")
         .select(`
@@ -103,11 +115,17 @@ const Dashboard = () => {
         .order('application_date', { ascending: false })
         .limit(10);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching audition applications:', error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} audition applications`);
       setAuditionApplications(data || []);
     } catch (error: any) {
       console.error("Error fetching audition applications:", error);
       setAuditionApplications([]);
+      throw error; // Re-throw to be caught by Promise.allSettled
     }
   };
   
@@ -142,33 +160,35 @@ const Dashboard = () => {
   }
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <DashboardHeader 
-            error={error}
-            isLoading={isLoading}
-            onRefresh={fetchUserData}
-          />
-          
-          <DashboardStats 
-            isLoading={isLoading}
-            userAuditions={userAuditions}
-            auditionApplications={auditionApplications}
-            userRole={profile?.role}
-          />
-          
-          <DashboardTabs 
-            isLoading={isLoading}
-            userAuditions={userAuditions}
-            auditionApplications={auditionApplications}
-            formatDate={formatDate}
-          />
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <DashboardErrorBoundary>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <DashboardHeader 
+              error={error}
+              isLoading={isLoading}
+              onRefresh={fetchUserData}
+            />
+            
+            <DashboardStats 
+              isLoading={isLoading}
+              userAuditions={userAuditions}
+              auditionApplications={auditionApplications}
+              userRole={profile?.role}
+            />
+            
+            <DashboardTabs 
+              isLoading={isLoading}
+              userAuditions={userAuditions}
+              auditionApplications={auditionApplications}
+              formatDate={formatDate}
+            />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </DashboardErrorBoundary>
   );
 };
 

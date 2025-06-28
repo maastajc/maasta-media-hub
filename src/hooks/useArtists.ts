@@ -1,124 +1,104 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Artist } from '@/types/artist';
+
+interface Artist {
+  id: string;
+  full_name: string;
+  email: string;
+  profile_picture_url?: string;
+  category: string;
+  experience_level: string;
+  bio?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  years_of_experience?: number;
+  skills?: string[];
+  created_at: string;
+  status: string;
+  personal_website?: string;
+  linkedin?: string;
+  youtube_vimeo?: string;
+  instagram?: string;
+}
 
 interface UseArtistsOptions {
-  enabled?: boolean;
   refetchOnWindowFocus?: boolean;
   staleTime?: number;
 }
 
-const fetchArtists = async (): Promise<Artist[]> => {
-  console.log('Fetching artists...');
-  
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      email,
-      bio,
-      profile_picture_url,
-      city,
-      state,
-      country,
-      category,
-      experience_level,
-      verified
-    `)
-    .eq('status', 'active')
-    .eq('role', 'artist')
-    .limit(50);
-
-  if (error) {
-    console.error('Error fetching artists:', error);
-    throw new Error(`Failed to fetch artists: ${error.message}`);
-  }
-
-  const artists = data || [];
-  console.log(`Successfully fetched ${artists.length} artists`);
-  
-  // Transform the data to match our Artist interface
-  const transformedArtists = artists.map((artist: any) => ({
-    id: artist.id,
-    full_name: artist.full_name || 'Unknown Artist',
-    email: artist.email,
-    bio: artist.bio,
-    profile_picture_url: artist.profile_picture_url,
-    city: artist.city,
-    state: artist.state,
-    country: artist.country,
-    category: artist.category,
-    experience_level: artist.experience_level,
-    verified: artist.verified || false,
-    skills: [],
-    special_skills: [],
-    phone_number: null,
-    date_of_birth: null,
-    gender: null,
-    willing_to_relocate: false,
-    work_preference: "any",
-    years_of_experience: 0,
-    association_membership: null,
-    personal_website: null,
-    instagram: null,
-    linkedin: null,
-    youtube_vimeo: null,
-    role: 'artist',
-    status: 'active',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    projects: [],
-    education_training: [],
-    media_assets: [],
-    language_skills: [],
-    tools_software: []
-  } as Artist));
-
-  return transformedArtists;
-};
-
 export const useArtists = (options: UseArtistsOptions = {}) => {
-  const {
-    enabled = true,
-    refetchOnWindowFocus = false,
-    staleTime = 10 * 60 * 1000 // 10 minutes
-  } = options;
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const query = useQuery({
-    queryKey: ['artists'],
-    queryFn: fetchArtists,
-    enabled,
-    staleTime,
-    refetchOnWindowFocus,
-    retry: 2,
-    retryDelay: 1000,
-  });
+  const fetchArtists = async () => {
+    try {
+      console.log('Fetching artists...');
+      setIsLoading(true);
+      setIsError(false);
+      setError(null);
 
-  // Filter and search functionality
-  const filterArtists = (
-    artists: Artist[],
-    filters: {
-      search?: string;
-      category?: string;
-      location?: string;
-      experienceLevel?: string;
+      const { data, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        console.error('Error fetching artists:', fetchError);
+        throw fetchError;
+      }
+
+      // Transform data to match expected format
+      const transformedData = (data || []).map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || 'Unknown Artist',
+        email: profile.email,
+        profile_picture_url: profile.profile_picture_url,
+        category: profile.category || 'actor',
+        experience_level: profile.experience_level || 'beginner',
+        bio: profile.bio,
+        location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state,
+        city: profile.city,
+        state: profile.state,
+        country: profile.country,
+        years_of_experience: profile.years_of_experience || 0,
+        skills: [], // TODO: Add skills relation
+        created_at: profile.created_at,
+        status: profile.status,
+        personal_website: profile.personal_website,
+        linkedin: profile.linkedin,
+        youtube_vimeo: profile.youtube_vimeo,
+        instagram: profile.instagram
+      }));
+
+      console.log(`Successfully fetched ${transformedData.length} artists`);
+      setArtists(transformedData);
+    } catch (err: any) {
+      console.error('Error in fetchArtists:', err);
+      setIsError(true);
+      setError(err);
+    } finally {
+      setIsLoading(false);
     }
-  ) => {
-    if (!artists || artists.length === 0) return [];
+  };
 
+  const filterArtists = (artists: Artist[], filters: {
+    search?: string;
+    category?: string;
+    experienceLevel?: string;
+    location?: string;
+  }) => {
     return artists.filter(artist => {
       // Search filter
       if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        const matchesName = artist.full_name?.toLowerCase().includes(searchTerm);
-        const matchesBio = artist.bio?.toLowerCase().includes(searchTerm);
-        const matchesSkills = artist.skills?.some(skill => 
-          skill.toLowerCase().includes(searchTerm)
-        );
-        
-        if (!matchesName && !matchesBio && !matchesSkills) {
+        const searchLower = filters.search.toLowerCase();
+        if (!artist.full_name.toLowerCase().includes(searchLower) &&
+            !artist.bio?.toLowerCase().includes(searchLower)) {
           return false;
         }
       }
@@ -128,47 +108,39 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         return false;
       }
 
-      // Location filter
-      if (filters.location) {
-        const locationMatch = 
-          artist.city?.toLowerCase().includes(filters.location.toLowerCase()) ||
-          artist.state?.toLowerCase().includes(filters.location.toLowerCase()) ||
-          artist.country?.toLowerCase().includes(filters.location.toLowerCase());
-        
-        if (!locationMatch) {
-          return false;
-        }
-      }
-
       // Experience level filter
       if (filters.experienceLevel && artist.experience_level !== filters.experienceLevel) {
         return false;
+      }
+
+      // Location filter
+      if (filters.location) {
+        const locationLower = filters.location.toLowerCase();
+        if (!artist.location?.toLowerCase().includes(locationLower) &&
+            !artist.city?.toLowerCase().includes(locationLower) &&
+            !artist.state?.toLowerCase().includes(locationLower)) {
+          return false;
+        }
       }
 
       return true;
     });
   };
 
+  const refetch = () => {
+    fetchArtists();
+  };
+
+  useEffect(() => {
+    fetchArtists();
+  }, []);
+
   return {
-    // Data
-    artists: query.data || [],
-    
-    // Loading states
-    isLoading: query.isLoading,
-    isFetching: query.isFetching,
-    
-    // Error states
-    isError: query.isError,
-    error: query.error,
-    
-    // Actions
-    refetch: query.refetch,
-    
-    // Utility functions
-    filterArtists,
-    
-    // Query metadata
-    dataUpdatedAt: query.dataUpdatedAt,
-    isStale: query.isStale,
+    artists,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    filterArtists
   };
 };
