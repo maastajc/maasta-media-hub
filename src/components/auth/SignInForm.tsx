@@ -16,6 +16,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { isValidEmail, sanitizeErrorMessage, RateLimiter } from '@/utils/securityUtils';
 
 // Create rate limiter for sign-in attempts
@@ -31,6 +32,7 @@ export const SignInForm = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [resetEmailError, setResetEmailError] = useState('');
+  const [authError, setAuthError] = useState(''); // Add auth error state
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -76,25 +78,45 @@ export const SignInForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear any previous auth errors
+    setAuthError('');
+    
     if (!validateSignInForm()) {
       return;
     }
 
     // Check rate limiting
     if (!signInRateLimiter.canProceed(email.trim())) {
-      toast.error('Too many sign-in attempts. Please wait a few minutes before trying again.');
+      setAuthError('Too many sign-in attempts. Please wait a few minutes before trying again.');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      await signIn(email.trim(), password);
+      const result = await signIn(email.trim(), password);
+      if (result.error) {
+        // Handle authentication error without redirecting
+        if (result.error.message.includes('Invalid login credentials') || 
+            result.error.message.includes('invalid_credentials')) {
+          setAuthError('Incorrect email or password. Please try again.');
+        } else {
+          setAuthError(sanitizeErrorMessage(result.error.message));
+        }
+        return; // Don't navigate on error
+      }
+      
+      // Only navigate on successful login
       signInRateLimiter.reset(email.trim()); // Reset on successful login
       navigate('/');
     } catch (error: any) {
-      const sanitizedError = sanitizeErrorMessage(error.message);
-      toast.error(sanitizedError);
+      // Handle any unexpected errors
+      if (error.message.includes('Invalid login credentials') || 
+          error.message.includes('invalid_credentials')) {
+        setAuthError('Incorrect email or password. Please try again.');
+      } else {
+        setAuthError(sanitizeErrorMessage(error.message));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +125,7 @@ export const SignInForm = () => {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      setAuthError(''); // Clear any previous errors
       
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
@@ -117,10 +140,10 @@ export const SignInForm = () => {
       });
       
       if (error) {
-        toast.error(sanitizeErrorMessage(error.message));
+        setAuthError(sanitizeErrorMessage(error.message));
       }
     } catch (error: any) {
-      toast.error('Failed to sign in with Google');
+      setAuthError('Failed to sign in with Google');
     } finally {
       setIsLoading(false);
     }
@@ -167,6 +190,13 @@ export const SignInForm = () => {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Display authentication error */}
+          {authError && (
+            <Alert variant="destructive">
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -177,6 +207,7 @@ export const SignInForm = () => {
               onChange={(e) => {
                 setEmail(e.target.value);
                 if (emailError) setEmailError('');
+                if (authError) setAuthError(''); // Clear auth error when user starts typing
               }}
               required
               className={emailError ? 'border-red-500' : ''}
@@ -194,6 +225,7 @@ export const SignInForm = () => {
               onChange={(e) => {
                 setPassword(e.target.value);
                 if (passwordError) setPasswordError('');
+                if (authError) setAuthError(''); // Clear auth error when user starts typing
               }}
               required
               className={passwordError ? 'border-red-500' : ''}
