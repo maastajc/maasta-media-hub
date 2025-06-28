@@ -53,46 +53,35 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         throw fetchError;
       }
 
-      console.log('Raw data from Supabase:', data);
-
-      // Transform data to match expected format with better error handling
-      const transformedData = (data || []).map(profile => {
-        // Ensure required fields have fallback values
-        const transformedProfile: Artist = {
-          id: profile.id || '',
-          full_name: profile.full_name || 'Unknown Artist',
-          email: profile.email || '',
-          profile_picture_url: profile.profile_picture_url || undefined,
-          category: profile.category || 'actor',
-          experience_level: profile.experience_level || 'beginner',
-          bio: profile.bio || undefined,
-          location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state || '',
-          city: profile.city || undefined,
-          state: profile.state || undefined,
-          country: profile.country || undefined,
-          years_of_experience: profile.years_of_experience || 0,
-          skills: [], // Initialize as empty array - TODO: Add skills relation when available
-          created_at: profile.created_at || new Date().toISOString(),
-          status: profile.status || 'active',
-          personal_website: profile.personal_website || undefined,
-          linkedin: profile.linkedin || undefined,
-          youtube_vimeo: profile.youtube_vimeo || undefined,
-          instagram: profile.instagram || undefined
-        };
-
-        return transformedProfile;
-      }).filter(profile => profile.id && profile.full_name); // Filter out invalid profiles
+      // Transform data to match expected format
+      const transformedData = (data || []).map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || 'Unknown Artist',
+        email: profile.email,
+        profile_picture_url: profile.profile_picture_url,
+        category: profile.category || 'actor',
+        experience_level: profile.experience_level || 'beginner',
+        bio: profile.bio,
+        location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state,
+        city: profile.city,
+        state: profile.state,
+        country: profile.country,
+        years_of_experience: profile.years_of_experience || 0,
+        skills: [], // TODO: Add skills relation
+        created_at: profile.created_at,
+        status: profile.status,
+        personal_website: profile.personal_website,
+        linkedin: profile.linkedin,
+        youtube_vimeo: profile.youtube_vimeo,
+        instagram: profile.instagram
+      }));
 
       console.log(`Successfully fetched ${transformedData.length} artists`);
-      console.log('Transformed data sample:', transformedData.slice(0, 2));
-      
       setArtists(transformedData);
     } catch (err: any) {
       console.error('Error in fetchArtists:', err);
       setIsError(true);
       setError(err);
-      // Set empty array on error to prevent blank page but allow UI to show error state
-      setArtists([]);
     } finally {
       setIsLoading(false);
     }
@@ -104,28 +93,12 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     experienceLevel?: string;
     location?: string;
   }) => {
-    console.log('Filtering artists with filters:', filters);
-    console.log('Input artists count:', artists.length);
-
-    if (!artists || !Array.isArray(artists)) {
-      console.warn('Invalid artists array provided to filterArtists');
-      return [];
-    }
-
-    const filtered = artists.filter(artist => {
-      // Ensure artist is valid
-      if (!artist || typeof artist !== 'object') {
-        console.warn('Invalid artist object:', artist);
-        return false;
-      }
-
+    return artists.filter(artist => {
       // Search filter
-      if (filters.search && filters.search.trim()) {
+      if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        const nameMatch = artist.full_name?.toLowerCase().includes(searchLower);
-        const bioMatch = artist.bio?.toLowerCase().includes(searchLower);
-        
-        if (!nameMatch && !bioMatch) {
+        if (!artist.full_name.toLowerCase().includes(searchLower) &&
+            !artist.bio?.toLowerCase().includes(searchLower)) {
           return false;
         }
       }
@@ -141,26 +114,20 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       }
 
       // Location filter
-      if (filters.location && filters.location.trim()) {
+      if (filters.location) {
         const locationLower = filters.location.toLowerCase();
-        const locationMatch = artist.location?.toLowerCase().includes(locationLower);
-        const cityMatch = artist.city?.toLowerCase().includes(locationLower);
-        const stateMatch = artist.state?.toLowerCase().includes(locationLower);
-        
-        if (!locationMatch && !cityMatch && !stateMatch) {
+        if (!artist.location?.toLowerCase().includes(locationLower) &&
+            !artist.city?.toLowerCase().includes(locationLower) &&
+            !artist.state?.toLowerCase().includes(locationLower)) {
           return false;
         }
       }
 
       return true;
     });
-
-    console.log('Filtered artists count:', filtered.length);
-    return filtered;
   };
 
   const refetch = () => {
-    console.log('Refetching artists...');
     fetchArtists();
   };
 
