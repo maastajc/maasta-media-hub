@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-50 text-gray-600 pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <img 
               src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
@@ -13,7 +13,7 @@ const Footer = () => {
               className="h-8 w-auto mb-4"
             />
             <p className="text-sm mt-2">
-              All-in-one media-tech platform for artists, event organizers, and producers.
+              All-in-one media-tech platform for Tamil artists, event organizers, and producers.
             </p>
           </div>
           
@@ -22,21 +22,9 @@ const Footer = () => {
               Platform
             </h3>
             <ul className="space-y-2">
-              <li><Link to="/artists" className="text-sm hover:text-maasta-orange">Artist Portfolios</Link></li>
-              <li><Link to="/auditions" className="text-sm hover:text-maasta-orange">Audition Platform</Link></li>
-              <li><Link to="/events" className="text-sm hover:text-maasta-orange">Event Platform</Link></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">
-              Categories
-            </h3>
-            <ul className="space-y-2">
-              <li><Link to="/events?category=workshops" className="text-sm hover:text-maasta-orange">Workshops</Link></li>
-              <li><Link to="/events?category=courses" className="text-sm hover:text-maasta-orange">Courses</Link></li>
-              <li><Link to="/events?category=contests" className="text-sm hover:text-maasta-orange">Contests</Link></li>
-              <li><Link to="/events?category=concerts" className="text-sm hover:text-maasta-orange">Concerts</Link></li>
+              <li><Link to="/artists" className="text-sm hover:text-maasta-orange">Tamil Artist Portfolios</Link></li>
+              <li><Link to="/auditions" className="text-sm hover:text-maasta-orange">Kolywood Auditions</Link></li>
+              <li><Link to="/networking" className="text-sm hover:text-maasta-orange">Artist Network</Link></li>
             </ul>
           </div>
           
