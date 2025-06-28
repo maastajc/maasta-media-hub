@@ -102,12 +102,12 @@ const AuditionFilters = ({
 
         <div>
           <h3 className="text-sm font-semibold mb-2 text-gray-700">Experience Level</h3>
-          <Select value={experienceFilter} onValueChange={setExperienceFilter} disabled={isLoading}>
+          <Select value={experienceFilter || "all_levels"} onValueChange={(value) => setExperienceFilter(value === "all_levels" ? "" : value)} disabled={isLoading}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All levels" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All levels</SelectItem>
+              <SelectItem value="all_levels">All levels</SelectItem>
               <SelectItem value="beginner">Beginner</SelectItem>
               <SelectItem value="intermediate">Intermediate</SelectItem>
               <SelectItem value="advanced">Advanced</SelectItem>
@@ -118,12 +118,12 @@ const AuditionFilters = ({
 
         <div>
           <h3 className="text-sm font-semibold mb-2 text-gray-700">Compensation</h3>
-          <Select value={compensationFilter} onValueChange={setCompensationFilter} disabled={isLoading}>
+          <Select value={compensationFilter || "all_types"} onValueChange={(value) => setCompensationFilter(value === "all_types" ? "" : value)} disabled={isLoading}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All types</SelectItem>
+              <SelectItem value="all_types">All types</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="unpaid">Unpaid</SelectItem>
               <SelectItem value="deferred">Deferred Payment</SelectItem>
