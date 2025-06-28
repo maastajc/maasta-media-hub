@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AuditionApplication {
@@ -130,6 +129,7 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
         artist_id: app.artist_id,
         status: app.status,
         notes: app.notes,
+        organizer_notes: app.organizer_notes,
         application_date: app.application_date,
         audition: audition ? {
           id: audition.id,
