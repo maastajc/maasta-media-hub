@@ -3,7 +3,6 @@ import { Artist } from "@/types/artist";
 import { FeaturedArtistRow } from "./types";
 import { mapFeaturedArtistToArtist, mapFallbackArtistToArtist } from "./mappers";
 import { supabase } from "@/integrations/supabase/client";
-import { getCacheBustingHeaders } from "@/utils/cacheManager";
 
 const MAX_RETRIES = 2;
 const TIMEOUT_MS = 8000; // Reduced timeout for faster responses
@@ -37,8 +36,7 @@ const withRetry = async <T>(
 };
 
 const fetchFeaturedArtistsQuery = (limit: number) => {
-  console.log('Executing featured artists query with cache-busting...');
-  const timestamp = Date.now();
+  console.log('Executing featured artists query...');
   
   return supabase
     .from('profiles')
@@ -91,7 +89,7 @@ const fetchFeaturedArtistsFallbackQuery = (limit: number) => {
 
 export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]> => {
   return withRetry(async () => {
-    console.log('Fetching featured artists with cache-busting...');
+    console.log('Fetching featured artists...');
     
     const timeoutPromise = createTimeoutPromise('Request timeout - retrying with fresh data');
     const fetchPromise = fetchFeaturedArtistsQuery(limit);
