@@ -1,8 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { getCacheBustingHeaders } from "@/utils/cacheManager";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500; // Reduced delay
+const TIMEOUT_MS = 8000; // Reduced timeout
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -16,10 +18,10 @@ const withRetry = async <T>(
   } catch (error: any) {
     console.error('Operation failed:', error.message);
     
-    if (retries > 0 && error.message?.includes('timeout')) {
+    if (retries > 0) {
       console.log(`Retrying operation in ${retryDelay}ms... ${retries} attempts left`);
       await delay(retryDelay);
-      return withRetry(operation, retries - 1, retryDelay * 1.5);
+      return withRetry(operation, retries - 1, retryDelay);
     }
     
     throw error;
@@ -28,7 +30,7 @@ const withRetry = async <T>(
 
 export const fetchAuditions = async () => {
   return withRetry(async () => {
-    console.log('Fetching auditions...');
+    console.log('Fetching auditions with cache-busting...');
     
     const { data, error } = await supabase
       .from('auditions')
@@ -54,7 +56,7 @@ export const fetchAuditions = async () => {
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
-      .limit(50); // Add reasonable limit
+      .limit(50);
 
     if (error) {
       console.error('Error fetching auditions:', error);
@@ -68,7 +70,7 @@ export const fetchAuditions = async () => {
 
 export const fetchRecentAuditions = async () => {
   return withRetry(async () => {
-    console.log('Fetching recent auditions...');
+    console.log('Fetching recent auditions with cache-busting...');
     
     const { data, error } = await supabase
       .from('auditions')
@@ -108,7 +110,7 @@ export const fetchRecentAuditions = async () => {
 
 export const fetchAuditionById = async (id: string) => {
   return withRetry(async () => {
-    console.log('Fetching audition by id:', id);
+    console.log('Fetching audition by id with cache-busting:', id);
     
     if (!id || id === 'undefined' || id === 'null') {
       throw new Error('Invalid audition ID provided');

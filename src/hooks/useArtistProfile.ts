@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
 import { Artist } from '@/types/artist';
 import { toast } from 'sonner';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface UseArtistProfileOptions {
   enabled?: boolean;
@@ -24,17 +25,17 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 5 * 60 * 1000 // 5 minutes
+    staleTime = 0 // Remove stale time to always fetch fresh data
   } = options;
   
   const profileQuery = useQuery({
-    queryKey: ['artistProfile', targetId],
+    queryKey: ['artistProfile', targetId, cacheManager.getVersion()],
     queryFn: async () => {
       if (!targetId) {
         throw new Error('No artist ID provided');
       }
       
-      console.log('Fetching artist profile for ID:', targetId);
+      console.log('Fetching artist profile for ID with cache-busting:', targetId);
       
       const profile = await fetchArtistById(targetId);
       
@@ -48,7 +49,8 @@ export const useArtistProfile = (
     staleTime,
     refetchOnWindowFocus,
     retry: 2,
-    retryDelay: 1000,
+    retryDelay: 500,
+    gcTime: 0, // Don't cache the data
   });
   
   const updateProfileMutation = useMutation({
@@ -70,7 +72,9 @@ export const useArtistProfile = (
       return result;
     },
     onSuccess: (updatedProfile) => {
-      queryClient.setQueryData(['artistProfile', targetId], updatedProfile);
+      // Clear cache and invalidate queries
+      cacheManager.invalidateCache('profile');
+      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
       
@@ -87,6 +91,7 @@ export const useArtistProfile = (
   const refreshProfile = async () => {
     try {
       console.log('Refreshing profile data...');
+      cacheManager.invalidateCache('profile');
       const result = await profileQuery.refetch();
       return result;
     } catch (error: any) {

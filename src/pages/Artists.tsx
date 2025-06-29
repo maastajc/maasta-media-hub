@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import ArtistsHeader from "@/components/artists/ArtistsHeader";
 import ArtistFilters from "@/components/artists/ArtistFilters";
 import ArtistsGrid from "@/components/artists/ArtistsGrid";
+import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { useArtists } from "@/hooks/useArtists";
 import { toast } from "sonner";
 
@@ -27,7 +28,7 @@ const Artists = () => {
     filterArtists
   } = useArtists({
     refetchOnWindowFocus: false,
-    staleTime: 10 * 60 * 1000
+    staleTime: 0 // Always fetch fresh data
   });
 
   // Extract unique tags from artists data
@@ -116,6 +117,11 @@ const Artists = () => {
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Artists Directory</h2>
+              <CacheRefreshButton onRefresh={handleRefresh} />
+            </div>
+            
             <ArtistFilters
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}

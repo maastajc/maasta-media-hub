@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -5,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
 import AuditionFilters from "@/components/auditions/AuditionFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
+import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { fetchApplicationsForArtist } from "@/services/auditionApplicationService";
 import { AuditionApplication } from "@/services/auditionApplicationService";
 import { toast } from "sonner";
+import { cacheManager } from "@/utils/cacheManager";
 
 interface AuditionData {
   id: string;
@@ -79,12 +82,14 @@ const Auditions = () => {
     if (isInitialLoad) {
       setLoading(true);
       setError(null);
+      // Clear any cached data before fetching
+      cacheManager.invalidateCache('auditions');
     } else {
       setLoadingMore(true);
     }
 
     try {
-      console.log(`Fetching auditions page ${currentPage}...`);
+      console.log(`Fetching auditions page ${currentPage} with cache-busting...`);
       
       const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
       const to = from + AUDITIONS_PER_PAGE - 1;
@@ -209,6 +214,10 @@ const Auditions = () => {
 
   const fetchUniqueData = async () => {
     try {
+      // Clear cache before fetching unique data
+      cacheManager.invalidateCache('categories');
+      cacheManager.invalidateCache('tags');
+      
       // Fetch unique categories
       const { data: categoriesData } = await supabase
         .from('auditions')
@@ -260,6 +269,7 @@ const Auditions = () => {
   };
 
   const handleRetry = () => {
+    cacheManager.clearAllCaches();
     setPage(1);
     fetchAuditions(1, true);
   };
@@ -318,6 +328,11 @@ const Auditions = () => {
         <AuditionsHeader />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Open Auditions</h2>
+            <CacheRefreshButton onRefresh={handleRetry} />
+          </div>
+          
           {error && (
             <Alert className="mb-6 border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />

@@ -3,10 +3,11 @@ import { Artist } from "@/types/artist";
 import { FeaturedArtistRow } from "./types";
 import { mapFeaturedArtistToArtist, mapFallbackArtistToArtist } from "./mappers";
 import { supabase } from "@/integrations/supabase/client";
+import { getCacheBustingHeaders } from "@/utils/cacheManager";
 
 const MAX_RETRIES = 2;
-const TIMEOUT_MS = 10000; // 10 seconds
-const RETRY_DELAY = 1000;
+const TIMEOUT_MS = 8000; // Reduced timeout for faster responses
+const RETRY_DELAY = 500; // Reduced retry delay
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -25,7 +26,7 @@ const withRetry = async <T>(
   } catch (error: any) {
     console.error('Operation failed:', error.message);
     
-    if (retries > 0 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+    if (retries > 0) {
       console.log(`Retrying operation... ${retries} attempts left`);
       await delay(RETRY_DELAY);
       return withRetry(operation, retries - 1);
@@ -36,7 +37,9 @@ const withRetry = async <T>(
 };
 
 const fetchFeaturedArtistsQuery = (limit: number) => {
-  console.log('Executing featured artists query...');
+  console.log('Executing featured artists query with cache-busting...');
+  const timestamp = Date.now();
+  
   return supabase
     .from('profiles')
     .select(`
@@ -57,6 +60,7 @@ const fetchFeaturedArtistsQuery = (limit: number) => {
     `)
     .eq('status', 'active')
     .not('profile_picture_url', 'is', null)
+    .order('created_at', { ascending: false })
     .limit(limit);
 };
 
@@ -81,14 +85,15 @@ const fetchFeaturedArtistsFallbackQuery = (limit: number) => {
     `)
     .eq('status', 'active')
     .not('profile_picture_url', 'is', null)
+    .order('created_at', { ascending: false })
     .limit(limit);
 };
 
 export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]> => {
   return withRetry(async () => {
-    console.log('Fetching featured artists...');
+    console.log('Fetching featured artists with cache-busting...');
     
-    const timeoutPromise = createTimeoutPromise('Request timeout - please check your connection');
+    const timeoutPromise = createTimeoutPromise('Request timeout - retrying with fresh data');
     const fetchPromise = fetchFeaturedArtistsQuery(limit);
 
     try {
@@ -117,8 +122,10 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       const artistsFromDb = result.data;
 
       if (!artistsFromDb || artistsFromDb.length === 0) {
-        console.log('No featured artists found');
-        return [];
+        console.log('No featured artists found, trying fallback...');
+        const fallbackResult = await fetchFeaturedArtistsFallbackQuery(limit);
+        const fallbackData = fallbackResult.data || [];
+        return fallbackData.map(mapFallbackArtistToArtist);
       }
 
       console.log(`Successfully fetched ${artistsFromDb.length} featured artists`);
@@ -126,7 +133,7 @@ export const fetchFeaturedArtists = async (limit: number = 4): Promise<Artist[]>
       return artistsFromDb.map(mapFeaturedArtistToArtist);
     } catch (error: any) {
       if (error.message?.includes('timeout')) {
-        throw new Error('Connection timeout - please try again');
+        throw new Error('Connection timeout - trying fallback');
       }
       throw error;
     }

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface Artist {
   id: string;
@@ -30,8 +31,8 @@ interface UseArtistsOptions {
 }
 
 const MAX_RETRIES = 2;
-const RETRY_DELAY = 1000;
-const TIMEOUT_MS = 10000;
+const RETRY_DELAY = 500;
+const TIMEOUT_MS = 8000;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -44,7 +45,7 @@ const withRetry = async <T>(
   } catch (error: any) {
     console.error('Operation failed:', error.message);
     
-    if (retries > 0 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+    if (retries > 0) {
       console.log(`Retrying operation... ${retries} attempts left`);
       await delay(RETRY_DELAY);
       return withRetry(operation, retries - 1);
@@ -62,7 +63,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const fetchArtists = async () => {
     return withRetry(async () => {
-      console.log('Fetching artists...');
+      console.log('Fetching artists with cache-busting...');
       setIsLoading(true);
       setIsError(false);
       setError(null);
@@ -117,6 +118,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
+      // Clear any cached data before refetching
+      cacheManager.invalidateCache('artists');
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -181,7 +184,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     };
 
     initializeFetch();
-  }, []);
+  }, []); // Remove dependencies to prevent unnecessary re-renders
 
   return {
     artists,
