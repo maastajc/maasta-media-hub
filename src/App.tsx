@@ -56,6 +56,8 @@ function App() {
               <Route path="/artists" element={<Artists />} />
               <Route path="/artists/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
+              {/* Create audition route must come before the dynamic :id route */}
+              <Route path="/auditions/create" element={<ProtectedRoute><CreateAudition /></ProtectedRoute>} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
