@@ -52,7 +52,12 @@ export const fetchAuditions = async () => {
         project_details,
         tags,
         created_at,
-        updated_at
+        updated_at,
+        profiles!creator_id (
+          id,
+          full_name,
+          profile_picture_url
+        )
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -63,8 +68,18 @@ export const fetchAuditions = async () => {
       throw new Error(`Database error: ${error.message}`);
     }
 
-    console.log(`Successfully fetched ${data?.length || 0} auditions`);
-    return data || [];
+    // Transform the data to include posterProfile
+    const transformedData = data?.map(audition => ({
+      ...audition,
+      posterProfile: audition.profiles ? {
+        id: audition.profiles.id,
+        full_name: audition.profiles.full_name,
+        profile_picture: audition.profiles.profile_picture_url
+      } : null
+    })) || [];
+
+    console.log(`Successfully fetched ${transformedData.length} auditions`);
+    return transformedData;
   });
 };
 
@@ -92,7 +107,12 @@ export const fetchRecentAuditions = async () => {
         project_details,
         tags,
         created_at,
-        updated_at
+        updated_at,
+        profiles!creator_id (
+          id,
+          full_name,
+          profile_picture_url
+        )
       `)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -103,8 +123,18 @@ export const fetchRecentAuditions = async () => {
       throw new Error(`Database error: ${error.message}`);
     }
 
-    console.log(`Successfully fetched ${data?.length || 0} recent auditions`);
-    return data || [];
+    // Transform the data to include posterProfile
+    const transformedData = data?.map(audition => ({
+      ...audition,
+      posterProfile: audition.profiles ? {
+        id: audition.profiles.id,
+        full_name: audition.profiles.full_name,
+        profile_picture: audition.profiles.profile_picture_url
+      } : null
+    })) || [];
+
+    console.log(`Successfully fetched ${transformedData.length} recent auditions`);
+    return transformedData;
   });
 };
 

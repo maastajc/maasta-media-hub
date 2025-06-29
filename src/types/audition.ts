@@ -17,4 +17,12 @@ export interface Audition {
   compensation?: string;
   status?: string;
   applicationStatus?: string;
+  creator_id?: string;
+  created_at?: string;
+  posterProfile?: {
+    id: string;
+    full_name: string;
+    profile_picture?: string;
+    bio?: string;
+  };
 }
