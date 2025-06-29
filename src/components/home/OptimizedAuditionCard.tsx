@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Calendar, MapPin, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { Audition } from "@/types/audition";
 import { AuditionApplicationButton } from "@/components/auditions/AuditionApplicationButton";
@@ -74,10 +75,27 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             )}
           </div>
         </div>
-        <h3 className="font-extrabold text-xl text-gray-800 group-hover:text-maasta-purple transition-colors duration-300 leading-tight line-clamp-2 mb-2">
+        <h3 className="font-extrabold text-xl text-gray-800 group-hover:text-maasta-purple transition-colors duration-300 leading-tight line-clamp-2 mb-3">
           {audition.title || 'Untitled Audition'}
         </h3>
-        <p className="text-sm font-medium text-gray-500 mb-4">{audition.company || 'Company not listed'}</p>
+        
+        {/* Poster Profile Section */}
+        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+          <Avatar className="h-8 w-8">
+            <AvatarImage 
+              src={audition.posterProfile?.profile_picture || audition.company} 
+              alt={audition.posterProfile?.full_name || audition.company || 'Poster'}
+            />
+            <AvatarFallback>
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              Posted by {audition.posterProfile?.full_name || audition.company || 'Unknown'}
+            </p>
+          </div>
+        </div>
         
         <div className="mt-auto space-y-3 pt-4 border-t border-gray-100">
           <div className="flex items-center text-gray-600">

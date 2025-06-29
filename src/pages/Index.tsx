@@ -8,6 +8,7 @@ import UpcomingEvents from "@/components/home/UpcomingEvents";
 import RecentAuditions from "@/components/home/RecentAuditions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import HeroArtistSlideshow from "@/components/home/HeroArtistSlideshow";
 
 const Index = () => {
   const { user } = useAuth();
@@ -133,50 +134,9 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Enhanced Visual Content with Tamil Industry Focus */}
+              {/* Enhanced Visual Content with Artist Slideshow */}
               <div className="relative lg:ml-8">
-                {/* Main Hero Image Container */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/30 to-maasta-purple/30 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
-                  <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500 border-4 border-white/50">
-                    <img 
-                      src="/lovable-uploads/df74f021-0d9a-46ae-9655-df4ed65824da.png" 
-                      alt="Tamil film production scene with director and actors" 
-                      className="w-full h-64 md:h-80 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-6 left-6 text-white">
-                      <div className="text-xl font-bold mb-1">Tamil Cinema Excellence</div>
-                      <div className="text-sm opacity-90 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        Live casting opportunities
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Enhanced Industry-Specific Floating Cards */}
-                <div className="absolute -top-6 -right-6 bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-4 transform rotate-6 hover:rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-orange" style={{ animationDelay: '1s' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 bg-gradient-to-r from-green-400 to-green-600 rounded-full animate-pulse"></div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-800">Kollywood Casting</div>
-                      <div className="text-xs text-gray-600">3 new today</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute -bottom-6 -left-6 bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-4 transform -rotate-6 hover:-rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-purple" style={{ animationDelay: '1.2s' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-maasta-orange to-maasta-purple rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">🎭</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-800">Featured Role</div>
-                      <div className="text-xs text-gray-600">Lead actor needed</div>
-                    </div>
-                  </div>
-                </div>
+                <HeroArtistSlideshow />
 
                 {/* Industry Decorative Elements */}
                 <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
@@ -220,7 +180,7 @@ const Index = () => {
                 <CardContent className="p-8">
                   <div className="h-20 w-20 rounded-full bg-gradient-to-r from-maasta-purple/10 to-maasta-purple/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 mx-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-maasta-purple">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-8.25-3l1.5 1.5 3-3.75" />
                     </svg>
                   </div>
                   <h3 className="text-2xl font-semibold mb-4 text-center">Kolywood Audition Platform</h3>
