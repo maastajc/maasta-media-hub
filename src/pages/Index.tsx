@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,12 +14,8 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleJoinAsArtist = () => {
-    if (user) {
-      navigate("/profile");
-    } else {
-      navigate("/sign-up");
-    }
+  const handleViewAuditions = () => {
+    navigate("/auditions");
   };
 
   const handlePostAudition = () => {
@@ -50,134 +45,152 @@ const Index = () => {
       <main className="flex-grow">
         {/* Enhanced Hero Section with Tamil Nadu Artists */}
         <section className="relative overflow-hidden bg-gradient-to-br from-maasta-purple/5 via-white to-maasta-orange/5 py-20 md:py-32">
-          {/* Animated Background Elements */}
+          {/* Enhanced Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-maasta-orange/10 rounded-full blur-3xl animate-pulse"></div>
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-maasta-purple/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-maasta-orange/5 to-maasta-purple/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
+            
+            {/* Industry-specific floating elements */}
+            <div className="absolute top-20 left-1/4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '0.5s' }}>
+              <span className="text-2xl">🎬</span>
+            </div>
+            <div className="absolute bottom-20 right-1/4 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '1.5s' }}>
+              <span className="text-2xl">🎭</span>
+            </div>
+            <div className="absolute top-1/3 right-1/6 w-10 h-10 bg-maasta-orange/20 rounded-full flex items-center justify-center animate-pulse">
+              <span className="text-lg">🎤</span>
+            </div>
+            <div className="absolute bottom-1/3 left-1/6 w-14 h-14 bg-maasta-purple/20 rounded-full flex items-center justify-center animate-pulse" style={{ animationDelay: '2s' }}>
+              <span className="text-xl">🎵</span>
+            </div>
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              {/* Text Content */}
+              {/* Enhanced Text Content */}
               <div className="text-center lg:text-left">
-                <div className="mb-6 animate-fade-in">
-                  <span className="inline-block px-4 py-2 bg-maasta-orange/10 text-maasta-orange rounded-full text-sm font-medium mb-4 animate-scale-in">
-                    🎭 Welcome to the Future of Tamil Media
+                <div className="mb-8 animate-fade-in">
+                  <span className="inline-block px-6 py-3 bg-gradient-to-r from-maasta-orange/10 to-maasta-purple/10 text-maasta-orange rounded-full text-sm font-medium mb-4 animate-scale-in border border-maasta-orange/20">
+                    🎭 Tamil Cinema's Digital Revolution
                   </span>
                 </div>
                 
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 animate-fade-in leading-tight">
-                  The Super App for{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-orange to-maasta-purple animate-pulse">
-                    Tamil Artists
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-8 animate-fade-in leading-tight">
+                  Where Tamil{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-orange via-red-500 to-maasta-purple animate-pulse">
+                    Dreams
+                  </span>{" "}
+                  Meet{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-purple via-blue-500 to-maasta-orange animate-pulse">
+                    Opportunities
                   </span>
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0 animate-slide-up">
-                  Empowering Tamil artists from Chennai to Coimbatore, connecting talent with opportunities across Tamil Nadu and beyond.
+                <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0 animate-slide-up leading-relaxed">
+                  From <strong>Kollywood</strong> to digital platforms, discover authentic casting calls and showcase your talent to Tamil cinema's finest directors and producers.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 animate-slide-up">
+                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-8 animate-slide-up">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-maasta-orange to-maasta-orange/90 hover:from-maasta-orange/90 hover:to-maasta-orange text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-                    onClick={handleJoinAsArtist}
+                    className="bg-gradient-to-r from-maasta-orange to-red-500 hover:from-maasta-orange/90 hover:to-red-500/90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    onClick={handleViewAuditions}
                   >
                     <span className="flex items-center gap-2">
-                      🎭 Join as Tamil Artist
+                      🎬 View Live Auditions
                     </span>
                   </Button>
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
                     onClick={handlePostAudition}
                   >
                     <span className="flex items-center gap-2">
-                      📢 Post an Audition
+                      📢 Post Casting Call
                     </span>
                   </Button>
                 </div>
 
                 {/* Enhanced Stats Section with Tamil focus */}
-                <div className="mt-12 grid grid-cols-3 gap-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+                <div className="grid grid-cols-3 gap-8 animate-fade-in p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg" style={{ animationDelay: '0.5s' }}>
                   <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-orange">500+</div>
-                    <div className="text-sm text-gray-600">Tamil Artists</div>
+                    <div className="text-3xl md:text-4xl font-bold text-maasta-orange mb-2">500+</div>
+                    <div className="text-sm font-medium text-gray-700">Active Artists</div>
+                    <div className="text-xs text-gray-500">Ready to audition</div>
+                  </div>
+                  <div className="text-center border-x border-gray-200">
+                    <div className="text-3xl md:text-4xl font-bold text-maasta-purple mb-2">150+</div>
+                    <div className="text-sm font-medium text-gray-700">Live Auditions</div>
+                    <div className="text-xs text-gray-500">Updated daily</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-purple">200+</div>
-                    <div className="text-sm text-gray-600">Active Auditions</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-orange">50+</div>
-                    <div className="text-sm text-gray-600">Production Houses</div>
+                    <div className="text-3xl md:text-4xl font-bold text-red-500 mb-2">25+</div>
+                    <div className="text-sm font-medium text-gray-700">Casting Directors</div>
+                    <div className="text-xs text-gray-500">Verified profiles</div>
                   </div>
                 </div>
               </div>
 
-              {/* Enhanced Visual Content with Tamil Artists */}
+              {/* Enhanced Visual Content with Tamil Industry Focus */}
               <div className="relative lg:ml-8">
-                {/* Main Hero Image Container - Using uploaded image */}
+                {/* Main Hero Image Container */}
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/20 to-maasta-purple/20 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
-                  <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/30 to-maasta-purple/30 rounded-3xl blur-xl transform rotate-3 animate-pulse"></div>
+                  <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500 border-4 border-white/50">
                     <img 
                       src="/lovable-uploads/df74f021-0d9a-46ae-9655-df4ed65824da.png" 
                       alt="Tamil film production scene with director and actors" 
                       className="w-full h-64 md:h-80 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <div className="text-lg font-semibold">Showcase Tamil Talent</div>
-                      <div className="text-sm opacity-90">Connect with Tamil cinema</div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <div className="text-xl font-bold mb-1">Tamil Cinema Excellence</div>
+                      <div className="text-sm opacity-90 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        Live casting opportunities
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Enhanced Floating Cards */}
-                <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-lg p-4 transform rotate-6 hover:rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-orange" style={{ animationDelay: '1s' }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">Live Kolywood Auditions</span>
+                {/* Enhanced Industry-Specific Floating Cards */}
+                <div className="absolute -top-6 -right-6 bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-4 transform rotate-6 hover:rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-orange" style={{ animationDelay: '1s' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-gradient-to-r from-green-400 to-green-600 rounded-full animate-pulse"></div>
+                    <div>
+                      <div className="text-sm font-bold text-gray-800">Kollywood Casting</div>
+                      <div className="text-xs text-gray-600">3 new today</div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-lg p-4 transform -rotate-6 hover:-rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-purple" style={{ animationDelay: '1.2s' }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-maasta-orange to-maasta-purple rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">🎬</span>
+                <div className="absolute -bottom-6 -left-6 bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-4 transform -rotate-6 hover:-rotate-12 transition-transform duration-300 animate-fade-in border-l-4 border-maasta-purple" style={{ animationDelay: '1.2s' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-maasta-orange to-maasta-purple rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">🎭</span>
                     </div>
                     <div>
-                      <div className="text-sm font-medium">Tamil Film Casting</div>
-                      <div className="text-xs text-gray-500">Starting soon</div>
+                      <div className="text-sm font-bold text-gray-800">Featured Role</div>
+                      <div className="text-xs text-gray-600">Lead actor needed</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Entertainment Industry Decorative Elements */}
-                <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-red-500/10 to-yellow-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
-                  <span className="text-2xl">🎭</span>
+                {/* Industry Decorative Elements */}
+                <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '0.5s' }}>
+                  <span className="text-2xl">🏆</span>
                 </div>
-                <div className="absolute bottom-1/4 -right-8 w-12 h-12 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '1.5s' }}>
-                  <span className="text-xl">💃</span>
-                </div>
-
-                {/* Additional Tamil Entertainment Elements */}
-                <div className="absolute top-1/2 right-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
-                  <span className="text-2xl">🎬</span>
-                </div>
-                
-                <div className="absolute bottom-1/3 left-4 w-14 h-14 bg-maasta-orange/10 rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '2s' }}>
-                  <span className="text-xl">🎤</span>
+                <div className="absolute bottom-1/4 -right-8 w-12 h-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full animate-bounce flex items-center justify-center" style={{ animationDelay: '1.5s' }}>
+                  <span className="text-xl">⭐</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Enhanced Features Section - Removed Event Platform */}
+        {/* Enhanced Features Section */}
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -223,11 +236,11 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Featured Artists Section */}
-        <FeaturedArtists />
-
-        {/* Recent Auditions Section */}
+        {/* Recent Auditions Section - Now First */}
         <RecentAuditions />
+
+        {/* Featured Artists Section - Now Second */}
+        <FeaturedArtists />
 
         {/* Upcoming Events Section */}
         <UpcomingEvents />
