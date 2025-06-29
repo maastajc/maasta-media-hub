@@ -29,6 +29,31 @@ interface UseArtistsOptions {
   staleTime?: number;
 }
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
+const TIMEOUT_MS = 10000;
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const withRetry = async <T>(
+  operation: () => Promise<T>,
+  retries: number = MAX_RETRIES
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error: any) {
+    console.error('Operation failed:', error.message);
+    
+    if (retries > 0 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+      console.log(`Retrying operation... ${retries} attempts left`);
+      await delay(RETRY_DELAY);
+      return withRetry(operation, retries - 1);
+    }
+    
+    throw error;
+  }
+};
+
 export const useArtists = (options: UseArtistsOptions = {}) => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,25 +61,33 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchArtists = async () => {
-    try {
+    return withRetry(async () => {
       console.log('Fetching artists...');
       setIsLoading(true);
       setIsError(false);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
+      );
+
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      const result = await Promise.race([fetchPromise, timeoutPromise]);
+      const { data, error: fetchError } = result as any;
 
       if (fetchError) {
         console.error('Error fetching artists:', fetchError);
-        throw fetchError;
+        throw new Error(`Database error: ${fetchError.message}`);
       }
 
       // Transform data to match expected format
-      const transformedData = (data || []).map(profile => ({
+      const transformedData = (data || []).map((profile: any) => ({
         id: profile.id,
         full_name: profile.full_name || 'Unknown Artist',
         email: profile.email,
@@ -78,8 +111,15 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
       console.log(`Successfully fetched ${transformedData.length} artists`);
       setArtists(transformedData);
+      return transformedData;
+    });
+  };
+
+  const refetch = async () => {
+    try {
+      await fetchArtists();
     } catch (err: any) {
-      console.error('Error in fetchArtists:', err);
+      console.error('Error in refetch:', err);
       setIsError(true);
       setError(err);
     } finally {
@@ -127,12 +167,20 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     });
   };
 
-  const refetch = () => {
-    fetchArtists();
-  };
-
   useEffect(() => {
-    fetchArtists();
+    const initializeFetch = async () => {
+      try {
+        await fetchArtists();
+      } catch (err: any) {
+        console.error('Error in useArtists:', err);
+        setIsError(true);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeFetch();
   }, []);
 
   return {

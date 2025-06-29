@@ -1,8 +1,33 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const fetchAuditions = async () => {
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const withRetry = async <T>(
+  operation: () => Promise<T>,
+  retries: number = MAX_RETRIES,
+  retryDelay: number = RETRY_DELAY
+): Promise<T> => {
   try {
+    return await operation();
+  } catch (error: any) {
+    console.error('Operation failed:', error.message);
+    
+    if (retries > 0 && error.message?.includes('timeout')) {
+      console.log(`Retrying operation in ${retryDelay}ms... ${retries} attempts left`);
+      await delay(retryDelay);
+      return withRetry(operation, retries - 1, retryDelay * 1.5);
+    }
+    
+    throw error;
+  }
+};
+
+export const fetchAuditions = async () => {
+  return withRetry(async () => {
     console.log('Fetching auditions...');
     
     const { data, error } = await supabase
@@ -28,23 +53,21 @@ export const fetchAuditions = async () => {
         updated_at
       `)
       .eq('status', 'open')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50); // Add reasonable limit
 
     if (error) {
       console.error('Error fetching auditions:', error);
-      throw error;
+      throw new Error(`Database error: ${error.message}`);
     }
 
     console.log(`Successfully fetched ${data?.length || 0} auditions`);
     return data || [];
-  } catch (error: any) {
-    console.error('Error in fetchAuditions:', error);
-    throw error;
-  }
+  });
 };
 
 export const fetchRecentAuditions = async () => {
-  try {
+  return withRetry(async () => {
     console.log('Fetching recent auditions...');
     
     const { data, error } = await supabase
@@ -75,20 +98,21 @@ export const fetchRecentAuditions = async () => {
 
     if (error) {
       console.error('Error fetching recent auditions:', error);
-      throw error;
+      throw new Error(`Database error: ${error.message}`);
     }
 
     console.log(`Successfully fetched ${data?.length || 0} recent auditions`);
     return data || [];
-  } catch (error: any) {
-    console.error('Error in fetchRecentAuditions:', error);
-    throw error;
-  }
+  });
 };
 
 export const fetchAuditionById = async (id: string) => {
-  try {
+  return withRetry(async () => {
     console.log('Fetching audition by id:', id);
+    
+    if (!id || id === 'undefined' || id === 'null') {
+      throw new Error('Invalid audition ID provided');
+    }
     
     const { data, error } = await supabase
       .from('auditions')
@@ -106,7 +130,7 @@ export const fetchAuditionById = async (id: string) => {
 
     if (error) {
       console.error('Error fetching audition by id:', error);
-      throw error;
+      throw new Error(`Database error: ${error.message}`);
     }
 
     if (!data) {
@@ -116,8 +140,5 @@ export const fetchAuditionById = async (id: string) => {
 
     console.log('Successfully fetched audition:', data.title);
     return data;
-  } catch (error: any) {
-    console.error('Error in fetchAuditionById:', error);
-    throw error;
-  }
+  });
 };
