@@ -9,11 +9,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    }
   },
   plugins: [
     react(),
@@ -26,17 +21,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Remove aggressive cache busting that was causing issues
     rollupOptions: {
       output: {
-        // Add timestamp to filenames for cache busting
-        entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-        chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-        assetFileNames: `assets/[name]-[hash]-${Date.now()}.[ext]`
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash].[ext]`
       }
     }
-  },
-  define: {
-    __APP_VERSION__: JSON.stringify(Date.now().toString()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
   }
 }));

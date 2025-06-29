@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { cacheManager } from '@/utils/cacheManager';
 
 interface Artist {
   id: string;
@@ -63,7 +62,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const fetchArtists = async () => {
     return withRetry(async () => {
-      console.log('Fetching artists with cache-busting...');
+      console.log('Fetching artists...');
       setIsLoading(true);
       setIsError(false);
       setError(null);
@@ -101,7 +100,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         state: profile.state,
         country: profile.country,
         years_of_experience: profile.years_of_experience || 0,
-        skills: [], // TODO: Add skills relation
+        skills: [],
         created_at: profile.created_at,
         status: profile.status,
         personal_website: profile.personal_website,
@@ -118,8 +117,6 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
-      // Clear any cached data before refetching
-      cacheManager.invalidateCache('artists');
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -184,7 +181,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     };
 
     initializeFetch();
-  }, []); // Remove dependencies to prevent unnecessary re-renders
+  }, []);
 
   return {
     artists,

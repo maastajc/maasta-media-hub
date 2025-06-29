@@ -1,10 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { getCacheBustingHeaders } from "@/utils/cacheManager";
 
 const MAX_RETRIES = 2;
-const RETRY_DELAY = 500; // Reduced delay
-const TIMEOUT_MS = 8000; // Reduced timeout
+const RETRY_DELAY = 500;
+const TIMEOUT_MS = 8000;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -30,7 +29,7 @@ const withRetry = async <T>(
 
 export const fetchAuditions = async () => {
   return withRetry(async () => {
-    console.log('Fetching auditions with cache-busting...');
+    console.log('Fetching auditions...');
     
     const { data, error } = await supabase
       .from('auditions')
@@ -85,7 +84,7 @@ export const fetchAuditions = async () => {
 
 export const fetchRecentAuditions = async () => {
   return withRetry(async () => {
-    console.log('Fetching recent auditions with cache-busting...');
+    console.log('Fetching recent auditions...');
     
     const { data, error } = await supabase
       .from('auditions')
@@ -140,7 +139,7 @@ export const fetchRecentAuditions = async () => {
 
 export const fetchAuditionById = async (id: string) => {
   return withRetry(async () => {
-    console.log('Fetching audition by id with cache-busting:', id);
+    console.log('Fetching audition by id:', id);
     
     if (!id || id === 'undefined' || id === 'null') {
       throw new Error('Invalid audition ID provided');

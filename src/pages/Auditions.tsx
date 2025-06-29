@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -16,7 +15,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { fetchApplicationsForArtist } from "@/services/auditionApplicationService";
 import { AuditionApplication } from "@/services/auditionApplicationService";
 import { toast } from "sonner";
-import { cacheManager } from "@/utils/cacheManager";
 
 interface AuditionData {
   id: string;
@@ -82,14 +80,12 @@ const Auditions = () => {
     if (isInitialLoad) {
       setLoading(true);
       setError(null);
-      // Clear any cached data before fetching
-      cacheManager.invalidateCache('auditions');
     } else {
       setLoadingMore(true);
     }
 
     try {
-      console.log(`Fetching auditions page ${currentPage} with cache-busting...`);
+      console.log(`Fetching auditions page ${currentPage}...`);
       
       const from = (currentPage - 1) * AUDITIONS_PER_PAGE;
       const to = from + AUDITIONS_PER_PAGE - 1;
@@ -214,10 +210,6 @@ const Auditions = () => {
 
   const fetchUniqueData = async () => {
     try {
-      // Clear cache before fetching unique data
-      cacheManager.invalidateCache('categories');
-      cacheManager.invalidateCache('tags');
-      
       // Fetch unique categories
       const { data: categoriesData } = await supabase
         .from('auditions')
@@ -269,7 +261,6 @@ const Auditions = () => {
   };
 
   const handleRetry = () => {
-    cacheManager.clearAllCaches();
     setPage(1);
     fetchAuditions(1, true);
   };

@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { cacheManager } from "@/utils/cacheManager";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -23,22 +22,23 @@ export const CacheRefreshButton = ({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Clear all caches
-      cacheManager.clearAllCaches();
-      cacheManager.updateVersion();
+      // Clear browser cache if supported
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      }
       
       // Call custom refresh function if provided
       if (onRefresh) {
         await onRefresh();
       }
       
-      // Force reload the page to ensure fresh data
-      window.location.reload();
-      
-      toast.success("Cache cleared and data refreshed");
+      toast.success("Data refreshed successfully");
     } catch (error) {
-      console.error("Error refreshing cache:", error);
-      toast.error("Failed to refresh cache");
+      console.error("Error refreshing:", error);
+      toast.error("Failed to refresh data");
     } finally {
       setIsRefreshing(false);
     }
