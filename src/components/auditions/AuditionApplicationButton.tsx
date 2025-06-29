@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EnhancedAuditionApplicationDialog } from "./EnhancedAuditionApplicationDialog";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AuditionApplicationButtonProps {
   auditionId: string;
@@ -12,6 +14,7 @@ interface AuditionApplicationButtonProps {
   children?: React.ReactNode;
   requestUploads?: boolean;
   onSuccess?: () => void;
+  hasApplied?: boolean;
 }
 
 export const AuditionApplicationButton = ({
@@ -22,9 +25,25 @@ export const AuditionApplicationButton = ({
   className,
   children = "Apply Now",
   requestUploads = false,
-  onSuccess
+  onSuccess,
+  hasApplied = false
 }: AuditionApplicationButtonProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleClick = () => {
+    if (!user) {
+      toast.error("Please sign in to apply for auditions");
+      return;
+    }
+
+    if (hasApplied) {
+      toast.info("You have already applied for this audition");
+      return;
+    }
+
+    setIsDialogOpen(true);
+  };
 
   return (
     <>
@@ -32,7 +51,7 @@ export const AuditionApplicationButton = ({
         variant={variant}
         size={size}
         className={className}
-        onClick={() => setIsDialogOpen(true)}
+        onClick={handleClick}
       >
         {children}
       </Button>

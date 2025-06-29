@@ -7,6 +7,8 @@ import { MapPin, Calendar, Clock, Users, DollarSign, Briefcase } from "lucide-re
 import { format } from "date-fns";
 import { getDaysRemaining } from "@/utils/auditionHelpers";
 import { Audition } from "@/types/audition";
+import { AuditionApplicationButton } from "@/components/auditions/AuditionApplicationButton";
+import { toast } from "sonner";
 
 interface AuditionCardProps {
   audition: Audition;
@@ -14,6 +16,11 @@ interface AuditionCardProps {
 
 const AuditionCard = ({ audition }: AuditionCardProps) => {
   const daysRemaining = getDaysRemaining(audition.deadline);
+  const hasApplied = !!audition.applicationStatus;
+
+  const handleAlreadyApplied = () => {
+    toast.info("You have already applied for this audition");
+  };
   
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
@@ -29,9 +36,16 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
               </Badge>
             )}
           </div>
-          {audition.urgent && (
-            <Badge className="bg-red-500 text-white animate-pulse">Urgent</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {audition.applicationStatus && (
+              <Badge variant="outline" className="text-xs capitalize bg-green-100 text-green-800 border-green-300 font-semibold">
+                {audition.applicationStatus}
+              </Badge>
+            )}
+            {audition.urgent && !audition.applicationStatus && (
+              <Badge className="bg-red-500 text-white animate-pulse">Urgent</Badge>
+            )}
+          </div>
         </div>
         
         <h3 className="font-bold text-xl mb-2 line-clamp-2 text-gray-900">{audition.title}</h3>
@@ -102,11 +116,34 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
           </div>
         </div>
         
-        <Link to={`/auditions/${audition.id}`}>
-          <Button className="w-full bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-3 rounded-lg transition-all duration-300">
-            View Details & Apply
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to={`/auditions/${audition.id}`} className="flex-1">
+            <Button 
+              variant="outline" 
+              className="w-full border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white font-semibold py-2 rounded-lg transition-all duration-300"
+            >
+              View Details
+            </Button>
+          </Link>
+          
+          {hasApplied ? (
+            <Button 
+              onClick={handleAlreadyApplied}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg"
+            >
+              Applied
+            </Button>
+          ) : (
+            <AuditionApplicationButton
+              auditionId={audition.id}
+              auditionTitle={audition.title}
+              className="flex-1 bg-gradient-to-r from-maasta-purple to-maasta-orange hover:from-maasta-purple/90 hover:to-maasta-orange/90 text-white font-semibold py-2 rounded-lg transition-all duration-300"
+              hasApplied={hasApplied}
+            >
+              Apply Now
+            </AuditionApplicationButton>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

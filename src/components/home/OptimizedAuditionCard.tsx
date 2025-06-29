@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Audition } from "@/types/audition";
+import { AuditionApplicationButton } from "@/components/auditions/AuditionApplicationButton";
+import { toast } from "sonner";
 
 interface OptimizedAuditionCardProps {
   audition: Audition;
@@ -47,6 +49,12 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       return 'Invalid deadline';
     }
   };
+
+  const handleAlreadyApplied = () => {
+    toast.info("You have already applied for this audition");
+  };
+
+  const hasApplied = !!audition.applicationStatus;
 
   return (
     <Card className="h-full flex flex-col bg-white overflow-hidden rounded-xl border-2 border-transparent hover:border-maasta-purple transition-all duration-300 shadow-md hover:shadow-2xl group">
@@ -90,11 +98,33 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       </div>
       
       <div className="p-5 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-300">
-        <Link to={`/auditions/${audition.id}`} className="w-full">
-          <Button className="w-full bg-maasta-purple hover:bg-maasta-purple/90 text-white font-bold text-base py-3 rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1">
-            View Details
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to={`/auditions/${audition.id}`} className="flex-1">
+            <Button 
+              variant="outline" 
+              className="w-full border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white font-bold text-sm py-2 rounded-lg transition-all duration-300"
+            >
+              View Details
+            </Button>
+          </Link>
+          
+          {hasApplied ? (
+            <Button 
+              onClick={handleAlreadyApplied}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold text-sm py-2 rounded-lg"
+            >
+              Applied
+            </Button>
+          ) : (
+            <AuditionApplicationButton
+              auditionId={audition.id}
+              auditionTitle={audition.title || 'Untitled Audition'}
+              className="flex-1 bg-maasta-purple hover:bg-maasta-purple/90 text-white font-bold text-sm py-2 rounded-lg"
+            >
+              Apply Now
+            </AuditionApplicationButton>
+          )}
+        </div>
       </div>
     </Card>
   );
