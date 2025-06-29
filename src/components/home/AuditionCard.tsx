@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Clock, Users, DollarSign, Briefcase } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { MapPin, Calendar, Clock, Users, DollarSign, Briefcase, User } from "lucide-react";
 import { format } from "date-fns";
 import { getDaysRemaining } from "@/utils/auditionHelpers";
 import { Audition } from "@/types/audition";
@@ -17,6 +18,9 @@ interface AuditionCardProps {
 const AuditionCard = ({ audition }: AuditionCardProps) => {
   const daysRemaining = getDaysRemaining(audition.deadline);
   const hasApplied = !!audition.applicationStatus;
+  
+  // Check if audition date has passed
+  const isExpired = audition.audition_date ? new Date(audition.audition_date) < new Date() : false;
 
   const handleAlreadyApplied = () => {
     toast.info("You have already applied for this audition");
@@ -42,14 +46,38 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
                 {audition.applicationStatus}
               </Badge>
             )}
-            {audition.urgent && !audition.applicationStatus && (
+            {audition.urgent && !audition.applicationStatus && !isExpired && (
               <Badge className="bg-red-500 text-white animate-pulse">Urgent</Badge>
+            )}
+            {isExpired && (
+              <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
+                Closed
+              </Badge>
             )}
           </div>
         </div>
         
         <h3 className="font-bold text-xl mb-2 line-clamp-2 text-gray-900">{audition.title}</h3>
-        <p className="text-maasta-purple font-medium text-sm mb-4">{audition.company}</p>
+        
+        {/* Poster Profile Section */}
+        {audition.posterProfile && (
+          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={audition.posterProfile.profile_picture} 
+                alt={audition.posterProfile.full_name}
+              />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                Posted by {audition.posterProfile.full_name}
+              </p>
+            </div>
+          </div>
+        )}
         
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-gray-600">
@@ -103,15 +131,17 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
         
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm">
-            {daysRemaining !== null ? (
+            {!isExpired && daysRemaining !== null ? (
               <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-2 text-maasta-orange" />
                 <span className={`font-medium ${daysRemaining <= 5 ? "text-red-600" : "text-gray-600"}`}>
                   {daysRemaining} days left
                 </span>
               </div>
-            ) : (
+            ) : !isExpired ? (
               <span className="text-gray-600">Open until filled</span>
+            ) : (
+              <span className="text-gray-500">Audition date passed</span>
             )}
           </div>
         </div>
@@ -126,7 +156,14 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             </Button>
           </Link>
           
-          {hasApplied ? (
+          {isExpired ? (
+            <Button 
+              disabled
+              className="flex-1 bg-gray-400 text-white font-semibold py-2 rounded-lg cursor-not-allowed"
+            >
+              Closed
+            </Button>
+          ) : hasApplied ? (
             <Button 
               onClick={handleAlreadyApplied}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg"

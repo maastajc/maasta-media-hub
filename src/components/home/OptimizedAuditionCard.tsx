@@ -33,6 +33,9 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
   const isUrgent = audition.deadline ? 
     new Date(audition.deadline).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 : false;
 
+  // Check if audition date has passed
+  const isExpired = audition.audition_date ? new Date(audition.audition_date) < new Date() : false;
+
   const formatSafeDate = (dateString: string | undefined | null) => {
     if (!dateString) return 'TBD';
     try {
@@ -68,7 +71,12 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             {audition.applicationStatus && (
               <ApplicationStatusBadge status={audition.applicationStatus} />
             )}
-            {(isUrgent || audition.urgent) && !audition.applicationStatus && (
+            {isExpired && (
+              <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 text-xs font-bold">
+                CLOSED
+              </Badge>
+            )}
+            {(isUrgent || audition.urgent) && !audition.applicationStatus && !isExpired && (
               <Badge variant="destructive" className="text-xs font-bold animate-pulse">
                 URGENT
               </Badge>
@@ -80,22 +88,24 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
         </h3>
         
         {/* Poster Profile Section */}
-        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-          <Avatar className="h-8 w-8">
-            <AvatarImage 
-              src={audition.posterProfile?.profile_picture || audition.company} 
-              alt={audition.posterProfile?.full_name || audition.company || 'Poster'}
-            />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              Posted by {audition.posterProfile?.full_name || audition.company || 'Unknown'}
-            </p>
+        {audition.posterProfile && (
+          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={audition.posterProfile.profile_picture} 
+                alt={audition.posterProfile.full_name}
+              />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                Posted by {audition.posterProfile.full_name}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="mt-auto space-y-3 pt-4 border-t border-gray-100">
           <div className="flex items-center text-gray-600">
@@ -108,10 +118,12 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             <span className="text-sm">{audition.audition_date ? formatSafeDate(audition.audition_date) : 'Date TBD'}</span>
           </div>
           
-          <div className="flex items-center text-gray-600">
-            <Clock className="w-5 h-5 mr-3 text-yellow-500 flex-shrink-0" />
-            <span className="text-sm font-medium">{formatDeadline(audition.deadline)}</span>
-          </div>
+          {!isExpired && (
+            <div className="flex items-center text-gray-600">
+              <Clock className="w-5 h-5 mr-3 text-yellow-500 flex-shrink-0" />
+              <span className="text-sm font-medium">{formatDeadline(audition.deadline)}</span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -126,7 +138,14 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             </Button>
           </Link>
           
-          {hasApplied ? (
+          {isExpired ? (
+            <Button 
+              disabled
+              className="flex-1 bg-gray-400 text-white font-bold text-sm py-2 rounded-lg cursor-not-allowed"
+            >
+              Closed
+            </Button>
+          ) : hasApplied ? (
             <Button 
               onClick={handleAlreadyApplied}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold text-sm py-2 rounded-lg"
