@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,12 +72,6 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               {/* Enhanced Text Content */}
               <div className="text-center lg:text-left">
-                <div className="mb-8 animate-fade-in">
-                  <span className="inline-block px-6 py-3 bg-gradient-to-r from-maasta-orange/10 to-maasta-purple/10 text-maasta-orange rounded-full text-sm font-medium mb-4 animate-scale-in border border-maasta-orange/20">
-                    🎭 Tamil Cinema's Digital Revolution
-                  </span>
-                </div>
-                
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-8 animate-fade-in leading-tight">
                   Where Tamil{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-orange via-red-500 to-maasta-purple animate-pulse">
@@ -112,6 +107,12 @@ const Index = () => {
                       📢 Post Casting Call
                     </span>
                   </Button>
+                </div>
+
+                <div className="mb-8 animate-fade-in">
+                  <span className="inline-block px-6 py-3 bg-gradient-to-r from-maasta-orange/10 to-maasta-purple/10 text-maasta-orange rounded-full text-sm font-medium animate-scale-in border border-maasta-orange/20">
+                    🎭 Tamil Cinema's Digital Revolution
+                  </span>
                 </div>
 
                 {/* Enhanced Stats Section with Tamil focus */}
