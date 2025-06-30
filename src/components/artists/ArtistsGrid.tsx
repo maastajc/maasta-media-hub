@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -6,18 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import ArtistCard from "./ArtistCard";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-
-interface Artist {
-  id: string;
-  full_name: string;
-  bio?: string;
-  profile_picture_url?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  skills?: string[];
-  verified?: boolean;
-}
+import { Artist } from "@/types/artist";
 
 interface ArtistsGridProps {
   artists: Artist[];
