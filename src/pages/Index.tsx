@@ -46,7 +46,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Enhanced Hero Section with Tamil Nadu Artists */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-maasta-purple/5 via-white to-maasta-orange/5 py-20 md:py-32">
+        <section className="relative overflow-hidden bg-gradient-to-br from-maasta-purple/5 via-white to-maasta-orange/5 py-12 md:py-20">
           {/* Enhanced Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-maasta-orange/10 rounded-full blur-3xl animate-pulse"></div>
@@ -55,7 +55,7 @@ const Index = () => {
             
             {/* Industry-specific floating elements */}
             <div className="absolute top-20 left-1/4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '0.5s' }}>
-              <span className="text-2xl">🎬</span>
+              <span className="text-2xl">🎭</span>
             </div>
             <div className="absolute bottom-20 right-1/4 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-bounce" style={{ animationDelay: '1.5s' }}>
               <span className="text-2xl">🎭</span>
@@ -94,7 +94,7 @@ const Index = () => {
                     onClick={handleViewAuditions}
                   >
                     <span className="flex items-center gap-2">
-                      🎬 View Live Auditions
+                      View Live Auditions
                     </span>
                   </Button>
                   <Button 
@@ -104,7 +104,7 @@ const Index = () => {
                     onClick={handlePostAudition}
                   >
                     <span className="flex items-center gap-2">
-                      📢 Post Casting Call
+                      Post Casting Call
                     </span>
                   </Button>
                 </div>

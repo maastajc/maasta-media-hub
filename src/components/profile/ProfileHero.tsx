@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +12,14 @@ import {
   Youtube,
   Film,
   ArrowLeft,
-  MessageCircle
+  MessageCircle,
+  Mail,
+  Copy,
+  Check
 } from "lucide-react";
 import { Artist } from "@/types/artist";
 import ShareProfileDialog from "./ShareProfileDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeroProps {
   artist: Artist;
@@ -22,6 +27,10 @@ interface ProfileHeroProps {
 }
 
 const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
+  const [showEmail, setShowEmail] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+  const { toast } = useToast();
+
   const socialLinks = [
     { icon: Globe, url: artist.personal_website, label: 'Website' },
     { icon: Instagram, url: artist.instagram, label: 'Instagram' },
@@ -31,6 +40,30 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
   ].filter(link => link.url);
 
   const profileUrl = window.location.href;
+
+  const handleContactArtist = () => {
+    setShowEmail(true);
+  };
+
+  const handleCopyEmail = async () => {
+    if (artist.email) {
+      try {
+        await navigator.clipboard.writeText(artist.email);
+        setEmailCopied(true);
+        toast({
+          title: "Email copied!",
+          description: "The artist's email has been copied to your clipboard.",
+        });
+        setTimeout(() => setEmailCopied(false), 2000);
+      } catch (error) {
+        toast({
+          title: "Failed to copy",
+          description: "Please manually copy the email address.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   return (
     <div className="bg-gray-50 py-12">
@@ -123,10 +156,43 @@ const ProfileHero = ({ artist, onBack }: ProfileHeroProps) => {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-6">
-                <Button className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium text-lg">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Contact Artist
-                </Button>
+                {!showEmail ? (
+                  <Button 
+                    className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-8 py-3 rounded-full font-medium text-lg"
+                    onClick={handleContactArtist}
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Contact Artist
+                  </Button>
+                ) : (
+                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-maasta-orange" />
+                      <span className="font-medium text-gray-700">Contact via email:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium text-maasta-purple">{artist.email}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCopyEmail}
+                        className="flex items-center gap-1"
+                      >
+                        {emailCopied ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4" />
+                            Copy
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <ShareProfileDialog 
                   artistName={artist.full_name || 'Artist'}
                   profileUrl={profileUrl}
