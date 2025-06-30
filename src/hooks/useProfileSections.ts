@@ -1,6 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { 
   saveProject, 
   saveSkill, 
@@ -18,6 +18,7 @@ import {
 
 export const useProfileSections = (userId?: string) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Project mutations
   const saveProjectMutation = useMutation({
@@ -27,11 +28,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project updated successfully');
+      toast({
+        title: '✅ Project saved successfully!',
+        description: 'Your project has been updated in your portfolio.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving project:', error);
-      toast.error(error.message || 'Failed to save project');
+      toast({
+        title: '❌ Failed to save project',
+        description: error.message || 'Failed to save project. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -42,11 +50,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project deleted successfully');
+      toast({
+        title: '✅ Project deleted',
+        description: 'Project has been removed from your portfolio.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting project:', error);
-      toast.error(error.message || 'Failed to delete project');
+      toast({
+        title: '❌ Failed to delete project',
+        description: error.message || 'Failed to delete project. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -58,11 +73,27 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill updated successfully');
+      toast({
+        title: '✅ Skill saved successfully!',
+        description: 'Your skill has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving skill:', error);
-      toast.error(error.message || 'Failed to save skill');
+      // Handle duplicate key constraint specifically
+      if (error.message?.includes('duplicate key')) {
+        toast({
+          title: '❌ Skill already exists',
+          description: 'This skill is already in your profile.',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: '❌ Failed to save skill',
+          description: error.message || 'Failed to save skill. Please try again.',
+          variant: 'destructive'
+        });
+      }
     },
   });
 
@@ -73,11 +104,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill deleted successfully');
+      toast({
+        title: '✅ Skill deleted',
+        description: 'Skill has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting skill:', error);
-      toast.error(error.message || 'Failed to delete skill');
+      toast({
+        title: '❌ Failed to delete skill',
+        description: error.message || 'Failed to delete skill. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -89,11 +127,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education updated successfully');
+      toast({
+        title: '✅ Education saved successfully!',
+        description: 'Your education has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving education:', error);
-      toast.error(error.message || 'Failed to save education');
+      toast({
+        title: '❌ Failed to save education',
+        description: error.message || 'Failed to save education. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -104,11 +149,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education deleted successfully');
+      toast({
+        title: '✅ Education deleted',
+        description: 'Education has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting education:', error);
-      toast.error(error.message || 'Failed to delete education');
+      toast({
+        title: '❌ Failed to delete education',
+        description: error.message || 'Failed to delete education. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -120,11 +172,27 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language updated successfully');
+      toast({
+        title: '✅ Language saved successfully!',
+        description: 'Your language skill has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving language:', error);
-      toast.error(error.message || 'Failed to save language');
+      // Handle duplicate key constraint specifically
+      if (error.message?.includes('duplicate key')) {
+        toast({
+          title: '❌ Language already exists',
+          description: 'This language is already in your profile.',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: '❌ Failed to save language',
+          description: error.message || 'Failed to save language. Please try again.',
+          variant: 'destructive'
+        });
+      }
     },
   });
 
@@ -135,11 +203,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language deleted successfully');
+      toast({
+        title: '✅ Language deleted',
+        description: 'Language has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting language:', error);
-      toast.error(error.message || 'Failed to delete language');
+      toast({
+        title: '❌ Failed to delete language',
+        description: error.message || 'Failed to delete language. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -151,11 +226,27 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool updated successfully');
+      toast({
+        title: '✅ Tool saved successfully!',
+        description: 'Your tool/software has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving tool:', error);
-      toast.error(error.message || 'Failed to save tool');
+      // Handle duplicate key constraint specifically
+      if (error.message?.includes('duplicate key')) {
+        toast({
+          title: '❌ Tool already exists',
+          description: 'This tool/software is already in your profile.',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: '❌ Failed to save tool',
+          description: error.message || 'Failed to save tool. Please try again.',
+          variant: 'destructive'
+        });
+      }
     },
   });
 
@@ -166,11 +257,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool deleted successfully');
+      toast({
+        title: '✅ Tool deleted',
+        description: 'Tool/software has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting tool:', error);
-      toast.error(error.message || 'Failed to delete tool');
+      toast({
+        title: '❌ Failed to delete tool',
+        description: error.message || 'Failed to delete tool. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -182,11 +280,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media asset updated successfully');
+      toast({
+        title: '✅ Media asset saved successfully!',
+        description: 'Your media has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving media asset:', error);
-      toast.error(error.message || 'Failed to save media asset');
+      toast({
+        title: '❌ Failed to save media asset',
+        description: error.message || 'Failed to save media asset. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -197,11 +302,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media asset deleted successfully');
+      toast({
+        title: '✅ Media asset deleted',
+        description: 'Media has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting media asset:', error);
-      toast.error(error.message || 'Failed to delete media asset');
+      toast({
+        title: '❌ Failed to delete media asset',
+        description: error.message || 'Failed to delete media asset. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 

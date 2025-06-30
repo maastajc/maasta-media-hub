@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,11 +34,12 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
   const { saveProject, deleteProject, isSaving, isDeleting } = useProfileSections(userId);
   const { toast } = useToast();
 
+  // Updated project types to match database enum values
   const projectTypes = [
-    { value: "film", label: "Film" },
-    { value: "tv_series", label: "TV Series" },
-    { value: "web_series", label: "Web Series" },
+    { value: "feature_film", label: "Feature Film" },
     { value: "short_film", label: "Short Film" },
+    { value: "tv_show", label: "TV Show" },
+    { value: "web_series", label: "Web Series" },
     { value: "documentary", label: "Documentary" },
     { value: "commercial", label: "Commercial" },
     { value: "music_video", label: "Music Video" },

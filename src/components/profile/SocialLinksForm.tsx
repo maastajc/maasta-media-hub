@@ -1,209 +1,240 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, Instagram, Linkedin, Youtube, Film } from "lucide-react";
-import { updateArtistProfile } from "@/services/artistService";
-
-const socialLinksSchema = z.object({
-  imdb_profile: z.string().optional(),
-  youtube_vimeo: z.string().optional(),
-  instagram: z.string().optional(),
-  linkedin: z.string().optional(),
-  personal_website: z.string().optional(),
-});
-
-type SocialLinksValues = z.infer<typeof socialLinksSchema>;
+import { Label } from "@/components/ui/label";
+import { Globe, Instagram, Linkedin, Youtube, Save, ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Artist } from "@/types/artist";
 
 interface SocialLinksFormProps {
-  profileData: any;
+  profileData: Artist | null;
   onUpdate: () => void;
   userId?: string;
 }
 
 const SocialLinksForm = ({ profileData, onUpdate, userId }: SocialLinksFormProps) => {
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  
-  const form = useForm<SocialLinksValues>({
-    resolver: zodResolver(socialLinksSchema),
-    defaultValues: {
-      imdb_profile: profileData?.imdb_profile || "",
-      youtube_vimeo: profileData?.youtube_vimeo || "",
-      instagram: profileData?.instagram || "",
-      linkedin: profileData?.linkedin || "",
-      personal_website: profileData?.personal_website || "",
-    },
+  const [formData, setFormData] = useState({
+    personal_website: profileData?.personal_website || "",
+    instagram: profileData?.instagram || "",
+    linkedin: profileData?.linkedin || "",
+    youtube_vimeo: profileData?.youtube_vimeo || "",
+    imdb_profile: profileData?.imdb_profile || "",
   });
-  
-  const onSubmit = async (values: SocialLinksValues) => {
-    if (!userId) return;
-    
-    try {
-      setIsSaving(true);
-      
-      await updateArtistProfile(userId, values);
-      
+  const { toast } = useToast();
+
+  const handleSave = async () => {
+    if (!userId) {
       toast({
-        title: "Social links updated",
-        description: "Your social media links have been updated successfully",
+        title: "❌ Error",
+        description: "User ID is required to save social links.",
+        variant: "destructive"
       });
-      
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          personal_website: formData.personal_website || null,
+          instagram: formData.instagram || null,
+          linkedin: formData.linkedin || null,
+          youtube_vimeo: formData.youtube_vimeo || null,
+          imdb_profile: formData.imdb_profile || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "✅ Social links updated successfully!",
+        description: "Your social media links have been saved to your profile.",
+      });
+
       onUpdate();
     } catch (error: any) {
-      console.error("Error updating social links:", error.message);
+      console.error('Error saving social links:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update social links",
-        variant: "destructive",
+        title: "❌ Failed to save social links",
+        description: error.message || "There was an error saving your social links. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const socialPlatforms = [
+  const validateUrl = (url: string) => {
+    if (!url) return true;
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const formatUrl = (url: string) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `https://${url}`;
+  };
+
+  const socialLinks = [
     {
-      icon: Film,
-      name: "IMDB Profile",
-      field: "imdb_profile" as const,
-      placeholder: "https://www.imdb.com/name/...",
-      color: "text-yellow-600"
-    },
-    {
-      icon: Youtube,
-      name: "YouTube/Vimeo",
-      field: "youtube_vimeo" as const,
-      placeholder: "Link to your channel or profile",
-      color: "text-red-600"
-    },
-    {
-      icon: Instagram,
-      name: "Instagram",
-      field: "instagram" as const,
-      placeholder: "https://www.instagram.com/...",
-      color: "text-pink-600"
-    },
-    {
-      icon: Linkedin,
-      name: "LinkedIn",
-      field: "linkedin" as const,
-      placeholder: "https://www.linkedin.com/in/...",
-      color: "text-blue-600"
-    },
-    {
+      key: 'personal_website' as keyof typeof formData,
+      label: 'Personal Website',
       icon: Globe,
-      name: "Personal Website",
-      field: "personal_website" as const,
-      placeholder: "https://yourwebsite.com",
-      color: "text-gray-600"
+      placeholder: 'https://yourwebsite.com',
+      description: 'Your personal or professional website'
     },
+    {
+      key: 'instagram' as keyof typeof formData,
+      label: 'Instagram',
+      icon: Instagram,
+      placeholder: 'https://instagram.com/yourusername',
+      description: 'Your Instagram profile'
+    },
+    {
+      key: 'linkedin' as keyof typeof formData,
+      label: 'LinkedIn',
+      icon: Linkedin,
+      placeholder: 'https://linkedin.com/in/yourusername',
+      description: 'Your LinkedIn profile'
+    },
+    {
+      key: 'youtube_vimeo' as keyof typeof formData,
+      label: 'YouTube/Vimeo',
+      icon: Youtube,
+      placeholder: 'https://youtube.com/channel/yourchannel',
+      description: 'Your YouTube channel or Vimeo profile'
+    },
+    {
+      key: 'imdb_profile' as keyof typeof formData,
+      label: 'IMDb Profile',
+      icon: ExternalLink,
+      placeholder: 'https://imdb.com/name/nm1234567',  
+      description: 'Your IMDb profile page'
+    }
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Social Media & Professional Links</h2>
+        <h3 className="text-2xl font-bold text-gray-900">Social Links & Online Presence</h3>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Globe className="mr-2 text-maasta-purple" size={24} />
-            Connect Your Online Presence
-          </CardTitle>
+          <CardTitle>Connect Your Online Profiles</CardTitle>
+          <p className="text-sm text-gray-600">
+            Add your social media and professional profiles to help people connect with you.
+          </p>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {socialPlatforms.map((platform) => {
-                const Icon = platform.icon;
-                return (
-                  <FormField
-                    key={platform.field}
-                    control={form.control}
-                    name={platform.field}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center">
-                          <Icon className={`mr-2 ${platform.color}`} size={20} />
-                          {platform.name}
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder={platform.placeholder} 
-                            {...field} 
-                            className="pl-4"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-              })}
-              
-              <div className="flex justify-end">
-                <Button 
-                  type="submit" 
-                  disabled={isSaving}
-                  className="bg-maasta-orange hover:bg-maasta-orange/90 px-8"
-                >
-                  {isSaving ? "Saving..." : "Save Links"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Social Links Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {socialPlatforms.map((platform) => {
-              const Icon = platform.icon;
-              const value = form.watch(platform.field);
-              return (
-                <div
-                  key={platform.field}
-                  className={`flex items-center p-4 rounded-lg border-2 transition-all ${
-                    value 
-                      ? 'border-green-200 bg-green-50' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <Icon className={`mr-3 ${platform.color}`} size={24} />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{platform.name}</p>
-                    {value ? (
-                      <a
-                        href={value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline truncate block"
-                      >
-                        {value}
-                      </a>
-                    ) : (
-                      <p className="text-xs text-gray-500">Not connected</p>
-                    )}
-                  </div>
+        <CardContent className="space-y-6">
+          {socialLinks.map((link) => {
+            const Icon = link.icon;
+            const currentValue = formData[link.key];
+            const isValidUrl = validateUrl(currentValue);
+            
+            return (
+              <div key={link.key} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Icon className="w-5 h-5 text-gray-500" />
+                  <Label htmlFor={link.key} className="font-medium">
+                    {link.label}
+                  </Label>
                 </div>
-              );
-            })}
+                <Input
+                  id={link.key}
+                  type="url"
+                  value={currentValue}
+                  onChange={(e) => setFormData({ ...formData, [link.key]: e.target.value })}
+                  placeholder={link.placeholder}
+                  className={!isValidUrl && currentValue ? "border-red-300" : ""}
+                />
+                <p className="text-xs text-gray-500">{link.description}</p>
+                {!isValidUrl && currentValue && (
+                  <p className="text-xs text-red-500">Please enter a valid URL</p>
+                )}
+                {currentValue && isValidUrl && (
+                  <a
+                    href={formatUrl(currentValue)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-xs text-maasta-orange hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Preview link
+                  </a>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || Object.values(formData).some((value, index) => 
+                value && !validateUrl(value)
+              )}
+              className="bg-maasta-purple hover:bg-maasta-purple/90 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Save className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Social Links
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Current Links Preview */}
+      {Object.values(formData).some(value => value) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Link Preview</CardTitle>
+            <p className="text-sm text-gray-600">
+              How your links will appear on your public profile:
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {socialLinks.map((link) => {
+                const Icon = link.icon;
+                const currentValue = formData[link.key];
+                
+                if (!currentValue || !validateUrl(currentValue)) return null;
+                
+                return (
+                  <a
+                    key={link.key}
+                    href={formatUrl(currentValue)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-maasta-purple hover:text-white transition-all duration-300"
+                    title={link.label}
+                  >
+                    <Icon size={20} />
+                  </a>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Camera, Upload, X, RotateCcw, Check } from "lucide-react";
+import { Camera, Upload, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadProfileImage } from "@/utils/optimizedProfileImageUpload";
 
@@ -21,12 +21,10 @@ const ProfilePictureUpload = ({
   fullName 
 }: ProfilePictureUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,39 +62,26 @@ const ProfilePictureUpload = ({
     reader.readAsDataURL(file);
   };
 
-  const handleCropConfirm = () => {
+  const handleCropConfirm = async () => {
     if (!selectedFile) return;
     
-    // For now, we'll use the original file
-    // In a full implementation, you'd use canvas to crop the image
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewImage(e.target?.result as string);
-      setShowCropDialog(false);
-      handleUpload(selectedFile);
-    };
-    reader.readAsDataURL(selectedFile);
-  };
-
-  const handleUpload = async (file: File) => {
     try {
       setIsUploading(true);
+      setShowCropDialog(false);
       
-      const imageUrl = await uploadProfileImage(file, userId);
+      const imageUrl = await uploadProfileImage(selectedFile, userId);
       
       // Update parent component immediately
       onImageUpdate(imageUrl);
-      setPreviewImage(null);
       
       toast({
         title: "✅ Profile picture updated successfully!",
         description: "Your new profile picture is now live on your profile.",
       });
       
-      // Refresh after a short delay to show the new image
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Reset states
+      setSelectedFile(null);
+      setCropPreviewUrl(null);
       
     } catch (error: any) {
       console.error('Profile picture upload error:', error);
@@ -105,7 +90,6 @@ const ProfilePictureUpload = ({
         description: error.message || "Failed to upload profile picture. Please try again.",
         variant: "destructive"
       });
-      setPreviewImage(null);
     } finally {
       setIsUploading(false);
     }
@@ -116,7 +100,6 @@ const ProfilePictureUpload = ({
   };
 
   const cancelPreview = () => {
-    setPreviewImage(null);
     setShowCropDialog(false);
     setSelectedFile(null);
     setCropPreviewUrl(null);
@@ -134,7 +117,7 @@ const ProfilePictureUpload = ({
   };
 
   // Show only upload button if no image is set
-  if (!currentImageUrl && !previewImage) {
+  if (!currentImageUrl) {
     return (
       <>
         <div className="flex flex-col items-center">
@@ -207,9 +190,22 @@ const ProfilePictureUpload = ({
                 <X className="w-4 h-4 mr-2" />
                 Cancel
               </Button>
-              <Button onClick={handleCropConfirm} className="bg-maasta-orange hover:bg-maasta-orange/90 text-white">
-                <Check className="w-4 h-4 mr-2" />
-                Use This Photo
+              <Button 
+                onClick={handleCropConfirm} 
+                className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Upload className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Use This Photo
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -223,7 +219,7 @@ const ProfilePictureUpload = ({
       <div className="relative group">
         <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
           <AvatarImage 
-            src={previewImage || currentImageUrl} 
+            src={currentImageUrl} 
             alt={fullName}
             className="object-cover"
           />
@@ -246,20 +242,6 @@ const ProfilePictureUpload = ({
             </div>
           )}
         </div>
-
-        {/* Preview actions */}
-        {previewImage && (
-          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={cancelPreview}
-              className="bg-white"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
 
         {/* Hidden file input */}
         <input
@@ -317,12 +299,25 @@ const ProfilePictureUpload = ({
               <X className="w-4 h-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleCropConfirm} className="bg-maasta-orange hover:bg-maasta-orange/90 text-white">
-              <Check className="w-4 h-4 mr-2" />
-              Use This Photo
+            <Button 
+              onClick={handleCropConfirm} 
+              className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Upload className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Use This Photo
+                </>
+              )}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </Dialog>
       </Dialog>
     </>
   );
