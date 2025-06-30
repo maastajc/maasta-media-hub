@@ -50,8 +50,12 @@ const Profile = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Use the unified hook with better error handling
-  const { profile: rawProfileData, isLoading, isError, error, refetch } = useArtistProfile();
+  // Use the unified hook with reduced stale time for faster loading
+  const { profile: rawProfileData, isLoading, isError, error, refetch } = useArtistProfile(user?.id, {
+    enabled: !!user?.id,
+    refetchOnWindowFocus: false,
+    staleTime: 30000 // Reduced to 30 seconds
+  });
 
   // Get safe profile data with defaults
   const profileData = useSafeProfile(rawProfileData, user?.id);
@@ -62,22 +66,34 @@ const Profile = () => {
       return;
     }
 
-    // Check if this is a new user (no profile data after loading)
-    if (!isLoading && !isError && (!rawProfileData || !rawProfileData.full_name || rawProfileData.full_name === 'New User')) {
-      console.log('New user detected, showing welcome flow');
-      setShowWelcome(true);
-    }
-    
-    setIsInitializing(false);
+    // Shorter timeout for detecting new users
+    const timeout = setTimeout(() => {
+      if (!isLoading && !isError && (!rawProfileData || !rawProfileData.full_name || rawProfileData.full_name === 'New User')) {
+        console.log('New user detected, showing welcome flow');
+        setShowWelcome(true);
+      }
+      setIsInitializing(false);
+    }, 2000); // Reduced timeout
+
+    return () => clearTimeout(timeout);
   }, [user, navigate, isLoading, isError, rawProfileData]);
 
-  // Handle profile loading errors
+  // Handle profile loading errors with better user feedback
   useEffect(() => {
     if (isError && error) {
       console.error("Error loading profile:", error);
+      
+      // More specific error messages
+      let errorMessage = "We had trouble loading your profile.";
+      if (error.message?.includes('timeout')) {
+        errorMessage = "Profile loading timed out. Please check your internet connection and try again.";
+      } else if (error.message?.includes('not found')) {
+        errorMessage = "Profile not found. Please try refreshing the page.";
+      }
+      
       toast({
         title: "Profile Loading Error",
-        description: "We had trouble loading your profile. Please try refreshing the page.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -100,7 +116,7 @@ const Profile = () => {
     );
   }
 
-  // Loading state with better UX
+  // Enhanced loading state with timeout indicator
   if (isLoading || isInitializing) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -111,6 +127,11 @@ const Profile = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Loading Your Profile</h3>
               <p className="text-gray-600">Setting up your workspace...</p>
+              {isLoading && (
+                <p className="text-xs text-gray-500 mt-2">
+                  If this takes too long, try refreshing the page
+                </p>
+              )}
             </div>
           </div>
         </main>
@@ -119,7 +140,44 @@ const Profile = () => {
     );
   }
 
-  // Error boundary wrapper for profile components
+  // Error handling with retry option
+  if (isError || !profileData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <Card className="p-8 text-center max-w-lg">
+            <div className="mb-4 text-red-500">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Profile Loading Error</h2>
+            <p className="text-gray-600 mb-4">
+              {error?.message?.includes('timeout') 
+                ? "Connection timed out. Please check your internet connection and try again."
+                : "We're having trouble loading your profile. This might be a temporary issue."
+              }
+            </p>
+            
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button onClick={() => refetch()} className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Try Again
+              </Button>
+              <Button onClick={() => navigate("/")} variant="outline">
+                Go Home
+              </Button>
+            </div>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   const handleViewPublicProfile = () => {
     if (profileData?.id) {
       navigate(`/artists/${profileData.id}`);
@@ -149,7 +207,10 @@ const Profile = () => {
   };
 
   const handleProfilePictureUpdate = async (imageUrl: string) => {
-    refetch();
+    // Force a refetch with a small delay to ensure the update is captured
+    setTimeout(() => {
+      refetch();
+    }, 1000);
   };
 
   // Calculate profile completion percentage safely

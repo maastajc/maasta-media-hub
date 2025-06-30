@@ -4,9 +4,9 @@ import { ArtistByIdRow } from "./types";
 import { mapArtistByIdToArtist, mapFallbackArtistToArtist } from "./mappers";
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_RETRIES = 2;
-const TIMEOUT_MS = 12000; // 12 seconds
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 1; // Reduced retries
+const TIMEOUT_MS = 8000; // Reduced timeout to 8 seconds
+const RETRY_DELAY = 500;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -99,7 +99,6 @@ const fetchArtistByIdFallbackQuery = (id: string) => {
 export const fetchArtistById = async (id: string): Promise<Artist | null> => {
   return withRetry(async () => {
     console.log('Fetching artist by ID:', id);
-    console.log('Request URL:', window.location.href);
     
     if (!id || id === 'undefined' || id === 'null') {
       console.error('Invalid artist ID provided:', id);
@@ -113,10 +112,11 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       throw new Error(`Invalid artist ID format: ${id}`);
     }
     
-    const timeoutPromise = createTimeoutPromise('Profile loading timeout - please try again');
-    const fetchPromise = fetchArtistByIdQuery(id);
-
     try {
+      // Try main query first with reduced timeout
+      const timeoutPromise = createTimeoutPromise('Profile loading timeout - please try again', 6000);
+      const fetchPromise = fetchArtistByIdQuery(id);
+
       const result = await Promise.race([
         fetchPromise,
         timeoutPromise
@@ -124,46 +124,66 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
 
       if (result.error) {
         console.error('Database error fetching artist:', result.error);
-        console.error('Error code:', result.error.code);
-        console.error('Error message:', result.error.message);
         
         if (result.error.code === 'PGRST116') { 
-          console.log('Artist not found in main query');
-          throw new Error(`Artist not found with ID: ${id}`);
+          console.log('Artist not found in main query, trying fallback...');
+          
+          // Try fallback query with shorter timeout
+          const fallbackTimeoutPromise = createTimeoutPromise('Profile loading timeout - please try again', 4000);
+          const fallbackFetchPromise = fetchArtistByIdFallbackQuery(id);
+          
+          const fallbackResult = await Promise.race([
+            fallbackFetchPromise,
+            fallbackTimeoutPromise
+          ]) as { data: any; error: any };
+
+          if (fallbackResult.error) {
+            console.error('Fallback query also failed:', fallbackResult.error);
+            throw new Error(`Failed to load profile: ${fallbackResult.error.message}`);
+          }
+
+          const artistFromDb = fallbackResult.data;
+          if (!artistFromDb) {
+            console.error('No artist data returned from fallback query');
+            throw new Error(`No artist data returned for ID: ${id}`);
+          }
+
+          console.log(`Successfully fetched artist (fallback): ${artistFromDb.full_name}`);
+          return mapFallbackArtistToArtist(artistFromDb);
         }
         
-        console.log('Trying fallback query without joins...');
-        const fallbackResult = await fetchArtistByIdFallbackQuery(id);
-
-        if (fallbackResult.error) {
-          console.error('Fallback query also failed:', fallbackResult.error);
-          throw new Error(`Failed to load profile: ${fallbackResult.error.message}`);
-        }
-
-        const artistFromDb = fallbackResult.data;
-        if (!artistFromDb) {
-          console.error('No artist data returned from fallback query');
-          throw new Error(`No artist data returned for ID: ${id}`);
-        }
-
-        console.log(`Successfully fetched artist (fallback): ${artistFromDb.full_name}`);
-        
-        return mapFallbackArtistToArtist(artistFromDb);
+        throw new Error(`Database error: ${result.error.message}`);
       }
 
       const artistFromDb = result.data;
-
       if (!artistFromDb) {
         console.error('No artist data returned from main query');
         throw new Error(`No artist data returned for ID: ${id}`);
       }
 
       console.log(`Successfully fetched artist: ${artistFromDb.full_name}`);
-      
       return mapArtistByIdToArtist(artistFromDb);
+      
     } catch (error: any) {
       if (error.message?.includes('timeout')) {
-        throw new Error('Connection timeout - please try again');
+        console.error('Profile fetch timeout, trying simplified approach...');
+        
+        // Final fallback with minimal data
+        try {
+          const { data, error: simpleError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', id)
+            .single();
+            
+          if (simpleError || !data) {
+            throw new Error('Profile not found or connection issue');
+          }
+          
+          return mapFallbackArtistToArtist(data);
+        } catch (finalError) {
+          throw new Error('Connection timeout - please check your internet and try again');
+        }
       }
       throw error;
     }

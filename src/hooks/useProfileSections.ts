@@ -80,20 +80,19 @@ export const useProfileSections = (userId?: string) => {
     },
     onError: (error: any) => {
       console.error('Error saving skill:', error);
-      // Handle duplicate key constraint specifically
-      if (error.message?.includes('duplicate key')) {
-        toast({
-          title: '❌ Skill already exists',
-          description: 'This skill is already in your profile.',
-          variant: 'destructive'
-        });
-      } else {
-        toast({
-          title: '❌ Failed to save skill',
-          description: error.message || 'Failed to save skill. Please try again.',
-          variant: 'destructive'
-        });
+      let errorMessage = 'Failed to save skill. Please try again.';
+      
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique')) {
+        errorMessage = 'This skill already exists in your profile.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
       }
+      
+      toast({
+        title: '❌ Failed to save skill',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
@@ -164,10 +163,11 @@ export const useProfileSections = (userId?: string) => {
     },
   });
 
-  // Language mutations
+  // Language mutations with better error handling
   const saveLanguageMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!userId) throw new Error('User ID is required');
+      console.log('Saving language:', data);
       return saveLanguage(data, userId);
     },
     onSuccess: () => {
@@ -179,20 +179,21 @@ export const useProfileSections = (userId?: string) => {
     },
     onError: (error: any) => {
       console.error('Error saving language:', error);
-      // Handle duplicate key constraint specifically
-      if (error.message?.includes('duplicate key')) {
-        toast({
-          title: '❌ Language already exists',
-          description: 'This language is already in your profile.',
-          variant: 'destructive'
-        });
-      } else {
-        toast({
-          title: '❌ Failed to save language',
-          description: error.message || 'Failed to save language. Please try again.',
-          variant: 'destructive'
-        });
+      let errorMessage = 'Failed to save language. Please try again.';
+      
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique')) {
+        errorMessage = 'This language is already in your profile.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (error.message?.includes('proficiency')) {
+        errorMessage = 'Please select a valid proficiency level.';
       }
+      
+      toast({
+        title: '❌ Failed to save language',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
@@ -218,10 +219,11 @@ export const useProfileSections = (userId?: string) => {
     },
   });
 
-  // Tool mutations
+  // Tool mutations with better error handling
   const saveToolMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!userId) throw new Error('User ID is required');
+      console.log('Saving tool:', data);
       return saveTool(data, userId);
     },
     onSuccess: () => {
@@ -233,20 +235,21 @@ export const useProfileSections = (userId?: string) => {
     },
     onError: (error: any) => {
       console.error('Error saving tool:', error);
-      // Handle duplicate key constraint specifically
-      if (error.message?.includes('duplicate key')) {
-        toast({
-          title: '❌ Tool already exists',
-          description: 'This tool/software is already in your profile.',
-          variant: 'destructive'
-        });
-      } else {
-        toast({
-          title: '❌ Failed to save tool',
-          description: error.message || 'Failed to save tool. Please try again.',
-          variant: 'destructive'
-        });
+      let errorMessage = 'Failed to save tool. Please try again.';
+      
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique')) {
+        errorMessage = 'This tool/software is already in your profile.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (error.message?.includes('tool_name')) {
+        errorMessage = 'Please enter a valid tool name.';
       }
+      
+      toast({
+        title: '❌ Failed to save tool',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
