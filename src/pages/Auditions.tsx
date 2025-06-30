@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
 import CollapsibleAuditionFilters from "@/components/auditions/CollapsibleAuditionFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
+import AuditionSearch from "@/components/auditions/AuditionSearch";
 import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -43,6 +44,7 @@ const AUDITIONS_PER_PAGE = 12;
 const Auditions = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [auditions, setAuditions] = useState<AuditionData[]>([]);
+  const [filteredAuditions, setFilteredAuditions] = useState<AuditionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -50,6 +52,7 @@ const Auditions = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [compensationFilter, setCompensationFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   const [userApplications, setUserApplications] = useState<AuditionApplication[]>([]);
   const [page, setPage] = useState(1);
@@ -59,6 +62,27 @@ const Auditions = () => {
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
 
   const selectedCategory = searchParams.get('category') || '';
+
+  // Search filtering function
+  const filterAuditionsBySearch = (auditions: AuditionData[], query: string) => {
+    if (!query.trim()) return auditions;
+    
+    const searchLower = query.toLowerCase();
+    return auditions.filter(audition => 
+      audition.title.toLowerCase().includes(searchLower) ||
+      audition.description.toLowerCase().includes(searchLower) ||
+      audition.location.toLowerCase().includes(searchLower) ||
+      audition.requirements.toLowerCase().includes(searchLower) ||
+      audition.category.toLowerCase().includes(searchLower) ||
+      audition.tags.some(tag => tag.toLowerCase().includes(searchLower))
+    );
+  };
+
+  // Apply search filter whenever auditions or search query changes
+  useEffect(() => {
+    const filtered = filterAuditionsBySearch(auditions, searchQuery);
+    setFilteredAuditions(filtered);
+  }, [auditions, searchQuery]);
 
   useEffect(() => {
     const fetchUserApplications = async () => {
@@ -272,6 +296,7 @@ const Auditions = () => {
     setLocationFilter("");
     setExperienceFilter("");
     setCompensationFilter("");
+    setSearchQuery("");
   };
 
   const toggleTag = (tag: string) => {
@@ -322,6 +347,14 @@ const Auditions = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Open Auditions</h2>
             <CacheRefreshButton onRefresh={handleRetry} />
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <AuditionSearch 
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
           </div>
           
           {error && (
@@ -378,7 +411,7 @@ const Auditions = () => {
           />
           
           <AuditionsGrid 
-            auditions={auditions} 
+            auditions={filteredAuditions} 
             loading={loading && auditions.length === 0}
             error={null}
             onClearFilters={() => {
@@ -388,6 +421,7 @@ const Auditions = () => {
               setLocationFilter("");
               setExperienceFilter("");
               setCompensationFilter("");
+              setSearchQuery("");
             }}
             onRetry={() => fetchAuditions(1, true)}
             applicationStatusMap={applicationStatusMap}
