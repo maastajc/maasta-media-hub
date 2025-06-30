@@ -1,28 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Artist {
-  id: string;
-  full_name: string;
-  email: string;
-  profile_picture_url?: string;
-  category: string;
-  experience_level: string;
-  bio?: string;
-  location?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  years_of_experience?: number;
-  skills?: string[];
-  created_at: string;
-  status: string;
-  personal_website?: string;
-  linkedin?: string;
-  youtube_vimeo?: string;
-  instagram?: string;
-}
+import { Artist } from '@/types/artist';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -95,7 +74,6 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         category: profile.category || 'actor',
         experience_level: profile.experience_level || 'beginner',
         bio: profile.bio,
-        location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : profile.city || profile.state,
         city: profile.city,
         state: profile.state,
         country: profile.country,
@@ -106,8 +84,22 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         personal_website: profile.personal_website,
         linkedin: profile.linkedin,
         youtube_vimeo: profile.youtube_vimeo,
-        instagram: profile.instagram
-      }));
+        instagram: profile.instagram,
+        verified: profile.verified || false,
+        phone_number: profile.phone_number,
+        date_of_birth: profile.date_of_birth,
+        gender: profile.gender,
+        cover_image_url: profile.cover_image_url,
+        preferred_domains: profile.preferred_domains,
+        role: profile.role || 'artist',
+        work_preference: profile.work_preference || 'any',
+        willing_to_relocate: profile.willing_to_relocate || false,
+        imdb_profile: profile.imdb_profile,
+        behance: profile.behance,
+        association_membership: profile.association_membership,
+        rate_card: profile.rate_card,
+        updated_at: profile.updated_at
+      })) as Artist[];
 
       console.log(`Successfully fetched ${transformedData.length} artists`);
       setArtists(transformedData);
@@ -156,8 +148,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       // Location filter
       if (filters.location) {
         const locationLower = filters.location.toLowerCase();
-        if (!artist.location?.toLowerCase().includes(locationLower) &&
-            !artist.city?.toLowerCase().includes(locationLower) &&
+        if (!artist.city?.toLowerCase().includes(locationLower) &&
             !artist.state?.toLowerCase().includes(locationLower)) {
           return false;
         }
