@@ -1,13 +1,13 @@
 
-// Simplified cache management system
+// Enhanced cache management system with aggressive cache clearing
 class CacheManager {
   private static instance: CacheManager;
   private version: string;
   private cachePrefix = 'maasta_app_';
 
   private constructor() {
-    // Use app version instead of timestamp for better stability
-    this.version = '1.0.0';
+    // Use timestamp for aggressive cache busting
+    this.version = Date.now().toString();
     this.initializeVersion();
   }
 
@@ -19,59 +19,84 @@ class CacheManager {
   }
 
   private initializeVersion() {
-    const storedVersion = localStorage.getItem(`${this.cachePrefix}version`);
-    
-    // Only clear cache if version actually changed, not on every load
-    if (storedVersion && storedVersion !== this.version) {
-      console.log('App version changed, clearing caches');
-      this.clearAllCaches();
-      localStorage.setItem(`${this.cachePrefix}version`, this.version);
-    } else if (!storedVersion) {
-      localStorage.setItem(`${this.cachePrefix}version`, this.version);
-    }
+    // Always clear cache on app initialization
+    console.log('Initializing cache manager - clearing all caches');
+    this.clearAllCaches();
+    localStorage.setItem(`${this.cachePrefix}version`, this.version);
   }
 
   clearAllCaches() {
-    // Clear localStorage with our prefix only
+    // Clear localStorage with our prefix
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith(this.cachePrefix)) {
         localStorage.removeItem(key);
       }
     });
 
-    // Clear sessionStorage with our prefix only
+    // Clear sessionStorage with our prefix
     Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith(this.cachePrefix)) {
         sessionStorage.removeItem(key);
       }
     });
 
-    console.log('App caches cleared');
+    // Clear browser cache if supported
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(cacheName => {
+          caches.delete(cacheName);
+        });
+      });
+    }
+
+    console.log('All app caches cleared');
   }
 
-  getCacheKey(key: string): string {
-    return `${this.cachePrefix}${key}`;
-  }
-
-  invalidateCache(pattern?: string) {
+  // Force clear cache for specific patterns
+  forceClearCache(pattern?: string) {
     if (pattern) {
       Object.keys(localStorage).forEach(key => {
-        if (key.includes(pattern) && key.startsWith(this.cachePrefix)) {
+        if (key.includes(pattern) || key.startsWith(this.cachePrefix)) {
           localStorage.removeItem(key);
         }
       });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes(pattern) || key.startsWith(this.cachePrefix)) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } else {
+      this.clearAllCaches();
     }
+  }
+
+  getCacheKey(key: string): string {
+    return `${this.cachePrefix}${key}_${this.version}`;
+  }
+
+  invalidateCache(pattern?: string) {
+    this.forceClearCache(pattern);
   }
 
   getVersion(): string {
     return this.version;
   }
+
+  // Generate new version to bust cache
+  bustCache() {
+    this.version = Date.now().toString();
+    localStorage.setItem(`${this.cachePrefix}version`, this.version);
+    this.clearAllCaches();
+  }
 }
 
 export const cacheManager = CacheManager.getInstance();
 
-// Simplified cache headers for API requests only
+// Enhanced cache headers for API requests
 export const getApiHeaders = () => ({
   'X-Requested-With': 'XMLHttpRequest',
-  'Cache-Control': 'no-cache'
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
 });

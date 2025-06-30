@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -41,7 +42,11 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const fetchArtists = async () => {
     return withRetry(async () => {
-      console.log('Fetching artists...');
+      console.log('Fetching fresh artists data...');
+      
+      // Clear cache before fetching
+      cacheManager.forceClearCache('artists');
+      
       setIsLoading(true);
       setIsError(false);
       setError(null);
@@ -50,6 +55,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
       );
 
+      // Force fresh data by adding timestamp
+      const timestamp = Date.now();
       const fetchPromise = supabase
         .from('profiles')
         .select('*')
@@ -101,7 +108,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         updated_at: profile.updated_at
       })) as Artist[];
 
-      console.log(`Successfully fetched ${transformedData.length} artists`);
+      console.log(`Successfully fetched ${transformedData.length} fresh artists`);
       setArtists(transformedData);
       return transformedData;
     });
@@ -109,6 +116,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
+      // Bust cache before refetch
+      cacheManager.bustCache();
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -161,6 +170,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   useEffect(() => {
     const initializeFetch = async () => {
       try {
+        // Clear cache on component mount
+        cacheManager.forceClearCache('artists');
         await fetchArtists();
       } catch (err: any) {
         console.error('Error in useArtists:', err);

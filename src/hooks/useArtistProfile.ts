@@ -25,17 +25,20 @@ export const useArtistProfile = (
   const {
     enabled = true,
     refetchOnWindowFocus = false,
-    staleTime = 0 // Remove stale time to always fetch fresh data
+    staleTime = 0 // Always fetch fresh data
   } = options;
   
   const profileQuery = useQuery({
-    queryKey: ['artistProfile', targetId, cacheManager.getVersion()],
+    queryKey: ['artistProfile', targetId, Date.now()], // Always use fresh timestamp
     queryFn: async () => {
       if (!targetId) {
         throw new Error('No artist ID provided');
       }
       
-      console.log('Fetching artist profile for ID with cache-busting:', targetId);
+      console.log('Fetching fresh artist profile for ID:', targetId);
+      
+      // Clear cache before fetching
+      cacheManager.forceClearCache('profile');
       
       const profile = await fetchArtistById(targetId);
       
@@ -46,8 +49,8 @@ export const useArtistProfile = (
       return profile;
     },
     enabled: !!targetId && enabled,
-    staleTime,
-    refetchOnWindowFocus,
+    staleTime: 0, // Never use stale data
+    refetchOnWindowFocus: true, // Always refetch on focus
     retry: 2,
     retryDelay: 500,
     gcTime: 0, // Don't cache the data
@@ -72,8 +75,9 @@ export const useArtistProfile = (
       return result;
     },
     onSuccess: (updatedProfile) => {
-      // Clear cache and invalidate queries
-      cacheManager.invalidateCache('profile');
+      // Clear all cache and invalidate queries
+      cacheManager.bustCache();
+      queryClient.clear(); // Clear all query cache
       queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
       queryClient.invalidateQueries({ queryKey: ['artists'] });
       queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
@@ -90,8 +94,9 @@ export const useArtistProfile = (
   
   const refreshProfile = async () => {
     try {
-      console.log('Refreshing profile data...');
-      cacheManager.invalidateCache('profile');
+      console.log('Force refreshing profile data...');
+      cacheManager.bustCache();
+      queryClient.clear();
       const result = await profileQuery.refetch();
       return result;
     } catch (error: any) {

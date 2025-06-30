@@ -8,6 +8,7 @@ import CollapsibleArtistFilters from "@/components/artists/CollapsibleArtistFilt
 import ArtistsGrid from "@/components/artists/ArtistsGrid";
 import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { useArtists } from "@/hooks/useArtists";
+import { cacheManager } from "@/utils/cacheManager";
 import { toast } from "sonner";
 
 const Artists = () => {
@@ -27,9 +28,15 @@ const Artists = () => {
     refetch,
     filterArtists
   } = useArtists({
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Always refetch on focus
     staleTime: 0 // Always fetch fresh data
   });
+
+  // Clear cache on component mount
+  useEffect(() => {
+    console.log('Artists page mounted - clearing cache');
+    cacheManager.forceClearCache('artists');
+  }, []);
 
   // Extract unique tags from artists data
   const uniqueTags = Array.from(
@@ -94,9 +101,11 @@ const Artists = () => {
     setExperienceFilter("");
   };
 
-  const handleRefresh = () => {
-    refetch();
-    toast.success("Refreshing artists...");
+  const handleRefresh = async () => {
+    console.log('Manual refresh triggered - clearing all cache');
+    cacheManager.bustCache();
+    await refetch();
+    toast.success("Fresh data loaded!");
   };
 
   useEffect(() => {
