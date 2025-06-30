@@ -34,6 +34,8 @@ import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import MediaSection from "@/components/profile/MediaSection";
 import AwardsSection from "@/components/profile/AwardsSection";
+import CoverImageUpload from "@/components/profile/CoverImageUpload";
+import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -41,6 +43,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
+  const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>();
 
   const {
     data: profileData,
@@ -56,6 +60,13 @@ const Profile = () => {
     refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    if (profileData) {
+      setProfileImageUrl(profileData.profile_picture_url);
+      setCoverImageUrl(profileData.cover_image_url);
+    }
+  }, [profileData]);
+
   const handleProfileUpdate = () => {
     refetch();
     toast.success("Profile updated successfully!");
@@ -63,7 +74,7 @@ const Profile = () => {
 
   const handleViewPublicProfile = () => {
     if (profileData?.id) {
-      window.open(`/artist/${profileData.id}`, '_blank');
+      navigate(`/artist/${profileData.id}`);
     }
   };
 
@@ -74,6 +85,30 @@ const Profile = () => {
       .join('')
       .slice(0, 2);
   };
+
+  // Scroll spy functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['overview', 'projects', 'education', 'skills', 'awards', 'media'];
+      const scrollPosition = window.scrollY + 200;
+
+      for (const section of sections) {
+        const element = document.getElementById(`section-${section}`);
+        if (element) {
+          const offsetTop = element.offsetTop;
+          const offsetHeight = element.offsetHeight;
+          
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveTab(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -123,9 +158,9 @@ const Profile = () => {
       <div className="relative">
         {/* Cover Image */}
         <div className="h-64 bg-gradient-to-r from-maasta-orange/20 to-orange-100/50 relative overflow-hidden">
-          {profileData.cover_image_url ? (
+          {coverImageUrl ? (
             <img 
-              src={profileData.cover_image_url} 
+              src={coverImageUrl} 
               alt="Cover" 
               className="w-full h-full object-cover"
             />
@@ -137,6 +172,15 @@ const Profile = () => {
               </div>
             </div>
           )}
+          
+          {/* Cover Image Upload Overlay */}
+          <div className="absolute top-4 right-4">
+            <CoverImageUpload
+              currentImageUrl={coverImageUrl}
+              onImageUpdate={setCoverImageUrl}
+              userId={user?.id || ""}
+            />
+          </div>
         </div>
 
         {/* Profile Info Overlay */}
@@ -146,16 +190,12 @@ const Profile = () => {
               <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Profile Image */}
                 <div className="relative flex-shrink-0">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage 
-                      src={profileData.profile_picture_url} 
-                      alt={profileData.full_name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
-                      {getInitials(profileData.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <ProfilePictureUpload
+                    currentImageUrl={profileImageUrl}
+                    onImageUpdate={setProfileImageUrl}
+                    userId={user?.id || ""}
+                    fullName={profileData.full_name}
+                  />
                 </div>
 
                 {/* Profile Details */}
@@ -269,187 +309,244 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile Content Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-8">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <User size={16} />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="projects" className="flex items-center gap-2">
-              <Briefcase size={16} />
-              <span className="hidden sm:inline">Projects</span>
-            </TabsTrigger>
-            <TabsTrigger value="education" className="flex items-center gap-2">
-              <GraduationCap size={16} />
-              <span className="hidden sm:inline">Education</span>
-            </TabsTrigger>
-            <TabsTrigger value="skills" className="flex items-center gap-2">
-              <Brain size={16} />
-              <span className="hidden sm:inline">Skills</span>
-            </TabsTrigger>
-            <TabsTrigger value="awards" className="flex items-center gap-2">
-              <Award size={16} />
-              <span className="hidden sm:inline">Awards</span>
-            </TabsTrigger>
-            <TabsTrigger value="media" className="flex items-center gap-2">
-              <FileText size={16} />
-              <span className="hidden sm:inline">Media</span>
-            </TabsTrigger>
-          </TabsList>
+      {/* Fixed Navigation Tabs */}
+      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
+        <div className="max-w-6xl mx-auto px-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-6 mb-0 rounded-none border-0 bg-transparent h-auto p-0">
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-overview')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <User size={16} />
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="projects" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-projects')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <Briefcase size={16} />
+                <span className="hidden sm:inline">Projects</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="education" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-education')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <GraduationCap size={16} />
+                <span className="hidden sm:inline">Education</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="skills" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-skills')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <Brain size={16} />
+                <span className="hidden sm:inline">Skills</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="awards" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-awards')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <Award size={16} />
+                <span className="hidden sm:inline">Awards</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="media" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-media')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <FileText size={16} />
+                <span className="hidden sm:inline">Media</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
 
-          <TabsContent value="overview">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
+      {/* Profile Content - Single scrollable container */}
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
+        {/* Overview Section */}
+        <div id="section-overview" className="scroll-mt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Information */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-600">Full Name:</span>
+                      <p className="text-gray-900">{profileData.full_name}</p>
+                    </div>
+                    {profileData.bio && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Bio:</span>
+                        <p className="text-gray-900">{profileData.bio}</p>
+                      </div>
+                    )}
+                    {profileData.phone_number && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Phone:</span>
+                        <p className="text-gray-900">{profileData.phone_number}</p>
+                      </div>
+                    )}
+                    {(profileData.city || profileData.state || profileData.country) && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Location:</span>
+                        <p className="text-gray-900">
+                          {[profileData.city, profileData.state, profileData.country].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {profileData.preferred_domains && (
                 <Card>
                   <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">About</h3>
-                    {profileData.bio ? (
-                      <p className="text-gray-700 leading-relaxed">{profileData.bio}</p>
-                    ) : (
-                      <p className="text-gray-500 italic">No bio available</p>
-                    )}
+                    <h3 className="text-lg font-semibold mb-4">Available For</h3>
+                    <p className="text-gray-700">{profileData.preferred_domains}</p>
                   </CardContent>
                 </Card>
+              )}
+            </div>
 
-                {profileData.preferred_domains && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">Available For</h3>
-                      <p className="text-gray-700">{profileData.preferred_domains}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Work Preferences</h3>
+                  <div className="space-y-3">
+                    {profileData.work_preference && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Work Type:</span>
+                        <p className="text-gray-900 capitalize">{profileData.work_preference.replace('_', ' ')}</p>
+                      </div>
+                    )}
+                    {profileData.experience_level && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Experience:</span>
+                        <p className="text-gray-900 capitalize">{profileData.experience_level}</p>
+                      </div>
+                    )}
+                    {profileData.years_of_experience !== undefined && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Years:</span>
+                        <p className="text-gray-900">{profileData.years_of_experience}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
+              {/* Portfolio Links */}
+              {(profileData.personal_website || profileData.imdb_profile || profileData.behance || profileData.youtube_vimeo) && (
                 <Card>
                   <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Work Preferences</h3>
-                    <div className="space-y-3">
-                      {profileData.work_preference && (
-                        <div>
-                          <span className="text-sm font-medium text-gray-600">Work Type:</span>
-                          <p className="text-gray-900 capitalize">{profileData.work_preference.replace('_', ' ')}</p>
-                        </div>
+                    <h3 className="text-lg font-semibold mb-4">Portfolio Links</h3>
+                    <div className="space-y-2">
+                      {profileData.personal_website && (
+                        <a 
+                          href={profileData.personal_website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                        >
+                          <Globe size={16} />
+                          <span>Personal Website</span>
+                        </a>
                       )}
-                      {profileData.experience_level && (
-                        <div>
-                          <span className="text-sm font-medium text-gray-600">Experience:</span>
-                          <p className="text-gray-900 capitalize">{profileData.experience_level}</p>
-                        </div>
+                      {profileData.imdb_profile && (
+                        <a 
+                          href={profileData.imdb_profile} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                        >
+                          <FileText size={16} />
+                          <span>IMDb Profile</span>
+                        </a>
                       )}
-                      {profileData.years_of_experience !== undefined && (
-                        <div>
-                          <span className="text-sm font-medium text-gray-600">Years:</span>
-                          <p className="text-gray-900">{profileData.years_of_experience}</p>
-                        </div>
+                      {profileData.behance && (
+                        <a 
+                          href={profileData.behance} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                        >
+                          <Camera size={16} />
+                          <span>Behance</span>
+                        </a>
+                      )}
+                      {profileData.youtube_vimeo && (
+                        <a 
+                          href={profileData.youtube_vimeo} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                        >
+                          <Youtube size={16} />
+                          <span>YouTube/Vimeo</span>
+                        </a>
                       )}
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Portfolio Links */}
-                {(profileData.personal_website || profileData.imdb_profile || profileData.behance || profileData.youtube_vimeo) && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">Portfolio Links</h3>
-                      <div className="space-y-2">
-                        {profileData.personal_website && (
-                          <a 
-                            href={profileData.personal_website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-maasta-orange hover:underline"
-                          >
-                            <Globe size={16} />
-                            <span>Personal Website</span>
-                          </a>
-                        )}
-                        {profileData.imdb_profile && (
-                          <a 
-                            href={profileData.imdb_profile} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-maasta-orange hover:underline"
-                          >
-                            <FileText size={16} />
-                            <span>IMDb Profile</span>
-                          </a>
-                        )}
-                        {profileData.behance && (
-                          <a 
-                            href={profileData.behance} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-maasta-orange hover:underline"
-                          >
-                            <Camera size={16} />
-                            <span>Behance</span>
-                          </a>
-                        )}
-                        {profileData.youtube_vimeo && (
-                          <a 
-                            href={profileData.youtube_vimeo} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-maasta-orange hover:underline"
-                          >
-                            <Youtube size={16} />
-                            <span>YouTube/Vimeo</span>
-                          </a>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              )}
             </div>
-          </TabsContent>
+          </div>
+        </div>
 
-          <TabsContent value="projects">
-            <ProjectsSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-          </TabsContent>
+        {/* Projects Section */}
+        <div id="section-projects" className="scroll-mt-24">
+          <ProjectsSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
 
-          <TabsContent value="education">
-            <EducationSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-          </TabsContent>
+        {/* Education Section */}
+        <div id="section-education" className="scroll-mt-24">
+          <EducationSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
 
-          <TabsContent value="skills">
-            <SkillsSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-          </TabsContent>
+        {/* Skills Section */}
+        <div id="section-skills" className="scroll-mt-24">
+          <SkillsSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
 
-          <TabsContent value="awards">
-            <AwardsSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-          </TabsContent>
+        {/* Awards Section */}
+        <div id="section-awards" className="scroll-mt-24">
+          <AwardsSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
 
-          <TabsContent value="media">
-            <MediaSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Media Section */}
+        <div id="section-media" className="scroll-mt-24">
+          <MediaSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
       </div>
 
       {/* Profile Edit Form */}

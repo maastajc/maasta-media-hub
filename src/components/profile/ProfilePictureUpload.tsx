@@ -114,75 +114,22 @@ const ProfilePictureUpload = ({
     return 'U';
   };
 
-  // Show only upload button if no image is set
-  if (!currentImageUrl) {
-    return (
-      <>
-        <div className="flex flex-col items-center">
-          {/* Avatar with first letter */}
-          <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white mb-4">
-            <AvatarFallback className="text-6xl font-bold bg-maasta-purple text-white rounded-2xl">
-              {getAvatarLetter()}
-            </AvatarFallback>
-          </Avatar>
-          
-          {/* Upload button */}
-          <Button
-            onClick={triggerFileSelect}
-            disabled={isUploading}
-            className="bg-maasta-orange hover:bg-maasta-orange/90 text-white px-6 py-2 rounded-full"
-          >
-            {isUploading ? (
-              <>
-                <Upload className="w-4 h-4 mr-2 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Camera className="w-4 h-4 mr-2" />
-                Add Photo
-              </>
-            )}
-          </Button>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        </div>
-
-        {/* Image Cropper */}
-        {selectedImageUrl && (
-          <ImageCropper
-            isOpen={showCropper}
-            onClose={handleCropCancel}
-            onCropComplete={handleCropComplete}
-            imageUrl={selectedImageUrl}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
     <>
       <div className="relative group">
-        <Avatar className="w-48 h-48 rounded-2xl shadow-xl border-4 border-white">
+        <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
           <AvatarImage 
             src={currentImageUrl} 
             alt={fullName}
             className="object-cover"
           />
-          <AvatarFallback className="text-6xl font-bold bg-maasta-purple text-white rounded-2xl">
+          <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
             {getAvatarLetter()}
           </AvatarFallback>
         </Avatar>
         
         {/* Upload overlay */}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center cursor-pointer">
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer">
           {isUploading ? (
             <div className="text-white text-center">
               <Upload className="w-8 h-8 mx-auto mb-2 animate-spin" />
@@ -191,7 +138,7 @@ const ProfilePictureUpload = ({
           ) : (
             <div className="text-white text-center" onClick={triggerFileSelect}>
               <Camera className="w-8 h-8 mx-auto mb-2" />
-              <span className="text-sm">Change Photo</span>
+              <span className="text-sm">{currentImageUrl ? 'Change Photo' : 'Add Photo'}</span>
             </div>
           )}
         </div>
@@ -205,7 +152,7 @@ const ProfilePictureUpload = ({
           className="hidden"
         />
 
-        {/* Upload button for mobile */}
+        {/* Upload button for mobile/fallback */}
         <Button
           onClick={triggerFileSelect}
           disabled={isUploading}
@@ -214,7 +161,7 @@ const ProfilePictureUpload = ({
           variant="outline"
         >
           <Camera className="w-4 h-4 mr-2" />
-          Change Photo
+          {currentImageUrl ? 'Change Photo' : 'Add Photo'}
         </Button>
       </div>
 
