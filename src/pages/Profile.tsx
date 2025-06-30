@@ -5,9 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchArtistById } from "@/services/artist/artistById";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Briefcase, GraduationCap, Brain, FileText, Award } from "lucide-react";
+import { User, Briefcase, GraduationCap, Brain, FileText, Award, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ProfileHero from "@/components/profile/ProfileHero";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
 import ProjectsSection from "@/components/profile/ProjectsSection";
@@ -20,6 +22,7 @@ import { toast } from "sonner";
 
 const Profile = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
@@ -40,6 +43,12 @@ const Profile = () => {
   const handleProfileUpdate = () => {
     refetch();
     toast.success("Profile updated successfully!");
+  };
+
+  const handleViewPublicProfile = () => {
+    if (profileData?.id) {
+      navigate(`/artist/${profileData.id}`);
+    }
   };
 
   useEffect(() => {
@@ -92,6 +101,18 @@ const Profile = () => {
       />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Public Profile View Button */}
+        <div className="mb-6 flex justify-end">
+          <Button
+            onClick={handleViewPublicProfile}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ExternalLink size={16} />
+            View Public Profile
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">

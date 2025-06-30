@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { X, Check, RotateCw, Move } from "lucide-react";
+import { X, Check, RotateCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface ImageCropperProps {
   isOpen: boolean;
@@ -43,8 +43,8 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     canvas.width = canvasSize;
     canvas.height = canvasSize;
 
-    // Clear canvas with dark background
-    ctx.fillStyle = '#1f2937';
+    // Clear canvas with light background
+    ctx.fillStyle = '#f3f4f6';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     
     // Save context
@@ -76,10 +76,9 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     // Restore context
     ctx.restore();
     
-    // Draw circle border
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 4]);
+    // Draw clean circle border without dashed lines
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
     ctx.stroke();
@@ -110,12 +109,31 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     setImageLoaded(true);
   };
 
+  // Directional movement functions
+  const moveImage = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const moveAmount = 10;
+    setPosition(prev => {
+      switch (direction) {
+        case 'up':
+          return { ...prev, y: prev.y - moveAmount };
+        case 'down':
+          return { ...prev, y: prev.y + moveAmount };
+        case 'left':
+          return { ...prev, x: prev.x - moveAmount };
+        case 'right':
+          return { ...prev, x: prev.x + moveAmount };
+        default:
+          return prev;
+      }
+    });
+  };
+
   const handleCropConfirm = () => {
     const canvas = canvasRef.current;
     const image = imageRef.current;
     if (!canvas || !image) return;
 
-    // Create final crop canvas with transparent background
+    // Create final crop canvas with high quality
     const cropCanvas = document.createElement('canvas');
     const cropCtx = cropCanvas.getContext('2d');
     if (!cropCtx) return;
@@ -147,12 +165,12 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     
     cropCtx.restore();
 
-    // Convert to blob with high quality
+    // Convert to blob with high quality (no quality loss)
     cropCanvas.toBlob((blob) => {
       if (blob) {
         onCropComplete(blob);
       }
-    }, 'image/jpeg', 0.95);
+    }, 'image/jpeg', 1.0);
   };
 
   return (
@@ -164,7 +182,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
         
         <div className="space-y-4">
           {/* Crop Canvas */}
-          <div className="relative bg-gray-800 rounded-lg overflow-hidden mx-auto" style={{ width: '300px', height: '300px' }}>
+          <div className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto" style={{ width: '300px', height: '300px' }}>
             <canvas
               ref={canvasRef}
               width={300}
@@ -189,11 +207,9 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
 
           {/* Controls */}
           <div className="space-y-4">
+            {/* Zoom Control */}
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Move size={16} />
-                Zoom
-              </label>
+              <label className="text-sm font-medium">Zoom</label>
               <Slider
                 value={scale}
                 onValueChange={setScale}
@@ -204,7 +220,52 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
               />
             </div>
             
-            <div className="flex items-center gap-2">
+            {/* Movement Controls */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Position</label>
+              <div className="grid grid-cols-3 gap-2 w-fit mx-auto">
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moveImage('up')}
+                  className="p-2"
+                >
+                  <ArrowUp size={16} />
+                </Button>
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moveImage('left')}
+                  className="p-2"
+                >
+                  <ArrowLeft size={16} />
+                </Button>
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moveImage('right')}
+                  className="p-2"
+                >
+                  <ArrowRight size={16} />
+                </Button>
+                <div></div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moveImage('down')}
+                  className="p-2"
+                >
+                  <ArrowDown size={16} />
+                </Button>
+                <div></div>
+              </div>
+            </div>
+            
+            {/* Rotate and Reset */}
+            <div className="flex items-center gap-2 justify-center">
               <Button
                 variant="outline"
                 size="sm"
@@ -228,7 +289,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
           </div>
 
           <p className="text-xs text-gray-500 text-center">
-            Drag to reposition • Use zoom slider to scale • Click rotate to turn
+            Drag to reposition • Use directional buttons for precise movement • Use zoom slider to scale
           </p>
         </div>
 
