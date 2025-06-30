@@ -317,7 +317,7 @@ const ProfilePictureUpload = ({
               )}
             </Button>
           </DialogFooter>
-        </Dialog>
+        </DialogContent>
       </Dialog>
     </>
   );
