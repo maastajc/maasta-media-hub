@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -22,15 +22,27 @@ const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   requirements: z.string().min(1, 'Requirements are required'),
-  location: z.string().min(1, 'Location is required'),
+  audition_type: z.enum(['online', 'offline'], { required_error: 'Please select audition type' }),
+  location: z.string().optional(),
   deadline: z.string().optional(),
   audition_date: z.string().optional(),
   project_details: z.string().optional(),
-  compensation: z.string().optional(),
+  salary_amount: z.string().optional(),
+  salary_duration: z.enum(['per_day', 'per_month', 'whole_project']).optional(),
+  min_age: z.string().optional(),
+  max_age: z.string().optional(),
   category: z.string().optional(),
-  age_range: z.string().optional(),
   gender: z.string().optional(),
   experience_level: z.string().optional(),
+}).refine((data) => {
+  // If offline audition, location is required
+  if (data.audition_type === 'offline' && !data.location?.trim()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Location is required for offline auditions",
+  path: ["location"],
 });
 
 const CreateAudition = () => {
@@ -48,17 +60,29 @@ const CreateAudition = () => {
       title: '',
       description: '',
       requirements: '',
+      audition_type: undefined,
       location: '',
       deadline: '',
       audition_date: '',
       project_details: '',
-      compensation: '',
+      salary_amount: '',
+      salary_duration: undefined,
+      min_age: '',
+      max_age: '',
       category: '',
-      age_range: '',
       gender: '',
       experience_level: '',
     },
   });
+
+  // Watch audition type to conditionally show location
+  const auditionType = useWatch({
+    control: form.control,
+    name: 'audition_type'
+  });
+
+  // Generate age options (18 to 80)
+  const ageOptions = Array.from({ length: 63 }, (_, i) => i + 18);
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -91,18 +115,39 @@ const CreateAudition = () => {
     setIsSubmitting(true);
 
     try {
+      // Prepare compensation string
+      let compensation = '';
+      if (values.salary_amount && values.salary_duration) {
+        const durationText = {
+          per_day: 'per day',
+          per_month: 'per month',
+          whole_project: 'for whole project'
+        }[values.salary_duration];
+        compensation = `₹${values.salary_amount} ${durationText}`;
+      }
+
+      // Prepare age range string
+      let age_range = '';
+      if (values.min_age && values.max_age) {
+        age_range = `${values.min_age}-${values.max_age}`;
+      } else if (values.min_age) {
+        age_range = `${values.min_age}+`;
+      } else if (values.max_age) {
+        age_range = `Up to ${values.max_age}`;
+      }
+
       // Prepare the audition data
       const auditionData = {
         title: values.title,
         description: values.description,
         requirements: values.requirements,
-        location: values.location,
+        location: values.audition_type === 'offline' ? values.location : 'Online',
         deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
         audition_date: values.audition_date ? new Date(values.audition_date).toISOString() : null,
         project_details: values.project_details || null,
-        compensation: values.compensation || null,
+        compensation: compensation || null,
         category: values.category || null,
-        age_range: values.age_range || null,
+        age_range: age_range || null,
         gender: values.gender || null,
         experience_level: values.experience_level || null,
         tags: tags.length > 0 ? tags : null,
@@ -204,6 +249,31 @@ const CreateAudition = () => {
 
                       <FormField
                         control={form.control}
+                        name="audition_type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Audition Type *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select audition type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="online">Online</SelectItem>
+                                <SelectItem value="offline">Offline</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Conditional Location Field */}
+                    {auditionType === 'offline' && (
+                      <FormField
+                        control={form.control}
                         name="location"
                         render={({ field }) => (
                           <FormItem>
@@ -215,7 +285,7 @@ const CreateAudition = () => {
                           </FormItem>
                         )}
                       />
-                    </div>
+                    )}
 
                     <FormField
                       control={form.control}
@@ -252,6 +322,109 @@ const CreateAudition = () => {
                         </FormItem>
                       )}
                     />
+
+                    {/* Salary Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Compensation</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="salary_amount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Salary Amount (₹)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  placeholder="Enter amount in rupees" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="salary_duration"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Payment Duration</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select duration" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="per_day">Per Day</SelectItem>
+                                  <SelectItem value="per_month">Per Month</SelectItem>
+                                  <SelectItem value="whole_project">Whole Project</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Age Range Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Age Requirements</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="min_age"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Minimum Age</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select minimum age" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {ageOptions.map((age) => (
+                                    <SelectItem key={age} value={age.toString()}>
+                                      {age}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="max_age"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Maximum Age</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select maximum age" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {ageOptions.map((age) => (
+                                    <SelectItem key={age} value={age.toString()}>
+                                      {age}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
 
                     {/* Additional Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -308,45 +481,29 @@ const CreateAudition = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="age_range"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Age Range</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender Preference</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <Input placeholder="e.g. 25-35" {...field} />
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender preference" />
+                              </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="gender"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Gender</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select gender preference" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
-                                <SelectItem value="male">Male</SelectItem>
-                                <SelectItem value="female">Female</SelectItem>
-                                <SelectItem value="non-binary">Non-binary</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                            <SelectContent>
+                              <SelectItem value="any">Any</SelectItem>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="non-binary">Non-binary</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     {/* Tags */}
                     <div className="space-y-3">
@@ -376,7 +533,7 @@ const CreateAudition = () => {
                       </div>
                     </div>
 
-                    {/* Dates and Compensation */}
+                    {/* Dates and Project Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
@@ -416,24 +573,6 @@ const CreateAudition = () => {
                           <FormControl>
                             <Textarea 
                               placeholder="Additional details about the project"
-                              className="min-h-[80px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="compensation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Compensation</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Details about payment, benefits, etc."
                               className="min-h-[80px]"
                               {...field} 
                             />
