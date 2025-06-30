@@ -17,16 +17,17 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Artist } from '@/types/artist';
 
 interface ShareProfileDialogProps {
-  artistName: string;
-  profileUrl: string;
+  artist: Artist;
 }
 
-const ShareProfileDialog = ({ artistName, profileUrl }: ShareProfileDialogProps) => {
+const ShareProfileDialog = ({ artist }: ShareProfileDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  const shareText = `Check out ${artistName}'s profile on Maasta`;
+  const profileUrl = `${window.location.origin}/artist/${artist.id}`;
+  const shareText = `Check out ${artist.full_name}'s profile on Maasta`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(profileUrl);
 
@@ -45,7 +46,7 @@ const ShareProfileDialog = ({ artistName, profileUrl }: ShareProfileDialogProps)
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${artistName} - Maasta Profile`,
+          title: `${artist.full_name} - Maasta Profile`,
           text: shareText,
           url: profileUrl,
         });
@@ -79,7 +80,7 @@ const ShareProfileDialog = ({ artistName, profileUrl }: ShareProfileDialogProps)
     {
       name: 'Email',
       icon: Mail,
-      url: `mailto:?subject=${encodeURIComponent(`Check out ${artistName}'s profile`)}&body=${encodedText}%20${encodedUrl}`,
+      url: `mailto:?subject=${encodeURIComponent(`Check out ${artist.full_name}'s profile`)}&body=${encodedText}%20${encodedUrl}`,
       color: 'bg-blue-500 hover:bg-blue-600'
     },
     {
@@ -103,7 +104,7 @@ const ShareProfileDialog = ({ artistName, profileUrl }: ShareProfileDialogProps)
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share {artistName}'s Profile</DialogTitle>
+          <DialogTitle>Share {artist.full_name}'s Profile</DialogTitle>
           <DialogDescription>
             Choose how you'd like to share this artist's profile
           </DialogDescription>

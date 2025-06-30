@@ -3,16 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, MapPin, Calendar, Briefcase } from "lucide-react";
+import { Edit, MapPin, Calendar, Briefcase, ArrowLeft } from "lucide-react";
 import { Artist } from "@/types/artist";
 import ShareProfileDialog from "./ShareProfileDialog";
 
 interface ProfileHeroProps {
   artist: Artist;
   onEditProfile?: () => void;
+  onBack?: () => void;
 }
 
-const ProfileHero = ({ artist, onEditProfile }: ProfileHeroProps) => {
+const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -86,6 +87,16 @@ const ProfileHero = ({ artist, onEditProfile }: ProfileHeroProps) => {
                   </div>
 
                   <div className="flex gap-3">
+                    {onBack && (
+                      <Button 
+                        onClick={onBack}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <ArrowLeft size={16} />
+                        Back
+                      </Button>
+                    )}
                     {onEditProfile && (
                       <Button 
                         onClick={onEditProfile}
