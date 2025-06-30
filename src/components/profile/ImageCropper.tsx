@@ -43,6 +43,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     canvas.width = canvasSize;
     canvas.height = canvasSize;
 
+    // Clear canvas with transparent background
     ctx.clearRect(0, 0, canvasSize, canvasSize);
     
     // Save context
@@ -69,9 +70,18 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     // Restore context
     ctx.restore();
     
-    // Draw crop circle overlay
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
+    // Draw crop circle overlay with transparent background
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.rect(0, 0, canvasSize, canvasSize);
+    ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
+    ctx.fill('evenodd');
+    ctx.restore();
+    
+    // Draw circle border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
@@ -112,7 +122,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     const cropCtx = cropCanvas.getContext('2d');
     if (!cropCtx) return;
 
-    const cropSize = 400; // Final output size
+    const cropSize = 400;
     cropCanvas.width = cropSize;
     cropCanvas.height = cropSize;
 
@@ -141,7 +151,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
         
         <div className="space-y-4">
           {/* Crop Canvas */}
-          <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative bg-gray-900 rounded-lg overflow-hidden">
             <canvas
               ref={canvasRef}
               width={300}

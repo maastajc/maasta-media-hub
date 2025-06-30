@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -8,12 +7,14 @@ import {
   saveLanguage, 
   saveTool, 
   saveMediaAsset,
+  saveAward,
   deleteProject,
   deleteSkill,
   deleteEducation,
   deleteLanguage,
   deleteTool,
-  deleteMediaAsset
+  deleteMediaAsset,
+  deleteAward
 } from '@/services/profileService';
 
 export const useProfileSections = (userId?: string) => {
@@ -320,14 +321,61 @@ export const useProfileSections = (userId?: string) => {
     },
   });
 
+  // Award mutations
+  const saveAwardMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (!userId) throw new Error('User ID is required');
+      return saveAward(data, userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
+      toast({
+        title: '✅ Award saved successfully!',
+        description: 'Your award has been updated in your profile.',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error saving award:', error);
+      toast({
+        title: '❌ Failed to save award',
+        description: error.message || 'Failed to save award. Please try again.',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  const deleteAwardMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!userId) throw new Error('User ID is required');
+      return deleteAward(id, userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
+      toast({
+        title: '✅ Award deleted',
+        description: 'Award has been removed from your profile.',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting award:', error);
+      toast({
+        title: '❌ Failed to delete award',
+        description: error.message || 'Failed to delete award. Please try again.',
+        variant: 'destructive'
+      });
+    },
+  });
+
   return {
     // State
     isSaving: saveProjectMutation.isPending || saveSkillMutation.isPending || 
               saveEducationMutation.isPending || saveLanguageMutation.isPending || 
-              saveToolMutation.isPending || saveMediaAssetMutation.isPending,
+              saveToolMutation.isPending || saveMediaAssetMutation.isPending || 
+              saveAwardMutation.isPending,
     isDeleting: deleteProjectMutation.isPending || deleteSkillMutation.isPending || 
                 deleteEducationMutation.isPending || deleteLanguageMutation.isPending || 
-                deleteToolMutation.isPending || deleteMediaAssetMutation.isPending,
+                deleteToolMutation.isPending || deleteMediaAssetMutation.isPending ||
+                deleteAwardMutation.isPending,
     
     // Project functions
     saveProject: saveProjectMutation.mutateAsync,
@@ -352,5 +400,9 @@ export const useProfileSections = (userId?: string) => {
     // Media functions
     saveMediaAsset: saveMediaAssetMutation.mutateAsync,
     deleteMediaAsset: deleteMediaAssetMutation.mutateAsync,
+    
+    // Award functions
+    saveAward: saveAwardMutation.mutateAsync,
+    deleteAward: deleteAwardMutation.mutateAsync,
   };
 };
