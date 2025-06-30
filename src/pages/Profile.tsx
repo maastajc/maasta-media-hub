@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -23,8 +24,7 @@ import {
   Globe,
   Instagram,
   Linkedin,
-  Youtube,
-  Camera
+  Youtube
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
@@ -33,8 +33,9 @@ import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import MediaSection from "@/components/profile/MediaSection";
 import AwardsSection from "@/components/profile/AwardsSection";
-import CoverImageUpload from "@/components/profile/CoverImageUpload";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
+import ProfileStats from "@/components/profile/ProfileStats";
+import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -43,7 +44,6 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
-  const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>();
 
   const {
     data: profileData,
@@ -62,7 +62,6 @@ const Profile = () => {
   useEffect(() => {
     if (profileData) {
       setProfileImageUrl(profileData.profile_picture_url);
-      setCoverImageUrl(profileData.cover_image_url);
     }
   }, [profileData]);
 
@@ -81,11 +80,6 @@ const Profile = () => {
 
   const handleProfileImageUpdate = (imageUrl: string) => {
     setProfileImageUrl(imageUrl);
-    refetch(); // Refetch to get updated data
-  };
-
-  const handleCoverImageUpdate = (imageUrl: string | null) => {
-    setCoverImageUrl(imageUrl || undefined);
     refetch(); // Refetch to get updated data
   };
 
@@ -130,10 +124,13 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">Loading your profile...</p>
+          </div>
         </div>
       </div>
     );
@@ -141,62 +138,42 @@ const Profile = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Alert className="max-w-md">
-          <AlertDescription>
-            Failed to load profile. Please refresh the page and try again.
-          </AlertDescription>
-        </Alert>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center p-4 py-20">
+          <Alert className="max-w-md">
+            <AlertDescription>
+              Failed to load profile. Please refresh the page and try again.
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-600">No profile data found.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-600">No profile data found.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Cover Image & Profile Header */}
-      <div className="relative">
-        {/* Cover Image */}
-        <div className="h-64 bg-gradient-to-r from-maasta-orange/20 to-orange-100/50 relative overflow-hidden">
-          {coverImageUrl ? (
-            <img 
-              src={coverImageUrl} 
-              alt="Cover" 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <Camera size={48} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Add a cover image to personalize your profile</p>
-              </div>
-            </div>
-          )}
-          
-          {/* Cover Image Upload Overlay */}
-          <div className="absolute top-4 right-4">
-            <CoverImageUpload
-              currentImageUrl={coverImageUrl}
-              onImageUpdate={handleCoverImageUpdate}
-              userId={user?.id || ""}
-            />
-          </div>
-        </div>
-
-        {/* Profile Info Overlay */}
-        <div className="max-w-6xl mx-auto px-4 relative -mt-20">
-          <Card className="shadow-lg border-0 bg-white">
+      <Navbar />
+      
+      {/* Profile Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <Card className="shadow-lg border-0">
             <CardContent className="p-8">
               <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Profile Image */}
@@ -319,6 +296,9 @@ const Profile = () => {
           </Card>
         </div>
       </div>
+
+      {/* Profile Strength Tracker */}
+      <ProfileStats artist={profileData} />
 
       {/* Fixed Navigation Tabs */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
@@ -491,7 +471,7 @@ const Profile = () => {
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 text-maasta-orange hover:underline"
                         >
-                          <Camera size={16} />
+                          <Youtube size={16} />
                           <span>Behance</span>
                         </a>
                       )}

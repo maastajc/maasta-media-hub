@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -376,32 +377,60 @@ export const useProfileSections = (userId?: string) => {
                 deleteToolMutation.isPending || deleteMediaAssetMutation.isPending ||
                 deleteAwardMutation.isPending,
     
-    // Project functions
-    saveProject: saveProjectMutation.mutateAsync,
-    deleteProject: deleteProjectMutation.mutateAsync,
+    // Project functions - prevent double notifications
+    saveProject: async (data: any) => {
+      await saveProjectMutation.mutateAsync(data);
+    },
+    deleteProject: async (id: string) => {
+      await deleteProjectMutation.mutateAsync(id);
+    },
     
-    // Skills functions
-    saveSkill: saveSkillMutation.mutateAsync,
-    deleteSkill: deleteSkillMutation.mutateAsync,
+    // Skills functions - prevent double notifications
+    saveSkill: async (data: any) => {
+      await saveSkillMutation.mutateAsync(data);
+    },
+    deleteSkill: async (id: string) => {
+      await deleteSkillMutation.mutateAsync(id);
+    },
     
-    // Education functions
-    saveEducation: saveEducationMutation.mutateAsync,
-    deleteEducation: deleteEducationMutation.mutateAsync,
+    // Education functions - prevent double notifications
+    saveEducation: async (data: any) => {
+      await saveEducationMutation.mutateAsync(data);
+    },
+    deleteEducation: async (id: string) => {
+      await deleteEducationMutation.mutateAsync(id);
+    },
     
-    // Language functions
-    saveLanguage: saveLanguageMutation.mutateAsync,
-    deleteLanguage: deleteLanguageMutation.mutateAsync,
+    // Language functions - prevent double notifications
+    saveLanguage: async (data: any) => {
+      await saveLanguageMutation.mutateAsync(data);
+    },
+    deleteLanguage: async (id: string) => {
+      await deleteLanguageMutation.mutateAsync(id);
+    },
     
-    // Tools functions
-    saveTool: saveToolMutation.mutateAsync,
-    deleteTool: deleteToolMutation.mutateAsync,
+    // Tools functions - prevent double notifications
+    saveTool: async (data: any) => {
+      await saveToolMutation.mutateAsync(data);
+    },
+    deleteTool: async (id: string) => {
+      await deleteToolMutation.mutateAsync(id);
+    },
     
-    // Media functions
-    saveMediaAsset: saveMediaAssetMutation.mutateAsync,
-    deleteMediaAsset: deleteMediaAssetMutation.mutateAsync,
+    // Media functions - prevent double notifications
+    saveMediaAsset: async (data: any) => {
+      await saveMediaAssetMutation.mutateAsync(data);
+    },
+    deleteMediaAsset: async (id: string) => {
+      await deleteMediaAssetMutation.mutateAsync(id);
+    },
     
-    // Award functions
-    saveAward: saveAwardMutation.mutateAsync,
-    deleteAward: deleteAwardMutation.mutateAsync,
+    // Award functions - prevent double notifications
+    saveAward: async (data: any) => {
+      await saveAwardMutation.mutateAsync(data);
+    },
+    deleteAward: async (id: string) => {
+      await deleteAwardMutation.mutateAsync(id);
+    },
   };
 };
