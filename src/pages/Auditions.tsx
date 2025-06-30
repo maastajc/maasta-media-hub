@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AuditionsHeader from "@/components/auditions/AuditionsHeader";
-import AuditionFilters from "@/components/auditions/AuditionFilters";
+import CollapsibleAuditionFilters from "@/components/auditions/CollapsibleAuditionFilters";
 import AuditionsGrid from "@/components/auditions/AuditionsGrid";
 import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { supabase } from "@/integrations/supabase/client";
@@ -344,85 +344,79 @@ const Auditions = () => {
             </Alert>
           )}
           
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="lg:w-80 flex-shrink-0">
-              <AuditionFilters 
-                uniqueCategories={uniqueCategories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={(category) => {
-                  setSearchParams(prev => {
-                    if (category) {
-                      prev.set('category', category);
-                    } else {
-                      prev.delete('category');
-                    }
-                    return prev;
-                  }, { replace: true });
-                }}
-                uniqueTags={uniqueTags}
-                selectedTags={selectedTags}
-                toggleTag={(tag) => {
-                  setSelectedTags(prev => 
-                    prev.includes(tag) 
-                      ? prev.filter(t => t !== tag)
-                      : [...prev, tag]
-                  );
-                }}
-                isLoading={loading && auditions.length === 0}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                locationFilter={locationFilter}
-                setLocationFilter={setLocationFilter}
-                experienceFilter={experienceFilter}
-                setExperienceFilter={setExperienceFilter}
-                compensationFilter={compensationFilter}
-                setCompensationFilter={setCompensationFilter}
-              />
-            </aside>
-            
-            <div className="flex-1">
-              <AuditionsGrid 
-                auditions={auditions} 
-                loading={loading && auditions.length === 0}
-                error={null}
-                onClearFilters={() => {
-                  setSearchParams(new URLSearchParams());
-                  setSelectedTags([]);
-                  setSortBy("newest");
-                  setLocationFilter("");
-                  setExperienceFilter("");
-                  setCompensationFilter("");
-                }}
-                onRetry={() => fetchAuditions(1, true)}
-                applicationStatusMap={applicationStatusMap}
-              />
-              
-              {loadingMore && (
-                <div className="mt-8 text-center">
-                  <LoadingSpinner size="md" />
-                </div>
-              )}
-              
-              {!loadingMore && hasMore && auditions.length > 0 && (
-                <div className="mt-8 text-center">
-                  <Button onClick={() => {
-                    const nextPage = page + 1;
-                    setPage(nextPage);
-                    fetchAuditions(nextPage, false);
-                  }} className="w-40">
-                    Load More
-                  </Button>
-                </div>
-              )}
-
-              {!loading && !error && auditions.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
-                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
-                </div>
-              )}
+          <CollapsibleAuditionFilters 
+            uniqueCategories={uniqueCategories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={(category) => {
+              setSearchParams(prev => {
+                if (category) {
+                  prev.set('category', category);
+                } else {
+                  prev.delete('category');
+                }
+                return prev;
+              }, { replace: true });
+            }}
+            uniqueTags={uniqueTags}
+            selectedTags={selectedTags}
+            toggleTag={(tag) => {
+              setSelectedTags(prev => 
+                prev.includes(tag) 
+                  ? prev.filter(t => t !== tag)
+                  : [...prev, tag]
+              );
+            }}
+            isLoading={loading && auditions.length === 0}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            locationFilter={locationFilter}
+            setLocationFilter={setLocationFilter}
+            experienceFilter={experienceFilter}
+            setExperienceFilter={setExperienceFilter}
+            compensationFilter={compensationFilter}
+            setCompensationFilter={setCompensationFilter}
+          />
+          
+          <AuditionsGrid 
+            auditions={auditions} 
+            loading={loading && auditions.length === 0}
+            error={null}
+            onClearFilters={() => {
+              setSearchParams(new URLSearchParams());
+              setSelectedTags([]);
+              setSortBy("newest");
+              setLocationFilter("");
+              setExperienceFilter("");
+              setCompensationFilter("");
+            }}
+            onRetry={() => fetchAuditions(1, true)}
+            applicationStatusMap={applicationStatusMap}
+          />
+          
+          {loadingMore && (
+            <div className="mt-8 text-center">
+              <LoadingSpinner size="md" />
             </div>
-          </div>
+          )}
+          
+          {!loadingMore && hasMore && auditions.length > 0 && (
+            <div className="mt-8 text-center">
+              <Button onClick={() => {
+                const nextPage = page + 1;
+                setPage(nextPage);
+                fetchAuditions(nextPage, false);
+              }} className="w-40">
+                Load More
+              </Button>
+            </div>
+          )}
+
+          {!loading && !error && auditions.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No auditions found matching your criteria</p>
+              <p className="text-gray-500 mt-2">Try adjusting your filters</p>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

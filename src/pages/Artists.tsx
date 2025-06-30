@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ArtistsHeader from "@/components/artists/ArtistsHeader";
-import ArtistFilters from "@/components/artists/ArtistFilters";
+import CollapsibleArtistFilters from "@/components/artists/CollapsibleArtistFilters";
 import ArtistsGrid from "@/components/artists/ArtistsGrid";
 import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { useArtists } from "@/hooks/useArtists";
@@ -122,7 +122,7 @@ const Artists = () => {
               <CacheRefreshButton onRefresh={handleRefresh} />
             </div>
             
-            <ArtistFilters
+            <CollapsibleArtistFilters
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
               uniqueTags={uniqueTags}

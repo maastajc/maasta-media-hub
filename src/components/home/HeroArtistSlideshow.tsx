@@ -1,83 +1,86 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
-interface Artist {
-  id: string;
-  full_name: string;
-  profile_picture_url?: string;
-  category?: string;
-  city?: string;
-}
+const staticImages = [
+  {
+    id: '1',
+    url: '/lovable-uploads/979dd046-df26-4909-8770-94811e8b8bb4.png',
+    name: 'A.R. Rahman',
+    category: 'Music Director',
+    city: 'Chennai'
+  },
+  {
+    id: '2', 
+    url: '/lovable-uploads/364dea32-c41b-481c-b9be-85bfd2527137.png',
+    name: 'Ilaiyaraaja',
+    category: 'Music Composer',
+    city: 'Chennai'
+  },
+  {
+    id: '3',
+    url: '/lovable-uploads/b17c8eea-6ca4-47e9-8bb6-78e0dc2ef0dc.png',
+    name: 'Vetrimaaran',
+    category: 'Director',
+    city: 'Chennai'
+  },
+  {
+    id: '4',
+    url: '/lovable-uploads/3f2b7600-4607-482e-b255-d7b3206b6aa2.png',
+    name: 'K. Balachander',
+    category: 'Director',
+    city: 'Chennai'
+  },
+  {
+    id: '5',
+    url: '/lovable-uploads/0fd6eadc-11af-4bc7-ba45-407a18405763.png',
+    name: 'Ajith Kumar',
+    category: 'Actor',
+    city: 'Chennai'
+  },
+  {
+    id: '6',
+    url: '/lovable-uploads/7e463092-6803-48ec-9f5b-d17704010136.png',
+    name: 'Vijay',
+    category: 'Actor',
+    city: 'Chennai'
+  },
+  {
+    id: '7',
+    url: '/lovable-uploads/76a29572-bd52-4fd3-ba5c-2e1431ad588f.png',
+    name: 'Kamal Haasan',
+    category: 'Actor',
+    city: 'Chennai'
+  },
+  {
+    id: '8',
+    url: '/lovable-uploads/df6153b1-df94-4ca7-93d5-b2ea9d646c90.png',
+    name: 'Rajinikanth',
+    category: 'Actor',
+    city: 'Chennai'
+  }
+];
 
 const HeroArtistSlideshow = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeaturedArtists = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, profile_picture_url, category, city')
-          .eq('role', 'artist')
-          .eq('status', 'active')
-          .not('profile_picture_url', 'is', null)
-          .limit(8)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching artists:', error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          setArtists(data);
-        }
-      } catch (error) {
-        console.error('Error fetching featured artists:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeaturedArtists();
-  }, []);
-
-  useEffect(() => {
-    if (artists.length === 0) return;
-    
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % artists.length);
+      setCurrentSlide((prev) => (prev + 1) % staticImages.length);
     }, 4000);
     
     return () => clearInterval(interval);
-  }, [artists.length]);
+  }, []);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % artists.length);
+    setCurrentSlide((prev) => (prev + 1) % staticImages.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + artists.length) % artists.length);
+    setCurrentSlide((prev) => (prev - 1 + staticImages.length) % staticImages.length);
   };
 
-  if (loading || artists.length === 0) {
-    return (
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-maasta-orange/30 to-maasta-purple/30 rounded-3xl blur-xl transform rotate-3"></div>
-        <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500 border-4 border-white/50">
-          <div className="h-64 md:h-80 bg-gray-200 animate-pulse flex items-center justify-center">
-            <span className="text-gray-500">Loading artists...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const currentArtist = artists[currentSlide];
+  const currentArtist = staticImages[currentSlide];
 
   return (
     <div className="relative">
@@ -85,20 +88,16 @@ const HeroArtistSlideshow = () => {
       <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition-all duration-500 border-4 border-white/50">
         <div className="relative h-64 md:h-80">
           <img 
-            src={currentArtist.profile_picture_url || `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=face`}
-            alt={`${currentArtist.full_name} - ${currentArtist.category || 'Artist'}`}
+            src={currentArtist.url}
+            alt={`${currentArtist.name} - ${currentArtist.category}`}
             className="w-full h-full object-cover transition-all duration-500"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=face`;
-            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
           <div className="absolute bottom-6 left-6 text-white">
-            <div className="text-xl font-bold mb-1">{currentArtist.full_name}</div>
+            <div className="text-xl font-bold mb-1">{currentArtist.name}</div>
             <div className="text-sm opacity-90 flex items-center gap-2">
               <span className="w-2 h-2 bg-maasta-orange rounded-full"></span>
-              {currentArtist.category || 'Artist'} {currentArtist.city && `• ${currentArtist.city}`}
+              {currentArtist.category} • {currentArtist.city}
             </div>
           </div>
           
@@ -118,7 +117,7 @@ const HeroArtistSlideshow = () => {
           
           {/* Slide Indicators */}
           <div className="absolute bottom-3 right-6 flex space-x-2">
-            {artists.map((_, index) => (
+            {staticImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
