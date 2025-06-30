@@ -26,7 +26,7 @@ interface UnifiedProfileViewProps {
 }
 
 const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
-  // DEBUG: Print the data to console and display in-page data summary
+  // Keep console logs for debugging but remove the visual debug section
   React.useEffect(() => {
     console.log("[UnifiedProfileView] artist received:", artist);
     if (artist) {
@@ -38,24 +38,6 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
       console.log("Tools:", artist.tools_software);
     }
   }, [artist]);
-
-  // DEBUG/SUMMARY DISPLAY: Show object keys and items count at top of page (for dev)
-  const PortfolioDebugInfo = () => (
-    <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-900">
-      <div className="mb-1 font-semibold">[Debug] Portfolio Data Summary:</div>
-      <ul className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
-        <li>Skills: {artist.special_skills?.length ?? 0}</li>
-        <li>Projects: {artist.projects?.length ?? 0}</li>
-        <li>Education: {artist.education_training?.length ?? 0}</li>
-        <li>Media: {artist.media_assets?.length ?? 0}</li>
-        <li>Languages: {artist.language_skills?.length ?? 0}</li>
-        <li>Tools: {artist.tools_software?.length ?? 0}</li>
-      </ul>
-      <div className="mt-1">
-        <span className="font-mono">artist.id:</span> <span className="font-mono">{artist.id}</span>
-      </div>
-    </div>
-  );
 
   const socialLinks = [
     { icon: Globe, url: artist.personal_website, label: 'Website' },
@@ -448,7 +430,6 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
 
   return (
     <div className="space-y-0">
-      <PortfolioDebugInfo />
       {renderMediaSection()}
       {renderSocialLinks()}
       {renderProjects()}
