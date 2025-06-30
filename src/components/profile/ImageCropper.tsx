@@ -76,7 +76,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     // Restore context
     ctx.restore();
     
-    // Draw clean circle border without dashed lines
+    // Draw clean circle border (no dashed lines)
     ctx.strokeStyle = '#d1d5db';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -165,7 +165,7 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     
     cropCtx.restore();
 
-    // Convert to blob with high quality (no quality loss)
+    // Convert to blob with maximum quality (no quality loss)
     cropCanvas.toBlob((blob) => {
       if (blob) {
         onCropComplete(blob);

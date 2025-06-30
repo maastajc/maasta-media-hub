@@ -502,6 +502,7 @@ export type Database = {
       profiles: {
         Row: {
           association_membership: string | null
+          behance: string | null
           bio: string | null
           category: string | null
           city: string | null
@@ -520,6 +521,7 @@ export type Database = {
           linkedin: string | null
           personal_website: string | null
           phone_number: string | null
+          preferred_domains: string | null
           profile_picture_url: string | null
           rate_card: Json | null
           role: string | null
@@ -536,6 +538,7 @@ export type Database = {
         }
         Insert: {
           association_membership?: string | null
+          behance?: string | null
           bio?: string | null
           category?: string | null
           city?: string | null
@@ -554,6 +557,7 @@ export type Database = {
           linkedin?: string | null
           personal_website?: string | null
           phone_number?: string | null
+          preferred_domains?: string | null
           profile_picture_url?: string | null
           rate_card?: Json | null
           role?: string | null
@@ -570,6 +574,7 @@ export type Database = {
         }
         Update: {
           association_membership?: string | null
+          behance?: string | null
           bio?: string | null
           category?: string | null
           city?: string | null
@@ -588,6 +593,7 @@ export type Database = {
           linkedin?: string | null
           personal_website?: string | null
           phone_number?: string | null
+          preferred_domains?: string | null
           profile_picture_url?: string | null
           rate_card?: Json | null
           role?: string | null
