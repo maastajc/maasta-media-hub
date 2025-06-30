@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Brain } from "lucide-react";
 import { useProfileSections } from "@/hooks/useProfileSections";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 interface SkillsSectionProps {
   profileData: any;
@@ -17,11 +17,12 @@ interface SkillsSectionProps {
 const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) => {
   const [newSkill, setNewSkill] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
-  const [newLanguageProficiency, setNewLanguageProficiency] = useState("beginner");
+  const [newLanguageProficiency, setNewLanguageProficiency] = useState("basic");
   const [newTool, setNewTool] = useState("");
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [isAddingLanguage, setIsAddingLanguage] = useState(false);
   const [isAddingTool, setIsAddingTool] = useState(false);
+  const { toast } = useToast();
 
   const { 
     saveSkill, 
@@ -46,10 +47,17 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       await saveSkill({ skill: newSkill.trim() });
       setNewSkill("");
       onUpdate();
-      toast.success("Skill added successfully");
+      toast({
+        title: "✅ Skill added successfully!",
+        description: "Your skill has been updated in your profile.",
+      });
     } catch (error: any) {
       console.error("Error adding skill:", error.message);
-      toast.error("Failed to add skill");
+      toast({
+        title: "❌ Failed to add skill",
+        description: error.message || "Failed to add skill. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsAddingSkill(false);
     }
@@ -59,10 +67,17 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       await deleteSkill(skillId);
       onUpdate();
-      toast.success("Skill deleted successfully");
+      toast({
+        title: "✅ Skill deleted",
+        description: "Skill has been removed from your profile.",
+      });
     } catch (error: any) {
       console.error("Error deleting skill:", error.message);
-      toast.error("Failed to delete skill");
+      toast({
+        title: "❌ Failed to delete skill",
+        description: error.message || "Failed to delete skill. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -76,12 +91,19 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
         proficiency: newLanguageProficiency 
       });
       setNewLanguage("");
-      setNewLanguageProficiency("beginner");
+      setNewLanguageProficiency("basic");
       onUpdate();
-      toast.success("Language added successfully");
+      toast({
+        title: "✅ Language added successfully!",
+        description: "Your language skill has been updated in your profile.",
+      });
     } catch (error: any) {
       console.error("Error adding language:", error.message);
-      toast.error("Failed to add language");
+      toast({
+        title: "❌ Failed to add language",
+        description: error.message || "Failed to add language. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsAddingLanguage(false);
     }
@@ -91,10 +113,17 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       await deleteLanguage(languageId);
       onUpdate();
-      toast.success("Language deleted successfully");
+      toast({
+        title: "✅ Language deleted",
+        description: "Language has been removed from your profile.",
+      });
     } catch (error: any) {
       console.error("Error deleting language:", error.message);
-      toast.error("Failed to delete language");
+      toast({
+        title: "❌ Failed to delete language",
+        description: error.message || "Failed to delete language. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -106,10 +135,17 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
       await saveTool({ tool_name: newTool.trim() });
       setNewTool("");
       onUpdate();
-      toast.success("Tool added successfully");
+      toast({
+        title: "✅ Tool added successfully!",
+        description: "Your tool/software has been updated in your profile.",
+      });
     } catch (error: any) {
       console.error("Error adding tool:", error.message);
-      toast.error("Failed to add tool");
+      toast({
+        title: "❌ Failed to add tool",
+        description: error.message || "Failed to add tool. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsAddingTool(false);
     }
@@ -119,10 +155,17 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       await deleteTool(toolId);
       onUpdate();
-      toast.success("Tool deleted successfully");
+      toast({
+        title: "✅ Tool deleted",
+        description: "Tool/software has been removed from your profile.",
+      });
     } catch (error: any) {
       console.error("Error deleting tool:", error.message);
-      toast.error("Failed to delete tool");
+      toast({
+        title: "❌ Failed to delete tool",
+        description: error.message || "Failed to delete tool. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -201,7 +244,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
               onChange={(e) => setNewLanguageProficiency(e.target.value)}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="beginner">Beginner</option>
+              <option value="basic">Basic</option>
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
               <option value="native">Native</option>

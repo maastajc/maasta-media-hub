@@ -2,10 +2,10 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Camera, Upload, X, Check } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadProfileImage } from "@/utils/optimizedProfileImageUpload";
+import ImageCropper from "./ImageCropper";
 
 interface ProfilePictureUploadProps {
   currentImageUrl?: string;
@@ -21,9 +21,8 @@ const ProfilePictureUpload = ({
   fullName 
 }: ProfilePictureUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [showCropDialog, setShowCropDialog] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -51,25 +50,26 @@ const ProfilePictureUpload = ({
       return;
     }
 
-    setSelectedFile(file);
-    
-    // Create preview for crop dialog
+    // Create preview URL for cropper
     const reader = new FileReader();
     reader.onload = (e) => {
-      setCropPreviewUrl(e.target?.result as string);
-      setShowCropDialog(true);
+      setSelectedImageUrl(e.target?.result as string);
+      setShowCropper(true);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleCropConfirm = async () => {
-    if (!selectedFile) return;
-    
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
     try {
       setIsUploading(true);
-      setShowCropDialog(false);
+      setShowCropper(false);
       
-      const imageUrl = await uploadProfileImage(selectedFile, userId);
+      // Create a file from the blob
+      const croppedFile = new File([croppedImageBlob], 'profile-picture.jpg', {
+        type: 'image/jpeg'
+      });
+      
+      const imageUrl = await uploadProfileImage(croppedFile, userId);
       
       // Update parent component immediately
       onImageUpdate(imageUrl);
@@ -80,8 +80,7 @@ const ProfilePictureUpload = ({
       });
       
       // Reset states
-      setSelectedFile(null);
-      setCropPreviewUrl(null);
+      setSelectedImageUrl(null);
       
     } catch (error: any) {
       console.error('Profile picture upload error:', error);
@@ -99,10 +98,9 @@ const ProfilePictureUpload = ({
     fileInputRef.current?.click();
   };
 
-  const cancelPreview = () => {
-    setShowCropDialog(false);
-    setSelectedFile(null);
-    setCropPreviewUrl(null);
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSelectedImageUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -156,60 +154,15 @@ const ProfilePictureUpload = ({
           />
         </div>
 
-        {/* Crop & Preview Dialog */}
-        <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Crop & Preview Profile Picture</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {cropPreviewUrl && (
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <img 
-                      src={cropPreviewUrl} 
-                      alt="Crop preview"
-                      className="max-w-full max-h-64 object-contain rounded-lg"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-2">Preview how this will appear on your profile:</p>
-                    <Avatar className="w-24 h-24 mx-auto rounded-2xl shadow-lg border-2 border-white">
-                      <AvatarImage 
-                        src={cropPreviewUrl} 
-                        alt="Profile preview"
-                        className="object-cover"
-                      />
-                    </Avatar>
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={cancelPreview}>
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCropConfirm} 
-                className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <Upload className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Use This Photo
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Image Cropper */}
+        {selectedImageUrl && (
+          <ImageCropper
+            isOpen={showCropper}
+            onClose={handleCropCancel}
+            onCropComplete={handleCropComplete}
+            imageUrl={selectedImageUrl}
+          />
+        )}
       </>
     );
   }
@@ -265,60 +218,15 @@ const ProfilePictureUpload = ({
         </Button>
       </div>
 
-      {/* Crop & Preview Dialog */}
-      <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Crop & Preview Profile Picture</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {cropPreviewUrl && (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative">
-                  <img 
-                    src={cropPreviewUrl} 
-                    alt="Crop preview"
-                    className="max-w-full max-h-64 object-contain rounded-lg"
-                  />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Preview how this will appear on your profile:</p>
-                  <Avatar className="w-24 h-24 mx-auto rounded-2xl shadow-lg border-2 border-white">
-                    <AvatarImage 
-                      src={cropPreviewUrl} 
-                      alt="Profile preview"
-                      className="object-cover"
-                    />
-                  </Avatar>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={cancelPreview}>
-              <X className="w-4 h-4 mr-2" />
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCropConfirm} 
-              className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Upload className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Use This Photo
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Image Cropper */}
+      {selectedImageUrl && (
+        <ImageCropper
+          isOpen={showCropper}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          imageUrl={selectedImageUrl}
+        />
+      )}
     </>
   );
 };
