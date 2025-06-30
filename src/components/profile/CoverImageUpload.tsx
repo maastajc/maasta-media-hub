@@ -1,7 +1,6 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Camera, X, Upload, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +25,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       
       const { data, error: uploadError } = await supabase.storage
         .from('profile-images')
-        .upload(fileName, file);
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 

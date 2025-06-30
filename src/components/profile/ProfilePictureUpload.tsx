@@ -128,7 +128,7 @@ const ProfilePictureUpload = ({
           </AvatarFallback>
         </Avatar>
         
-        {/* Upload overlay */}
+        {/* Upload overlay - Fixed positioning */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer">
           {isUploading ? (
             <div className="text-white text-center">
@@ -151,13 +151,15 @@ const ProfilePictureUpload = ({
           onChange={handleFileSelect}
           className="hidden"
         />
+      </div>
 
-        {/* Upload button for mobile/fallback */}
+      {/* Upload button for mobile/fallback - Better visibility */}
+      <div className="mt-4 w-full flex justify-center">
         <Button
           onClick={triggerFileSelect}
           disabled={isUploading}
           size="sm"
-          className="lg:hidden mt-4 w-full"
+          className="lg:hidden"
           variant="outline"
         >
           <Camera className="w-4 h-4 mr-2" />

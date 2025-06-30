@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { X, Check, RotateCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -178,6 +178,9 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Crop Profile Picture</DialogTitle>
+          <DialogDescription>
+            Adjust your profile picture by dragging, zooming, and rotating the image to get the perfect crop.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -74,8 +73,20 @@ const Profile = () => {
 
   const handleViewPublicProfile = () => {
     if (profileData?.id) {
-      navigate(`/artist/${profileData.id}`);
+      // Open public profile in new tab with correct user ID
+      const publicProfileUrl = `/artist/${profileData.id}`;
+      window.open(publicProfileUrl, '_blank');
     }
+  };
+
+  const handleProfileImageUpdate = (imageUrl: string) => {
+    setProfileImageUrl(imageUrl);
+    refetch(); // Refetch to get updated data
+  };
+
+  const handleCoverImageUpdate = (imageUrl: string | null) => {
+    setCoverImageUrl(imageUrl || undefined);
+    refetch(); // Refetch to get updated data
   };
 
   const getInitials = (name: string) => {
@@ -177,7 +188,7 @@ const Profile = () => {
           <div className="absolute top-4 right-4">
             <CoverImageUpload
               currentImageUrl={coverImageUrl}
-              onImageUpdate={setCoverImageUrl}
+              onImageUpdate={handleCoverImageUpdate}
               userId={user?.id || ""}
             />
           </div>
@@ -192,7 +203,7 @@ const Profile = () => {
                 <div className="relative flex-shrink-0">
                   <ProfilePictureUpload
                     currentImageUrl={profileImageUrl}
-                    onImageUpdate={setProfileImageUrl}
+                    onImageUpdate={handleProfileImageUpdate}
                     userId={user?.id || ""}
                     fullName={profileData.full_name}
                   />
