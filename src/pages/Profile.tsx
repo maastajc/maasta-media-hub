@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +20,7 @@ import { toast } from "sonner";
 const Profile = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
   const {
     data: profileData,
@@ -89,14 +89,10 @@ const Profile = () => {
       
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <User size={16} />
               Overview
-            </TabsTrigger>
-            <TabsTrigger value="basic" className="flex items-center gap-2">
-              <User size={16} />
-              Basic Info
             </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Briefcase size={16} />
@@ -122,14 +118,6 @@ const Profile = () => {
 
           <TabsContent value="overview">
             <UnifiedProfileView artist={profileData} />
-          </TabsContent>
-
-          <TabsContent value="basic">
-            <ProfileEditForm
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
           </TabsContent>
 
           <TabsContent value="projects">
@@ -173,6 +161,16 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Profile Edit Form */}
+      {isEditFormOpen && (
+        <ProfileEditForm
+          profileData={profileData}
+          onClose={() => setIsEditFormOpen(false)}
+          onUpdate={handleProfileUpdate}
+          userId={user?.id}
+        />
+      )}
     </div>
   );
 };

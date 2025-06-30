@@ -118,6 +118,39 @@ export type Database = {
           },
         ]
       }
+      awards: {
+        Row: {
+          artist_id: string
+          created_at: string
+          description: string | null
+          id: string
+          organization: string | null
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization?: string | null
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization?: string | null
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       education_training: {
         Row: {
           artist_id: string | null

@@ -7,15 +7,14 @@ import {
   saveLanguage, 
   saveTool, 
   saveMediaAsset,
-  saveAward,
   deleteProject,
   deleteSkill,
   deleteEducation,
   deleteLanguage,
   deleteTool,
-  deleteMediaAsset,
-  deleteAward
+  deleteMediaAsset
 } from '@/services/profileService';
+import { saveAward, deleteAward } from '@/services/awardsService';
 
 export const useProfileSections = (userId?: string) => {
   const queryClient = useQueryClient();
@@ -321,7 +320,7 @@ export const useProfileSections = (userId?: string) => {
     },
   });
 
-  // Award mutations
+  // Award mutations using the new service
   const saveAwardMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!userId) throw new Error('User ID is required');

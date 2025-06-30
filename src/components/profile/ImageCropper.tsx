@@ -43,11 +43,17 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     canvas.width = canvasSize;
     canvas.height = canvasSize;
 
-    // Clear canvas with transparent background
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    // Clear canvas with dark background
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
     
     // Save context
     ctx.save();
+    
+    // Create circular clipping path
+    ctx.beginPath();
+    ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
+    ctx.clip();
     
     // Move to center
     ctx.translate(canvasSize / 2, canvasSize / 2);
@@ -70,19 +76,10 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     // Restore context
     ctx.restore();
     
-    // Draw crop circle overlay with transparent background
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.rect(0, 0, canvasSize, canvasSize);
-    ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
-    ctx.fill('evenodd');
-    ctx.restore();
-    
     // Draw circle border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 4]);
     ctx.beginPath();
     ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, 2 * Math.PI);
     ctx.stroke();
@@ -115,9 +112,10 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
 
   const handleCropConfirm = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const image = imageRef.current;
+    if (!canvas || !image) return;
 
-    // Create final crop canvas
+    // Create final crop canvas with transparent background
     const cropCanvas = document.createElement('canvas');
     const cropCtx = cropCanvas.getContext('2d');
     if (!cropCtx) return;
@@ -131,15 +129,30 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     cropCtx.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, 2 * Math.PI);
     cropCtx.clip();
 
-    // Draw scaled canvas content
-    cropCtx.drawImage(canvas, 0, 0, 300, 300, 0, 0, cropSize, cropSize);
+    // Apply transformations and draw image
+    cropCtx.save();
+    cropCtx.translate(cropSize / 2, cropSize / 2);
+    cropCtx.rotate((rotation * Math.PI) / 180);
+    
+    const scaledWidth = image.width * scale[0] * (cropSize / 300);
+    const scaledHeight = image.height * scale[0] * (cropSize / 300);
+    
+    cropCtx.drawImage(
+      image,
+      -scaledWidth / 2 + (position.x * cropSize / 300),
+      -scaledHeight / 2 + (position.y * cropSize / 300),
+      scaledWidth,
+      scaledHeight
+    );
+    
+    cropCtx.restore();
 
-    // Convert to blob
+    // Convert to blob with high quality
     cropCanvas.toBlob((blob) => {
       if (blob) {
         onCropComplete(blob);
       }
-    }, 'image/jpeg', 0.9);
+    }, 'image/jpeg', 0.95);
   };
 
   return (
@@ -151,16 +164,17 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
         
         <div className="space-y-4">
           {/* Crop Canvas */}
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden">
+          <div className="relative bg-gray-800 rounded-lg overflow-hidden mx-auto" style={{ width: '300px', height: '300px' }}>
             <canvas
               ref={canvasRef}
               width={300}
               height={300}
-              className="cursor-move"
+              className="cursor-move block"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              style={{ display: 'block', width: '300px', height: '300px' }}
+              onMouseLeave={handleMouseUp}
+              style={{ width: '300px', height: '300px' }}
             />
             
             {/* Hidden image for processing */}
