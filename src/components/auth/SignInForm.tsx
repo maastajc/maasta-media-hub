@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -106,9 +105,9 @@ export const SignInForm = () => {
         return; // Don't navigate on error
       }
       
-      // Only navigate on successful login
+      // Navigate to profile page instead of home
       signInRateLimiter.reset(email.trim()); // Reset on successful login
-      navigate('/');
+      navigate('/profile');
     } catch (error: any) {
       // Handle any unexpected errors
       if (error.message.includes('Invalid login credentials') || 
@@ -129,8 +128,8 @@ export const SignInForm = () => {
       
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
-        ? 'https://preview--maasta-media-hub.lovable.app/'
-        : `${currentDomain}/`;
+        ? 'https://preview--maasta-media-hub.lovable.app/profile'
+        : `${currentDomain}/profile`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +86,10 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProfileHero artist={profileData} />
+      <ProfileHero 
+        artist={profileData} 
+        onEditProfile={() => setIsEditFormOpen(true)}
+      />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

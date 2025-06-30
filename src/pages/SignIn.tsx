@@ -9,9 +9,9 @@ const SignIn = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If user is already logged in, redirect to home page
+    // If user is already logged in, redirect to profile page
     if (user) {
-      navigate('/');
+      navigate('/profile');
     }
   }, [user, navigate]);
 
