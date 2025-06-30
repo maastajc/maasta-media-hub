@@ -8,16 +8,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Briefcase, GraduationCap, Brain, FileText, Award, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  User, 
+  Briefcase, 
+  GraduationCap, 
+  Brain, 
+  FileText, 
+  Award, 
+  ExternalLink, 
+  Edit,
+  MapPin,
+  Phone,
+  Globe,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Camera
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ProfileHero from "@/components/profile/ProfileHero";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
 import ProjectsSection from "@/components/profile/ProjectsSection";
 import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import MediaSection from "@/components/profile/MediaSection";
 import AwardsSection from "@/components/profile/AwardsSection";
-import UnifiedProfileView from "@/components/profile/UnifiedProfileView";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -47,8 +63,16 @@ const Profile = () => {
 
   const handleViewPublicProfile = () => {
     if (profileData?.id) {
-      navigate(`/artist/${profileData.id}`);
+      window.open(`/artist/${profileData.id}`, '_blank');
     }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
   };
 
   useEffect(() => {
@@ -95,54 +119,295 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProfileHero 
-        artist={profileData} 
-        onEditProfile={() => setIsEditFormOpen(true)}
-      />
-      
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Public Profile View Button */}
-        <div className="mb-6 flex justify-end">
-          <Button
-            onClick={handleViewPublicProfile}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <ExternalLink size={16} />
-            View Public Profile
-          </Button>
+      {/* Cover Image & Profile Header */}
+      <div className="relative">
+        {/* Cover Image */}
+        <div className="h-64 bg-gradient-to-r from-maasta-orange/20 to-orange-100/50 relative overflow-hidden">
+          {profileData.cover_image_url ? (
+            <img 
+              src={profileData.cover_image_url} 
+              alt="Cover" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <Camera size={48} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Add a cover image to personalize your profile</p>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Profile Info Overlay */}
+        <div className="max-w-6xl mx-auto px-4 relative -mt-20">
+          <Card className="shadow-lg border-0 bg-white">
+            <CardContent className="p-8">
+              <div className="flex flex-col lg:flex-row gap-6 items-start">
+                {/* Profile Image */}
+                <div className="relative flex-shrink-0">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage 
+                      src={profileData.profile_picture_url} 
+                      alt={profileData.full_name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
+                      {getInitials(profileData.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
+                {/* Profile Details */}
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div>
+                      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        {profileData.full_name}
+                      </h1>
+                      
+                      <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
+                        {profileData.category && (
+                          <Badge variant="secondary" className="bg-maasta-orange/10 text-maasta-orange border-maasta-orange/20">
+                            {profileData.category.charAt(0).toUpperCase() + profileData.category.slice(1)}
+                          </Badge>
+                        )}
+                        
+                        {(profileData.city || profileData.state || profileData.country) && (
+                          <div className="flex items-center gap-1">
+                            <MapPin size={16} />
+                            <span>
+                              {[profileData.city, profileData.state, profileData.country].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {profileData.years_of_experience !== undefined && profileData.experience_level && (
+                          <div className="flex items-center gap-1">
+                            <Briefcase size={16} />
+                            <span>
+                              {profileData.years_of_experience > 0 ? `${profileData.years_of_experience} year${profileData.years_of_experience !== 1 ? 's' : ''} • ` : ''}
+                              {profileData.experience_level.charAt(0).toUpperCase() + profileData.experience_level.slice(1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {profileData.bio && (
+                        <p className="text-gray-700 leading-relaxed max-w-2xl mb-4">
+                          {profileData.bio}
+                        </p>
+                      )}
+
+                      {/* Contact & Social Links */}
+                      <div className="flex flex-wrap gap-4">
+                        {profileData.phone_number && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Phone size={14} />
+                            <span>{profileData.phone_number}</span>
+                          </div>
+                        )}
+                        {profileData.personal_website && (
+                          <a 
+                            href={profileData.personal_website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm text-maasta-orange hover:underline"
+                          >
+                            <Globe size={14} />
+                            <span>Website</span>
+                          </a>
+                        )}
+                        {profileData.instagram && (
+                          <a 
+                            href={profileData.instagram} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm text-maasta-orange hover:underline"
+                          >
+                            <Instagram size={14} />
+                            <span>Instagram</span>
+                          </a>
+                        )}
+                        {profileData.linkedin && (
+                          <a 
+                            href={profileData.linkedin} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm text-maasta-orange hover:underline"
+                          >
+                            <Linkedin size={14} />
+                            <span>LinkedIn</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleViewPublicProfile}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink size={16} />
+                        View Public Profile
+                      </Button>
+                      <Button 
+                        onClick={() => setIsEditFormOpen(true)}
+                        className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                      >
+                        <Edit size={16} className="mr-2" />
+                        Edit Profile
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Profile Content Tabs */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <User size={16} />
-              Overview
+              <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Briefcase size={16} />
-              Projects
+              <span className="hidden sm:inline">Projects</span>
             </TabsTrigger>
             <TabsTrigger value="education" className="flex items-center gap-2">
               <GraduationCap size={16} />
-              Education
+              <span className="hidden sm:inline">Education</span>
             </TabsTrigger>
             <TabsTrigger value="skills" className="flex items-center gap-2">
               <Brain size={16} />
-              Skills
+              <span className="hidden sm:inline">Skills</span>
             </TabsTrigger>
             <TabsTrigger value="awards" className="flex items-center gap-2">
               <Award size={16} />
-              Awards
+              <span className="hidden sm:inline">Awards</span>
             </TabsTrigger>
             <TabsTrigger value="media" className="flex items-center gap-2">
               <FileText size={16} />
-              Media
+              <span className="hidden sm:inline">Media</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            <UnifiedProfileView artist={profileData} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">About</h3>
+                    {profileData.bio ? (
+                      <p className="text-gray-700 leading-relaxed">{profileData.bio}</p>
+                    ) : (
+                      <p className="text-gray-500 italic">No bio available</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {profileData.preferred_domains && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold mb-4">Available For</h3>
+                      <p className="text-gray-700">{profileData.preferred_domains}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">Work Preferences</h3>
+                    <div className="space-y-3">
+                      {profileData.work_preference && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Work Type:</span>
+                          <p className="text-gray-900 capitalize">{profileData.work_preference.replace('_', ' ')}</p>
+                        </div>
+                      )}
+                      {profileData.experience_level && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Experience:</span>
+                          <p className="text-gray-900 capitalize">{profileData.experience_level}</p>
+                        </div>
+                      )}
+                      {profileData.years_of_experience !== undefined && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Years:</span>
+                          <p className="text-gray-900">{profileData.years_of_experience}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Portfolio Links */}
+                {(profileData.personal_website || profileData.imdb_profile || profileData.behance || profileData.youtube_vimeo) && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold mb-4">Portfolio Links</h3>
+                      <div className="space-y-2">
+                        {profileData.personal_website && (
+                          <a 
+                            href={profileData.personal_website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          >
+                            <Globe size={16} />
+                            <span>Personal Website</span>
+                          </a>
+                        )}
+                        {profileData.imdb_profile && (
+                          <a 
+                            href={profileData.imdb_profile} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          >
+                            <FileText size={16} />
+                            <span>IMDb Profile</span>
+                          </a>
+                        )}
+                        {profileData.behance && (
+                          <a 
+                            href={profileData.behance} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          >
+                            <Camera size={16} />
+                            <span>Behance</span>
+                          </a>
+                        )}
+                        {profileData.youtube_vimeo && (
+                          <a 
+                            href={profileData.youtube_vimeo} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          >
+                            <Youtube size={16} />
+                            <span>YouTube/Vimeo</span>
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="projects">

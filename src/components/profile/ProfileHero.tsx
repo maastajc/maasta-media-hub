@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, MapPin, Calendar, Briefcase, ArrowLeft } from "lucide-react";
+import { Edit, MapPin, Briefcase, ArrowLeft, Camera } from "lucide-react";
 import { Artist } from "@/types/artist";
 import ShareProfileDialog from "./ShareProfileDialog";
 
@@ -28,8 +28,27 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-maasta-orange/10 to-orange-100/50">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className="relative">
+      {/* Cover Image */}
+      <div className="h-64 bg-gradient-to-r from-maasta-orange/20 to-orange-100/50 relative overflow-hidden">
+        {artist.cover_image_url ? (
+          <img 
+            src={artist.cover_image_url} 
+            alt="Cover" 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <Camera size={48} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Cover image not available</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Info */}
+      <div className="max-w-6xl mx-auto px-4 relative -mt-20">
         <Card className="shadow-lg border-0">
           <CardContent className="p-8">
             <div className="flex flex-col lg:flex-row gap-8 items-start">

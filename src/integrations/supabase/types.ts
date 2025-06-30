@@ -507,6 +507,7 @@ export type Database = {
           category: string | null
           city: string | null
           country: string | null
+          cover_image_url: string | null
           created_at: string | null
           date_of_birth: string | null
           email: string
@@ -543,6 +544,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           email: string
@@ -579,6 +581,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           email?: string

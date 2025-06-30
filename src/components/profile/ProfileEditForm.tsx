@@ -1,191 +1,105 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ProfilePictureUpload from "./ProfilePictureUpload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Artist } from "@/types/artist";
+import ProfilePictureUpload from "./ProfilePictureUpload";
+import CoverImageUpload from "./CoverImageUpload";
 
 const profileSchema = z.object({
-  full_name: z.string().min(1, "Full name is required"),
-  bio: z.string().max(250, "Bio cannot exceed 250 characters").optional().or(z.literal("")),
+  full_name: z.string().min(2, "Name must be at least 2 characters"),
+  bio: z.string().optional(),
+  category: z.string().optional(),
+  experience_level: z.string().optional(),
+  years_of_experience: z.number().min(0).optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  phone_number: z.string()
-    .optional()
-    .refine((val) => {
-      if (!val || val.trim() === "") return true;
-      return /^\+?[\d\s-]{7,20}$/.test(val);
-    }, "Invalid phone number. Must be 7-20 digits and can start with +.")
-    .or(z.literal("")),
-  date_of_birth: z.string()
-    .optional()
-    .refine((val) => {
-      if (!val || val.trim() === "") return true;
-      const date = new Date(val);
-      return !isNaN(date.getTime()) && date <= new Date();
-    }, "Invalid date or date is in the future. Please use YYYY-MM-DD format.")
-    .or(z.literal("")),
-  gender: z.string().optional(),
-  willing_to_relocate: z.boolean().default(false),
-  work_preference: z.enum(["freelance", "contract", "full_time", "any"]).default("any"),
-  category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
-  experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).default("beginner"),
-  years_of_experience: z.number().min(0).optional(),
-  association_membership: z.string().optional(),
-  // Portfolio Links
+  phone_number: z.string().optional(),
   personal_website: z.string().optional(),
   instagram: z.string().optional(),
   linkedin: z.string().optional(),
   youtube_vimeo: z.string().optional(),
-  behance: z.string().optional(),
   imdb_profile: z.string().optional(),
-  // Reach out preferences
+  behance: z.string().optional(),
+  work_preference: z.string().optional(),
   preferred_domains: z.string().optional(),
 });
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileEditFormProps {
-  profileData: any;
+  profileData: Artist;
   onClose: () => void;
   onUpdate: () => void;
   userId?: string;
 }
 
 const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEditFormProps) => {
-  const { toast: useToastHook } = useToast();
-  const { user } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
-  const [profilePictureUrl, setProfilePictureUrl] = useState(profileData?.profile_picture_url || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState(profileData.profile_picture_url);
+  const [coverImageUrl, setCoverImageUrl] = useState(profileData.cover_image_url);
 
-  const getSignupFullName = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name;
-    }
-    if (profileData?.full_name && profileData.full_name !== 'New User') {
-      return profileData.full_name;
-    }
-    return '';
-  };
-
-  const getSignupEmail = () => {
-    return user?.email || '';
-  };
-
-  const defaultValues = {
-    full_name: getSignupFullName(),
-    bio: profileData?.bio || "",
-    city: profileData?.city || "",
-    state: profileData?.state || "",
-    country: profileData?.country || "",
-    phone_number: profileData?.phone_number || "",
-    date_of_birth: profileData?.date_of_birth || "",
-    gender: profileData?.gender || "",
-    willing_to_relocate: profileData?.willing_to_relocate || false,
-    work_preference: profileData?.work_preference || "any",
-    category: profileData?.category || "actor",
-    experience_level: profileData?.experience_level || "beginner",
-    years_of_experience: profileData?.years_of_experience || 0,
-    association_membership: profileData?.association_membership || "",
-    // Portfolio Links
-    personal_website: profileData?.personal_website || "",
-    instagram: profileData?.instagram || "",
-    linkedin: profileData?.linkedin || "",
-    youtube_vimeo: profileData?.youtube_vimeo || "",
-    behance: profileData?.behance || "",
-    imdb_profile: profileData?.imdb_profile || "",
-    // Reach out preferences
-    preferred_domains: profileData?.preferred_domains || "",
-  };
-
-  const form = useForm<ProfileFormValues>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues,
+    defaultValues: {
+      full_name: profileData.full_name || "",
+      bio: profileData.bio || "",
+      category: profileData.category || "",
+      experience_level: profileData.experience_level || "",
+      years_of_experience: profileData.years_of_experience || 0,
+      city: profileData.city || "",
+      state: profileData.state || "",
+      country: profileData.country || "",
+      phone_number: profileData.phone_number || "",
+      personal_website: profileData.personal_website || "",
+      instagram: profileData.instagram || "",
+      linkedin: profileData.linkedin || "",
+      youtube_vimeo: profileData.youtube_vimeo || "",
+      imdb_profile: profileData.imdb_profile || "",
+      behance: profileData.behance || "",
+      work_preference: profileData.work_preference || "",
+      preferred_domains: profileData.preferred_domains || "",
+    }
   });
 
-  const onSubmit = async (values: ProfileFormValues) => {
-    if (!userId || !user?.email) {
-      toast.error("User information is required to update profile");
-      return;
-    }
-
+  const onSubmit = async (data: ProfileFormData) => {
+    if (!userId) return;
+    
     try {
-      setIsSaving(true);
+      setIsSubmitting(true);
       
-      const cleanedPhoneNumber = values.phone_number ? values.phone_number.replace(/[^\d+]/g, '') : null;
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ...data,
+          profile_picture_url: profileImageUrl,
+          cover_image_url: coverImageUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
 
-      const profileUpdateData = {
-        id: userId,
-        full_name: values.full_name,
-        email: getSignupEmail(),
-        bio: values.bio || null,
-        city: values.city || null,
-        state: values.state || null,
-        country: values.country || null,
-        phone_number: cleanedPhoneNumber,
-        date_of_birth: values.date_of_birth || null,
-        gender: values.gender || null,
-        willing_to_relocate: values.willing_to_relocate,
-        work_preference: values.work_preference,
-        category: values.category,
-        experience_level: values.experience_level,
-        years_of_experience: values.years_of_experience || 0,
-        association_membership: values.association_membership || null,
-        profile_picture_url: profilePictureUrl || null,
-        // Portfolio Links
-        personal_website: values.personal_website || null,
-        instagram: values.instagram || null,
-        linkedin: values.linkedin || null,
-        youtube_vimeo: values.youtube_vimeo || null,
-        behance: values.behance || null,
-        imdb_profile: values.imdb_profile || null,
-        // Reach out preferences
-        preferred_domains: values.preferred_domains || null,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: upsertError } = await supabase
-        .from("profiles")
-        .upsert(profileUpdateData, {
-          onConflict: 'id'
-        });
-
-      if (upsertError) {
-        throw upsertError;
-      }
+      if (error) throw error;
 
       toast.success("Profile updated successfully!");
-      useToastHook({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully",
-      });
-
       onUpdate();
       onClose();
-    } catch (error: any) {
-      console.error("Error updating profile:", error.message);
-      const errorMessage = error.message || "Failed to update profile";
-      toast.error(errorMessage);
-      useToastHook({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -193,455 +107,282 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {!profileData?.full_name || profileData?.full_name === 'New User' ? 'Set Up Your Profile' : 'Edit Profile'}
-          </DialogTitle>
+          <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Cover Image Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cover Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CoverImageUpload
+                currentImageUrl={coverImageUrl}
+                onImageUpdate={setCoverImageUrl}
+                userId={userId || ""}
+              />
+            </CardContent>
+          </Card>
+
           {/* Profile Picture Section */}
-          <div className="flex justify-center">
-            <ProfilePictureUpload
-              currentImageUrl={profilePictureUrl}
-              userId={userId || ""}
-              onImageUpdate={setProfilePictureUrl}
-              fullName={form.watch("full_name") || getSignupFullName()}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Picture</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfilePictureUpload
+                currentImageUrl={profileImageUrl}
+                onImageUpdate={setProfileImageUrl}
+                userId={userId || ""}
+              />
+            </CardContent>
+          </Card>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="portfolio">Portfolio Links</TabsTrigger>
-                  <TabsTrigger value="preferences">Work Preferences</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="full_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name*</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your full name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Email</label>
-                      <Input 
-                        value={getSignupEmail()} 
-                        disabled 
-                        className="bg-gray-50 text-gray-600"
-                      />
-                      <p className="text-xs text-gray-500">Email cannot be changed</p>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="phone_number"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input type="tel" placeholder="e.g., +1 123 456 7890" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="date_of_birth"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Date of Birth</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} max={new Date().toISOString().split("T")[0]} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gender</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select gender" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                              <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your city" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your state" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your country" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Bio */}
-                  <FormField
-                    control={form.control}
-                    name="bio"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bio (Max 250 characters)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Tell us about yourself..." 
-                            className="min-h-24"
-                            maxLength={250}
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    {...register("full_name")}
+                    className="mt-1"
                   />
+                  {errors.full_name && (
+                    <p className="text-sm text-red-600 mt-1">{errors.full_name.message}</p>
+                  )}
+                </div>
 
-                  {/* Artist Details */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Artist Information</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select your category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="actor">Actor</SelectItem>
-                                <SelectItem value="director">Director</SelectItem>
-                                <SelectItem value="cinematographer">Cinematographer</SelectItem>
-                                <SelectItem value="musician">Musician</SelectItem>
-                                <SelectItem value="editor">Editor</SelectItem>
-                                <SelectItem value="art_director">Art Director</SelectItem>
-                                <SelectItem value="stunt_coordinator">Stunt Coordinator</SelectItem>
-                                <SelectItem value="producer">Producer</SelectItem>
-                                <SelectItem value="writer">Writer</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="experience_level"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Experience Level</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select experience level" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="beginner">Beginner</SelectItem>
-                                <SelectItem value="fresher">Fresher</SelectItem>
-                                <SelectItem value="intermediate">Intermediate</SelectItem>
-                                <SelectItem value="expert">Expert</SelectItem>
-                                <SelectItem value="veteran">Veteran</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="years_of_experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Years of Experience</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="0"
-                                placeholder="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="association_membership"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Association Membership</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., SAG-AFTRA, DGA" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="portfolio" className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Portfolio Links</h3>
-                    <p className="text-sm text-gray-600">Add links to your online presence and portfolios</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="personal_website"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Personal Website</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://yourwebsite.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="instagram"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instagram</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://instagram.com/username" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="linkedin"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LinkedIn</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://linkedin.com/in/username" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="behance"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Behance</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://behance.net/username" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="youtube_vimeo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>YouTube/Vimeo</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://youtube.com/channel/..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="imdb_profile"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>IMDb Profile</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://imdb.com/name/..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="preferences" className="space-y-6">
-                  {/* Work Preferences */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Work Preferences</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="work_preference"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Work Preference</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select work preference" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="freelance">Freelance</SelectItem>
-                                <SelectItem value="contract">Contract</SelectItem>
-                                <SelectItem value="full_time">Full Time</SelectItem>
-                                <SelectItem value="any">Any</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="willing_to_relocate"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Willing to Relocate</FormLabel>
-                              <div className="text-sm text-gray-600">
-                                Are you open to relocating for work?
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* Reach out preferences */}
-                    <FormField
-                      control={form.control}
-                      name="preferred_domains"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Reach out to you for?</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="e.g., Film projects, TV shows, Commercial work, Theater, Voice acting, etc." 
-                              className="min-h-20"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <div className="text-sm text-gray-600">
-                            Specify the types of work or domains you're interested in
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              {/* Form Actions */}
-              <div className="flex justify-end gap-4 pt-6">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving} className="bg-maasta-orange hover:bg-maasta-orange/90">
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
+                <div>
+                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Input
+                    id="phone_number"
+                    {...register("phone_number")}
+                    className="mt-1"
+                  />
+                </div>
               </div>
-            </form>
-          </Form>
-        </div>
+
+              <div>
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  {...register("bio")}
+                  className="mt-1"
+                  rows={4}
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    {...register("city")}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="state">State/Province</Label>
+                  <Input
+                    id="state"
+                    {...register("state")}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    {...register("country")}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Work Preferences */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Work Preferences</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={watch("category")} onValueChange={(value) => setValue("category", value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="actor">Actor</SelectItem>
+                      <SelectItem value="director">Director</SelectItem>
+                      <SelectItem value="cinematographer">Cinematographer</SelectItem>
+                      <SelectItem value="musician">Musician</SelectItem>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="art_director">Art Director</SelectItem>
+                      <SelectItem value="stunt_coordinator">Stunt Coordinator</SelectItem>
+                      <SelectItem value="producer">Producer</SelectItem>
+                      <SelectItem value="writer">Writer</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="experience_level">Experience Level</Label>
+                  <Select value={watch("experience_level")} onValueChange={(value) => setValue("experience_level", value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select experience level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="fresher">Fresher</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                      <SelectItem value="veteran">Veteran</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="years_of_experience">Years of Experience</Label>
+                  <Input
+                    id="years_of_experience"
+                    type="number"
+                    min="0"
+                    {...register("years_of_experience", { valueAsNumber: true })}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="work_preference">Work Preference</Label>
+                  <Select value={watch("work_preference")} onValueChange={(value) => setValue("work_preference", value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select work preference" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="freelance">Freelance</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="full_time">Full Time</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="preferred_domains">What can we reach out to you for?</Label>
+                <Textarea
+                  id="preferred_domains"
+                  {...register("preferred_domains")}
+                  className="mt-1"
+                  rows={2}
+                  placeholder="E.g., Acting opportunities, directing projects, collaborations..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Portfolio Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Portfolio Links</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="personal_website">Personal Website</Label>
+                  <Input
+                    id="personal_website"
+                    {...register("personal_website")}
+                    className="mt-1"
+                    placeholder="https://your-website.com"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="imdb_profile">IMDb Profile</Label>
+                  <Input
+                    id="imdb_profile"
+                    {...register("imdb_profile")}
+                    className="mt-1"
+                    placeholder="https://imdb.com/name/..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    {...register("instagram")}
+                    className="mt-1"
+                    placeholder="https://instagram.com/username"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    {...register("linkedin")}
+                    className="mt-1"
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="youtube_vimeo">YouTube/Vimeo</Label>
+                  <Input
+                    id="youtube_vimeo"
+                    {...register("youtube_vimeo")}
+                    className="mt-1"
+                    placeholder="https://youtube.com/channel/..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="behance">Behance</Label>
+                  <Input
+                    id="behance"
+                    {...register("behance")}
+                    className="mt-1"
+                    placeholder="https://behance.net/username"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-maasta-orange hover:bg-maasta-orange/90"
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
