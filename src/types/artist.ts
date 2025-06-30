@@ -1,9 +1,11 @@
+
 export interface Artist {
   id: string;
   full_name: string;
   email: string;
   bio?: string;
   profile_picture_url?: string;
+  cover_image_url?: string;
   city?: string;
   state?: string;
   country?: string;
@@ -14,6 +16,8 @@ export interface Artist {
   linkedin?: string;
   youtube_vimeo?: string;
   personal_website?: string;
+  behance?: string;
+  preferred_domains?: string;
   category?: "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
   experience_level?: "beginner" | "fresher" | "intermediate" | "expert" | "veteran";
   years_of_experience?: number;

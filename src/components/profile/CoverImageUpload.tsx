@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Camera, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadProfileImage } from "@/utils/profileImageUpload";
 
 interface CoverImageUploadProps {
   currentImageUrl?: string;
@@ -21,18 +20,30 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
     try {
       setIsUploading(true);
       
-      // Upload the cover image
-      const imageUrl = await uploadProfileImage(file, userId, 'cover');
+      // Upload the cover image directly to supabase storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/cover-${Date.now()}.${fileExt}`;
+      
+      const { data, error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(fileName);
       
       // Update the profile with the new cover image URL
       const { error } = await supabase
         .from('profiles')
-        .update({ cover_image_url: imageUrl })
+        .update({ cover_image_url: publicUrl })
         .eq('id', userId);
 
       if (error) throw error;
 
-      onImageUpdate(imageUrl);
+      onImageUpdate(publicUrl);
       toast.success("Cover image updated successfully!");
     } catch (error) {
       console.error("Error uploading cover image:", error);
