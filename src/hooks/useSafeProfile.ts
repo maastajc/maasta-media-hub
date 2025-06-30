@@ -1,14 +1,14 @@
 
 import { useMemo } from 'react';
-import { Artist } from '@/types/artist';
+import { Artist, ArtistCategory, ExperienceLevel } from '@/types/artist';
 
 interface SafeProfileData {
   id: string;
   full_name: string;
   email: string;
   bio: string | null;
-  category: string;
-  experience_level: string;
+  category: ArtistCategory;
+  experience_level: ExperienceLevel;
   years_of_experience: number;
   city: string | null;
   state: string | null;
@@ -47,8 +47,8 @@ export const useSafeProfile = (profileData: Artist | null | undefined, userId?: 
       full_name: profileData?.full_name || 'New User',
       email: profileData?.email || '',
       bio: profileData?.bio || null,
-      category: profileData?.category || 'actor',
-      experience_level: profileData?.experience_level || 'beginner',
+      category: (profileData?.category as ArtistCategory) || 'actor',
+      experience_level: (profileData?.experience_level as ExperienceLevel) || 'beginner',
       years_of_experience: profileData?.years_of_experience || 0,
       city: profileData?.city || null,
       state: profileData?.state || null,
