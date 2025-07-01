@@ -9,6 +9,7 @@ interface UserProfile {
   full_name: string;
   email: string;
   role: string;
+  profile_picture_url?: string;
   // Add other profile fields as needed
 }
 
@@ -17,9 +18,11 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
+  isSessionRestored: boolean; // New flag to track session restoration
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>; // New method to manually refresh session
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,14 +44,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSessionRestored, setIsSessionRestored] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role')
+        .select('id, full_name, email, role, profile_picture_url')
         .eq('id', userId)
         .single();
 
@@ -57,6 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
+      console.log('Profile fetched successfully:', data);
       return data;
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -64,51 +70,118 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshSession = async () => {
+    try {
+      console.log('Manually refreshing session...');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Error refreshing session:', error);
+      } else {
+        console.log('Session refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Error in refreshSession:', error);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, 'Session:', session);
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
         
-        // Fetch profile when user signs in
-        if (session?.user) {
-          const userProfile = await fetchProfile(session.user.id);
-          setProfile(userProfile);
-          
-          // Handle OAuth redirect to profile page
-          const isOAuthCallback = location.pathname === '/' && 
-            (window.location.hash.includes('access_token') || 
-             window.location.search.includes('code'));
-          
-          if (event === 'SIGNED_IN' && (isOAuthCallback || location.pathname === '/sign-in')) {
-            setTimeout(() => {
-              navigate('/profile');
-            }, 100);
+        // Set up auth state listener FIRST
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return;
+            
+            console.log('Auth event:', event, 'Session exists:', !!session);
+            
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            // Fetch profile when user signs in
+            if (session?.user) {
+              console.log('User session found, fetching profile...');
+              const userProfile = await fetchProfile(session.user.id);
+              if (mounted) {
+                setProfile(userProfile);
+              }
+              
+              // Handle OAuth redirect to profile page
+              const isOAuthCallback = location.pathname === '/' && 
+                (window.location.hash.includes('access_token') || 
+                 window.location.search.includes('code'));
+              
+              if (event === 'SIGNED_IN' && (isOAuthCallback || location.pathname === '/sign-in')) {
+                setTimeout(() => {
+                  navigate('/profile');
+                }, 100);
+              }
+            } else {
+              console.log('No user session, clearing profile');
+              if (mounted) {
+                setProfile(null);
+              }
+            }
+            
+            // Mark session as restored after the first auth state change
+            if (mounted && !isSessionRestored) {
+              console.log('Session restoration completed');
+              setIsSessionRestored(true);
+            }
+            
+            if (mounted) {
+              setLoading(false);
+            }
           }
-        } else {
-          setProfile(null);
+        );
+
+        // Get existing session AFTER setting up the listener
+        console.log('Checking for existing session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
         }
         
-        setLoading(false);
-      }
-    );
+        if (mounted) {
+          console.log('Initial session check:', !!session);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            console.log('Existing session found, fetching profile...');
+            const userProfile = await fetchProfile(session.user.id);
+            if (mounted) {
+              setProfile(userProfile);
+            }
+          }
+          
+          // Mark as restored even if no session
+          setIsSessionRestored(true);
+          setLoading(false);
+        }
 
-    // Get existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const userProfile = await fetchProfile(session.user.id);
-        setProfile(userProfile);
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error in auth initialization:', error);
+        if (mounted) {
+          setLoading(false);
+          setIsSessionRestored(true);
+        }
       }
-      
-      setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    const cleanup = initializeAuth();
+    
+    return () => {
+      mounted = false;
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
   }, [navigate, location]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
@@ -140,6 +213,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setIsSessionRestored(false); // Reset session restoration flag
     navigate('/');
   };
 
@@ -148,9 +222,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     session,
     profile,
     loading,
+    isSessionRestored,
     signUp,
     signIn,
     signOut,
+    refreshSession,
   };
 
   return (

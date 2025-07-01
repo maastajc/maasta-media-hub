@@ -8,7 +8,7 @@ import CollapsibleArtistFilters from "@/components/artists/CollapsibleArtistFilt
 import ArtistsGrid from "@/components/artists/ArtistsGrid";
 import { CacheRefreshButton } from "@/components/ui/cache-refresh-button";
 import { useArtists } from "@/hooks/useArtists";
-import { cacheManager } from "@/utils/cacheManager";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const Artists = () => {
@@ -19,6 +19,7 @@ const Artists = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const navigate = useNavigate();
+  const { isSessionRestored } = useAuth();
 
   const {
     artists,
@@ -28,15 +29,9 @@ const Artists = () => {
     refetch,
     filterArtists
   } = useArtists({
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    staleTime: 5 * 60 * 1000 // 5 minutes cache
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000
   });
-
-  // Remove aggressive cache clearing on mount - let the hook handle it
-  useEffect(() => {
-    console.log('Artists page mounted');
-    // Removed: cacheManager.forceClearCache('artists');
-  }, []);
 
   // Extract unique tags from artists data
   const uniqueTags = Array.from(
@@ -103,22 +98,18 @@ const Artists = () => {
 
   const handleRefresh = async () => {
     console.log('Manual refresh triggered');
-    // Only clear specific cache, not everything
-    cacheManager.forceClearCache('artists');
     await refetch();
     toast.success("Data refreshed!");
   };
 
   useEffect(() => {
     if (isError && error) {
-      // Add session check for better error messaging
-      if (!cacheManager.isSessionValid()) {
-        toast.error("Session expired. Please sign in again.");
-      } else {
-        toast.error("Failed to load artists. Please try again.");
-      }
+      toast.error("Failed to load artists. Please try again.");
     }
   }, [isError, error]);
+
+  // Show loading state if session is not yet restored
+  const showLoading = isLoading || !isSessionRestored;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -143,7 +134,7 @@ const Artists = () => {
               uniqueTags={uniqueTags}
               selectedTags={selectedTags}
               toggleTag={toggleTag}
-              isLoading={isLoading}
+              isLoading={showLoading}
               sortBy={sortBy}
               setSortBy={setSortBy}
               locationFilter={locationFilter}
@@ -154,7 +145,7 @@ const Artists = () => {
             
             <ArtistsGrid
               artists={filteredAndSortedArtists}
-              isLoading={isLoading}
+              isLoading={showLoading}
               isError={isError}
               error={error}
               onViewProfile={handleViewProfile}
