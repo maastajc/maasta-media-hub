@@ -19,14 +19,18 @@ import CoverImageUpload from "./CoverImageUpload";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   bio: z.string().optional(),
-  category: z.string().optional(),
-  experience_level: z.string().optional(),
+  category: z.string().min(1, "Category is required"),
+  experience_level: z.string().min(1, "Experience level is required"),
   years_of_experience: z.number().min(0).optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  phone_number: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State/Province is required"),
+  country: z.string().min(1, "Country is required"),
+  phone_number: z.string().min(1, "Phone number is required"),
   personal_website: z.string().optional(),
   instagram: z.string().optional(),
   linkedin: z.string().optional(),
@@ -55,6 +59,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: profileData.full_name || "",
+      username: profileData.username || "",
       bio: profileData.bio || "",
       category: profileData.category || "",
       experience_level: profileData.experience_level || "",
@@ -80,6 +85,21 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     try {
       setIsSubmitting(true);
       
+      // Check if username is already taken by another user
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', data.username)
+        .neq('id', userId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      
+      if (existingUser) {
+        toast.error("Username is already taken. Please choose a different one.");
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -159,13 +179,29 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 </div>
 
                 <div>
-                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Label htmlFor="username">Username *</Label>
                   <Input
-                    id="phone_number"
-                    {...register("phone_number")}
+                    id="username"
+                    {...register("username")}
                     className="mt-1"
+                    placeholder="e.g., john_doe123"
                   />
+                  {errors.username && (
+                    <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
+                  )}
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="phone_number">Phone Number *</Label>
+                <Input
+                  id="phone_number"
+                  {...register("phone_number")}
+                  className="mt-1"
+                />
+                {errors.phone_number && (
+                  <p className="text-sm text-red-600 mt-1">{errors.phone_number.message}</p>
+                )}
               </div>
 
               <div>
@@ -181,30 +217,39 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Input
                     id="city"
                     {...register("city")}
                     className="mt-1"
                   />
+                  {errors.city && (
+                    <p className="text-sm text-red-600 mt-1">{errors.city.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label htmlFor="state">State/Province</Label>
+                  <Label htmlFor="state">State/Province *</Label>
                   <Input
                     id="state"
                     {...register("state")}
                     className="mt-1"
                   />
+                  {errors.state && (
+                    <p className="text-sm text-red-600 mt-1">{errors.state.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">Country *</Label>
                   <Input
                     id="country"
                     {...register("country")}
                     className="mt-1"
                   />
+                  {errors.country && (
+                    <p className="text-sm text-red-600 mt-1">{errors.country.message}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -218,7 +263,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">Category *</Label>
                   <Select value={watch("category")} onValueChange={(value) => setValue("category", value)}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select category" />
@@ -236,10 +281,13 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.category && (
+                    <p className="text-sm text-red-600 mt-1">{errors.category.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label htmlFor="experience_level">Experience Level</Label>
+                  <Label htmlFor="experience_level">Experience Level *</Label>
                   <Select value={watch("experience_level")} onValueChange={(value) => setValue("experience_level", value)}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select experience level" />
@@ -252,6 +300,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                       <SelectItem value="veteran">Veteran</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.experience_level && (
+                    <p className="text-sm text-red-600 mt-1">{errors.experience_level.message}</p>
+                  )}
                 </div>
               </div>
 

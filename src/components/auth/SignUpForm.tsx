@@ -12,12 +12,14 @@ import { toast } from 'sonner';
 
 export const SignUpForm = () => {
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('artist');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const navigate = useNavigate();
 
   const validatePassword = () => {
@@ -33,10 +35,51 @@ export const SignUpForm = () => {
     return true;
   };
 
+  const validateUsername = async () => {
+    if (!username || username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      return false;
+    }
+    if (username.length > 30) {
+      setUsernameError('Username must be at most 30 characters');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameError('Username can only contain letters, numbers, and underscores');
+      return false;
+    }
+
+    // Check if username is already taken
+    const { data: existingUser, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking username:', error);
+      setUsernameError('Error checking username availability');
+      return false;
+    }
+
+    if (existingUser) {
+      setUsernameError('Username is already taken');
+      return false;
+    }
+
+    setUsernameError('');
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validatePassword()) {
+      return;
+    }
+
+    const isUsernameValid = await validateUsername();
+    if (!isUsernameValid) {
       return;
     }
     
@@ -49,6 +92,7 @@ export const SignUpForm = () => {
         options: {
           data: {
             full_name: fullName,
+            username: username,
             role,
           },
           emailRedirectTo: `${window.location.origin}/`
@@ -116,6 +160,18 @@ export const SignUpForm = () => {
               onChange={(e) => setFullName(e.target.value)}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              placeholder="Choose a unique username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+            {usernameError && <p className="text-sm text-red-500">{usernameError}</p>}
           </div>
           
           <div className="space-y-2">

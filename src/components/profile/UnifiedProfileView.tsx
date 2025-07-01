@@ -133,18 +133,18 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
     );
   };
 
-  const renderSocialLinks = () => {
+  const renderPortfolioLinks = () => {
     if (socialLinks.length === 0) {
       return (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-maasta-purple" />
-              Social Links
+              Portfolio Links
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="italic text-gray-400">No social links provided.</div>
+            <div className="italic text-gray-400">No portfolio links provided.</div>
           </CardContent>
         </Card>
       );
@@ -155,7 +155,7 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-maasta-purple" />
-            Social Links
+            Portfolio Links
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -431,7 +431,7 @@ const UnifiedProfileView = ({ artist }: UnifiedProfileViewProps) => {
   return (
     <div className="space-y-0">
       {renderMediaSection()}
-      {renderSocialLinks()}
+      {renderPortfolioLinks()}
       {renderProjects()}
       {renderSkills()}
       {renderEducation()}

@@ -20,20 +20,20 @@ interface OptimizedAuditionCardProps {
   audition: {
     id: string;
     title: string;
-    description?: string; // Made optional to match Audition type
+    description?: string;
     location: string;
     audition_date?: string;
     deadline?: string;
     compensation?: string;
     requirements?: string;
-    status?: string; // Made optional to match Audition type
+    status?: string;
     category?: string;
     experience_level?: string;
     gender?: string;
     age_range?: string;
     tags?: string[];
     company?: string;
-    created_at?: string; // Made optional to match Audition type
+    created_at?: string;
     applicationStatus?: string;
     creator_profile?: {
       full_name: string;

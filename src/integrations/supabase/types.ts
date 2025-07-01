@@ -531,6 +531,7 @@ export type Database = {
           state: string | null
           status: string | null
           updated_at: string | null
+          username: string | null
           verification_token: string | null
           verification_token_expires_at: string | null
           verified: boolean | null
@@ -570,6 +571,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          username?: string | null
           verification_token?: string | null
           verification_token_expires_at?: string | null
           verified?: boolean | null
@@ -609,6 +611,7 @@ export type Database = {
           state?: string | null
           status?: string | null
           updated_at?: string | null
+          username?: string | null
           verification_token?: string | null
           verification_token_expires_at?: string | null
           verified?: boolean | null
