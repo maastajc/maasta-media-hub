@@ -33,7 +33,7 @@ interface OptimizedAuditionCardProps {
     age_range?: string;
     tags?: string[];
     company?: string;
-    created_at: string;
+    created_at?: string; // Made optional to match Audition type
     applicationStatus?: string;
     creator_profile?: {
       full_name: string;
@@ -110,9 +110,11 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-900 truncate">{creatorName}</p>
-              <p className="text-xs text-gray-500">
-                {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
-              </p>
+              {audition.created_at && (
+                <p className="text-xs text-gray-500">
+                  {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
+                </p>
+              )}
             </div>
           </div>
           {audition.applicationStatus && (
