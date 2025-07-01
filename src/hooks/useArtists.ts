@@ -188,7 +188,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         setIsError(true);
         setError(err);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
