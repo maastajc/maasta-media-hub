@@ -36,7 +36,38 @@ const ProfileAbout = ({ artist }: ProfileAboutProps) => {
         
         {/* About Section */}
         <div className="lg:col-span-2 space-y-8">
-          {artist.bio && (
+          {/* Headline */}
+          {artist.headline && (
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl">
+                  <User className="mr-3 text-maasta-purple" size={24} />
+                  Headline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed text-lg font-medium">{artist.headline}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* About */}
+          {artist.about && (
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl">
+                  <User className="mr-3 text-maasta-purple" size={24} />
+                  About {artist.full_name?.split(' ')[0]}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed text-lg">{artist.about}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Fallback to bio if about is not available */}
+          {!artist.about && artist.bio && (
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center text-xl">

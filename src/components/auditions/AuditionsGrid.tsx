@@ -78,6 +78,13 @@ const AuditionsGrid = ({ auditions, loading, error, onClearFilters, onRetry, app
       <div className="text-center py-12">
         <p className="text-gray-600 text-lg">No auditions available</p>
         <p className="text-gray-500 mt-2">Check back later for new opportunities, or try different filters.</p>
+        <Button 
+          onClick={onClearFilters}
+          variant="outline"
+          className="mt-4"
+        >
+          Clear Filters
+        </Button>
       </div>
     );
   }

@@ -1,141 +1,94 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { fetchArtistById, updateArtistProfile } from '@/services/artistService';
-import { Artist } from '@/types/artist';
-import { toast } from 'sonner';
-import { cacheManager } from '@/utils/cacheManager';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Artist } from "@/types/artist";
+import { cacheManager } from "@/utils/cacheManager";
 
-interface UseArtistProfileOptions {
-  enabled?: boolean;
-  refetchOnWindowFocus?: boolean;
-  staleTime?: number;
-}
+export const useArtistProfile = (artistId: string | undefined, options = {}) => {
+  return useQuery({
+    queryKey: ['artist-profile', artistId],
+    queryFn: async (): Promise<Artist> => {
+      if (!artistId) {
+        throw new Error('Artist ID is required');
+      }
 
-export const useArtistProfile = (
-  artistId?: string, 
-  options: UseArtistProfileOptions = {}
-) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  // Use provided artistId or fallback to current user's id
-  const targetId = artistId || user?.id;
-  
-  const {
-    enabled = true,
-    refetchOnWindowFocus = false,
-    staleTime = 0 // Always fetch fresh data
-  } = options;
-  
-  const profileQuery = useQuery({
-    queryKey: ['artistProfile', targetId, Date.now()], // Always use fresh timestamp
-    queryFn: async () => {
-      if (!targetId) {
-        throw new Error('No artist ID provided');
+      console.log('Fetching artist profile for ID:', artistId);
+
+      try {
+        // First, get the basic profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select(`
+            *
+          `)
+          .eq('id', artistId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          throw new Error(`Failed to fetch profile: ${profileError.message}`);
+        }
+
+        if (!profile) {
+          console.log('No profile found for ID:', artistId);
+          throw new Error('Artist not found');
+        }
+
+        console.log('Profile fetched successfully:', profile);
+
+        // Then fetch related data in parallel
+        const [
+          { data: projects },
+          { data: education },
+          { data: skills },
+          { data: languages },
+          { data: tools },
+          { data: references },
+          { data: mediaAssets }
+        ] = await Promise.all([
+          supabase.from('projects').select('*').eq('artist_id', artistId),
+          supabase.from('education_training').select('*').eq('artist_id', artistId),
+          supabase.from('special_skills').select('*').eq('artist_id', artistId),
+          supabase.from('language_skills').select('*').eq('artist_id', artistId),
+          supabase.from('tools_software').select('*').eq('artist_id', artistId),
+          supabase.from('professional_references').select('*').eq('artist_id', artistId),
+          supabase.from('media_assets').select('*').eq('artist_id', artistId)
+        ]);
+
+        // Map skills to the skills array format expected by the frontend
+        const skillsArray = skills?.map(skill => skill.skill) || [];
+
+        const artistData: Artist = {
+          ...profile,
+          skills: skillsArray,
+          projects: projects || [],
+          education_training: education || [],
+          special_skills: skills || [],
+          language_skills: languages || [],
+          tools_software: tools || [],
+          professional_references: references || [],
+          media_assets: mediaAssets || []
+        };
+
+        console.log('Complete artist data assembled:', artistData);
+        return artistData;
+
+      } catch (error: any) {
+        console.error('Error in useArtistProfile:', error);
+        throw error;
       }
-      
-      console.log('Fetching fresh artist profile for ID:', targetId);
-      
-      // Clear cache before fetching
-      cacheManager.forceClearCache('profile');
-      
-      const profile = await fetchArtistById(targetId);
-      
-      if (!profile) {
-        throw new Error(`Artist profile not found for ID: ${targetId}`);
-      }
-      
-      return profile;
     },
-    enabled: !!targetId && enabled,
-    staleTime: 0, // Never use stale data
-    refetchOnWindowFocus: true, // Always refetch on focus
-    retry: 2,
-    retryDelay: 500,
-    gcTime: 0, // Don't cache the data
+    enabled: !!artistId,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    retry: (failureCount, error: any) => {
+      // Don't retry if it's a "not found" error
+      if (error?.message?.includes('not found') || error?.message?.includes('Artist not found')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    ...options
   });
-  
-  const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: Partial<Artist>) => {
-      if (!user?.id) {
-        throw new Error('User must be authenticated to update profile');
-      }
-      
-      if (!profileData || Object.keys(profileData).length === 0) {
-        throw new Error('No profile data provided for update');
-      }
-      
-      const result = await updateArtistProfile(user.id, profileData);
-      
-      if (!result) {
-        throw new Error('Profile update failed');
-      }
-      
-      return result;
-    },
-    onSuccess: (updatedProfile) => {
-      // Clear all cache and invalidate queries
-      cacheManager.bustCache();
-      queryClient.clear(); // Clear all query cache
-      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['artists'] });
-      queryClient.invalidateQueries({ queryKey: ['featuredArtists'] });
-      
-      toast.success('Profile updated successfully');
-    },
-    onError: (error: any) => {
-      console.error('Profile update error:', error.message);
-      
-      const errorMessage = error?.message || 'Failed to update profile';
-      toast.error(errorMessage);
-    },
-  });
-  
-  const refreshProfile = async () => {
-    try {
-      console.log('Force refreshing profile data...');
-      cacheManager.bustCache();
-      queryClient.clear();
-      const result = await profileQuery.refetch();
-      return result;
-    } catch (error: any) {
-      console.error('Error refreshing profile:', error.message);
-      toast.error('Failed to refresh profile data');
-      throw error;
-    }
-  };
-  
-  const isProfileComplete = (profile?: Artist) => {
-    if (!profile) return false;
-    
-    return !!(
-      profile.full_name &&
-      profile.email &&
-      profile.bio &&
-      profile.category &&
-      profile.experience_level
-    );
-  };
-  
-  return {
-    profile: profileQuery.data,
-    isLoading: profileQuery.isLoading,
-    isFetching: profileQuery.isFetching,
-    isUpdating: updateProfileMutation.isPending,
-    isError: profileQuery.isError,
-    error: profileQuery.error,
-    updateError: updateProfileMutation.error,
-    updateProfile: updateProfileMutation.mutate,
-    refreshProfile,
-    refetch: profileQuery.refetch,
-    canEdit: user?.id === targetId,
-    isOwnProfile: user?.id === targetId,
-    isProfileComplete: isProfileComplete(profileQuery.data),
-    isStale: profileQuery.isStale,
-    dataUpdatedAt: profileQuery.dataUpdatedAt,
-    clearErrors: () => {
-      updateProfileMutation.reset();
-    }
-  };
 };

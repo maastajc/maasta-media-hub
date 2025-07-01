@@ -3,7 +3,9 @@ export interface Artist {
   id: string;
   full_name: string;
   email: string;
-  bio?: string;
+  headline?: string; // New field - max 200 characters
+  about?: string; // New field - replaces bio
+  bio?: string; // Keep for backward compatibility
   profile_picture_url?: string;
   cover_image_url?: string;
   city?: string;

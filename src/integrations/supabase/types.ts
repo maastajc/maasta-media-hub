@@ -501,6 +501,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          about: string | null
           association_membership: string | null
           behance: string | null
           bio: string | null
@@ -516,6 +517,7 @@ export type Database = {
           experience_level: string | null
           full_name: string
           gender: string | null
+          headline: string | null
           id: string
           imdb_profile: string | null
           instagram: string | null
@@ -538,6 +540,7 @@ export type Database = {
           youtube_vimeo: string | null
         }
         Insert: {
+          about?: string | null
           association_membership?: string | null
           behance?: string | null
           bio?: string | null
@@ -553,6 +556,7 @@ export type Database = {
           experience_level?: string | null
           full_name?: string
           gender?: string | null
+          headline?: string | null
           id: string
           imdb_profile?: string | null
           instagram?: string | null
@@ -575,6 +579,7 @@ export type Database = {
           youtube_vimeo?: string | null
         }
         Update: {
+          about?: string | null
           association_membership?: string | null
           behance?: string | null
           bio?: string | null
@@ -590,6 +595,7 @@ export type Database = {
           experience_level?: string | null
           full_name?: string
           gender?: string | null
+          headline?: string | null
           id?: string
           imdb_profile?: string | null
           instagram?: string | null
