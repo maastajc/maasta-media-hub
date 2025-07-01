@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -391,8 +392,6 @@ const CreateAudition = () => {
                       )}
                     </div>
 
-                    {/* ... keep existing code for dates, compensation, demographics, project details, tags, and submit button */}
-
                     {/* Dates */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
@@ -472,8 +471,8 @@ const CreateAudition = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Minimum Age</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Min age" />
                                 </SelectTrigger>
@@ -495,8 +494,8 @@ const CreateAudition = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Maximum Age</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Max age" />
                                 </SelectTrigger>
@@ -518,8 +517,8 @@ const CreateAudition = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Gender</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select gender" />
                                 </SelectTrigger>
