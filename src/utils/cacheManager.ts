@@ -23,6 +23,18 @@ class CacheManager {
     console.log('Initializing cache manager - clearing all caches');
     this.clearAllCaches();
     localStorage.setItem(`${this.cachePrefix}version`, this.version);
+    
+    // Force refresh on version mismatch
+    this.checkVersionMismatch();
+  }
+
+  private checkVersionMismatch() {
+    const storedVersion = localStorage.getItem(`${this.cachePrefix}version`);
+    if (storedVersion && storedVersion !== this.version) {
+      console.log('Version mismatch detected, forcing cache clear');
+      this.bustCache();
+      window.location.reload();
+    }
   }
 
   clearAllCaches() {
@@ -45,6 +57,15 @@ class CacheManager {
       caches.keys().then(cacheNames => {
         cacheNames.forEach(cacheName => {
           caches.delete(cacheName);
+        });
+      });
+    }
+
+    // Clear service worker cache if exists
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister();
         });
       });
     }
@@ -89,6 +110,20 @@ class CacheManager {
     localStorage.setItem(`${this.cachePrefix}version`, this.version);
     this.clearAllCaches();
   }
+
+  // Add method to check if cache should be refreshed
+  shouldRefreshCache(): boolean {
+    const lastClear = localStorage.getItem(`${this.cachePrefix}last_clear`);
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    
+    if (!lastClear || (now - parseInt(lastClear)) > oneHour) {
+      localStorage.setItem(`${this.cachePrefix}last_clear`, now.toString());
+      return true;
+    }
+    
+    return false;
+  }
 }
 
 export const cacheManager = CacheManager.getInstance();
@@ -98,5 +133,18 @@ export const getApiHeaders = () => ({
   'X-Requested-With': 'XMLHttpRequest',
   'Cache-Control': 'no-cache, no-store, must-revalidate',
   'Pragma': 'no-cache',
-  'Expires': '0'
+  'Expires': '0',
+  'X-Cache-Bust': Date.now().toString()
 });
+
+// Add global cache buster for all fetch requests
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  const url = args[0] as string;
+  if (typeof url === 'string' && !url.includes('?')) {
+    args[0] = `${url}?_cb=${Date.now()}`;
+  } else if (typeof url === 'string') {
+    args[0] = `${url}&_cb=${Date.now()}`;
+  }
+  return originalFetch.apply(this, args);
+};

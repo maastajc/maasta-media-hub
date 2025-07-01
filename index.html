@@ -9,6 +9,14 @@
     <meta name="author" content="Lovable" />
     <link rel="icon" href="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" type="image/png">
 
+    <!-- Aggressive cache prevention -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- Cache busting timestamp -->
+    <meta name="cache-bust" content="<?php echo time(); ?>" />
+
     <meta property="og:title" content="maasta-media-hub" />
     <meta property="og:description" content="Lovable Generated Project" />
     <meta property="og:type" content="website" />
@@ -24,5 +32,36 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Cache detection and clearing script -->
+    <script>
+      // Check if we're loading stale content
+      const checkCacheHealth = () => {
+        const scripts = document.querySelectorAll('script[src*="/assets/"]');
+        const links = document.querySelectorAll('link[href*="/assets/"]');
+        
+        // If we have old asset references, clear cache and reload
+        if (scripts.length > 0 || links.length > 0) {
+          const now = Date.now();
+          const lastCheck = localStorage.getItem('maasta_cache_check');
+          
+          if (!lastCheck || (now - parseInt(lastCheck)) > 300000) { // 5 minutes
+            localStorage.setItem('maasta_cache_check', now.toString());
+            if ('caches' in window) {
+              caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+              });
+            }
+          }
+        }
+      };
+      
+      // Run cache health check
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkCacheHealth);
+      } else {
+        checkCacheHealth();
+      }
+    </script>
   </body>
 </html>

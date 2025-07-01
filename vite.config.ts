@@ -21,13 +21,24 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Remove aggressive cache busting that was causing issues
+    // Enhanced cache busting for production
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name]-[hash].js`,
-        chunkFileNames: `assets/[name]-[hash].js`,
-        assetFileNames: `assets/[name]-[hash].[ext]`
+        entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+        chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+        assetFileNames: (assetInfo) => {
+          const extType = assetInfo.name?.split('.').pop();
+          return `assets/[name]-[hash]-${Date.now()}.[ext]`;
+        }
       }
-    }
+    },
+    // Force cache invalidation
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // Keep console logs for debugging
+      },
+    },
   }
 }));

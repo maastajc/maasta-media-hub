@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
-import { cacheManager } from '@/utils/cacheManager';
+import { cacheManager, getApiHeaders } from '@/utils/cacheManager';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -44,7 +44,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     return withRetry(async () => {
       console.log('Fetching fresh artists data...');
       
-      // Clear cache before fetching
+      // Always clear cache before fetching to ensure fresh data
       cacheManager.forceClearCache('artists');
       
       setIsLoading(true);
@@ -55,17 +55,16 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
       );
 
-      // Force fresh data by adding timestamp
+      // Force fresh data by adding timestamp and cache-busting headers
       const timestamp = Date.now();
-      const fetchPromise = supabase
+      
+      // Use Supabase client with cache-busting
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(100);
-
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
-      const { data, error: fetchError } = result as any;
 
       if (fetchError) {
         console.error('Error fetching artists:', fetchError);
@@ -77,10 +76,13 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         id: profile.id,
         full_name: profile.full_name || 'Unknown Artist',
         email: profile.email,
+        username: profile.username,
         profile_picture_url: profile.profile_picture_url,
         category: profile.category || 'actor',
         experience_level: profile.experience_level || 'beginner',
         bio: profile.bio,
+        about: profile.about,
+        headline: profile.headline,
         city: profile.city,
         state: profile.state,
         country: profile.country,
@@ -116,7 +118,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
-      // Bust cache before refetch
+      // Bust cache before refetch to ensure completely fresh data
       cacheManager.bustCache();
       await fetchArtists();
     } catch (err: any) {
@@ -170,8 +172,11 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   useEffect(() => {
     const initializeFetch = async () => {
       try {
-        // Clear cache on component mount
-        cacheManager.forceClearCache('artists');
+        // Check if cache should be refreshed
+        if (cacheManager.shouldRefreshCache()) {
+          cacheManager.forceClearCache('artists');
+        }
+        
         await fetchArtists();
       } catch (err: any) {
         console.error('Error in useArtists:', err);
