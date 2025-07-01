@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
-import { useAuth } from '@/contexts/AuthContext';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -10,8 +10,8 @@ interface UseArtistsOptions {
 }
 
 const MAX_RETRIES = 2;
-const RETRY_DELAY = 1000;
-const TIMEOUT_MS = 10000;
+const RETRY_DELAY = 500;
+const TIMEOUT_MS = 8000;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -24,7 +24,7 @@ const withRetry = async <T>(
   } catch (error: any) {
     console.error('Operation failed:', error.message);
     
-    if (retries > 0 && !error.message?.includes('not found')) {
+    if (retries > 0) {
       console.log(`Retrying operation... ${retries} attempts left`);
       await delay(RETRY_DELAY);
       return withRetry(operation, retries - 1);
@@ -39,7 +39,6 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { isSessionRestored, session } = useAuth();
 
   const fetchArtists = async () => {
     return withRetry(async () => {
@@ -49,27 +48,22 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       setIsError(false);
       setError(null);
 
-      // Wait a bit more if we have a session to ensure it's fully ready
-      if (session) {
-        console.log('Session detected, ensuring it is ready...');
-        await delay(100);
+      // Check session validity before fetching
+      if (!cacheManager.isSessionValid()) {
+        console.log('Session invalid, user may need to re-authenticate');
       }
 
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
       );
 
-      const fetchPromise = supabase
+      // Use clean Supabase client without cache-busting
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(100);
-
-      const { data, error: fetchError } = await Promise.race([
-        fetchPromise,
-        timeoutPromise
-      ]);
 
       if (fetchError) {
         console.error('Error fetching artists:', fetchError);
@@ -123,6 +117,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
+      // Only clear specific cache, not everything
+      cacheManager.forceClearCache('artists');
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -173,15 +169,14 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   };
 
   useEffect(() => {
-    // Only start fetching after session restoration is complete
-    if (!isSessionRestored) {
-      console.log('Waiting for session restoration...');
-      return;
-    }
-
     const initializeFetch = async () => {
       try {
-        console.log('Session restored, initializing data fetch');
+        // Only refresh cache if it's actually stale (6 hours)
+        if (cacheManager.shouldRefreshCache()) {
+          console.log('Cache is stale, refreshing data');
+          cacheManager.forceClearCache('artists');
+        }
+        
         await fetchArtists();
       } catch (err: any) {
         console.error('Error in useArtists:', err);
@@ -193,7 +188,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     };
 
     initializeFetch();
-  }, [isSessionRestored]); // Depend on session restoration instead of mount
+  }, []);
 
   return {
     artists,

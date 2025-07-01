@@ -2,11 +2,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
-import { useAuth } from "@/contexts/AuthContext";
+import { cacheManager } from "@/utils/cacheManager";
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
-  const { isSessionRestored } = useAuth();
-
   return useQuery({
     queryKey: ['artist-profile', artistId],
     queryFn: async (): Promise<Artist> => {
@@ -15,6 +13,11 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
       }
 
       console.log('Fetching artist profile for ID:', artistId);
+
+      // Check session validity
+      if (!cacheManager.isSessionValid()) {
+        console.warn('Session may be invalid for profile fetch');
+      }
 
       try {
         // First, get the basic profile
@@ -82,7 +85,7 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
         throw error;
       }
     },
-    enabled: !!artistId && isSessionRestored, // Wait for session restoration
+    enabled: !!artistId,
     staleTime: 5 * 60 * 1000, // 5 minutes - reasonable caching
     refetchOnMount: false, // Don't always refetch on mount
     refetchOnWindowFocus: false, // Don't refetch on window focus
