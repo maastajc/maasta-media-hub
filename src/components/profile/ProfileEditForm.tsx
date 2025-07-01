@@ -26,7 +26,7 @@ const profileSchema = z.object({
   username: z.string()
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must be at most 30 characters")
-    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+    .regex(/^[a-z0-9_]+$/, "Username must be lowercase and can only contain letters, numbers, and underscores"),
   bio: z.string().min(10, "Bio must be at least 10 characters long"),
   date_of_birth: z.date({
     required_error: "Date of birth is required",
@@ -37,7 +37,7 @@ const profileSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State/Province is required"),
   country: z.string().min(1, "Country is required"),
-  phone_number: z.string().min(1, "Phone number is required"),
+  phone_number: z.string().regex(/^\+91\d{10}$/, "Phone number must be in format +91XXXXXXXXXX"),
   personal_website: z.string().optional(),
   instagram: z.string().optional(),
   linkedin: z.string().optional(),
@@ -61,6 +61,8 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState(profileData.profile_picture_url);
   const [coverImageUrl, setCoverImageUrl] = useState(profileData.cover_image_url);
+  const [showOtherCategory, setShowOtherCategory] = useState(false);
+  const [otherCategoryValue, setOtherCategoryValue] = useState('');
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -125,15 +127,24 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Calculate age from date of birth
       const age = calculateAge(data.date_of_birth);
 
+      // Prepare update data with other category handling
+      const updateData = {
+        ...data,
+        date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
+        profile_picture_url: profileImageUrl,
+        cover_image_url: coverImageUrl,
+        updated_at: new Date().toISOString()
+      };
+
+      // If "other" category selected, store the custom category suggestion
+      if (data.category === "other" && otherCategoryValue.trim()) {
+        updateData.category = otherCategoryValue.trim();
+        // TODO: In future, we could also store this in a separate suggestions table for admin review
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          ...data,
-          date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
-          profile_picture_url: profileImageUrl,
-          cover_image_url: coverImageUrl,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', userId);
 
       if (error) throw error;
@@ -210,7 +221,10 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                     id="username"
                     {...register("username")}
                     className="mt-1"
-                    placeholder="e.g., john_doe123"
+                    placeholder="lowercase_username_only"
+                    onChange={(e) => {
+                      setValue("username", e.target.value.toLowerCase());
+                    }}
                   />
                   {errors.username && (
                     <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
@@ -220,11 +234,28 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
               <div>
                 <Label htmlFor="phone_number">Phone Number *</Label>
-                <Input
-                  id="phone_number"
-                  {...register("phone_number")}
-                  className="mt-1"
-                />
+                <div className="flex mt-1">
+                  <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md">
+                    <span className="text-sm text-gray-600">+91</span>
+                  </div>
+                  <Input
+                    id="phone_number"
+                    {...register("phone_number")}
+                    className="rounded-l-none"
+                    placeholder="Enter 10-digit phone number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.startsWith('+91')) {
+                        setValue("phone_number", value);
+                      } else {
+                        const digits = value.replace(/\D/g, '');
+                        if (digits.length <= 10) {
+                          setValue("phone_number", `+91${digits}`);
+                        }
+                      }
+                    }}
+                  />
+                </div>
                 {errors.phone_number && (
                   <p className="text-sm text-red-600 mt-1">{errors.phone_number.message}</p>
                 )}
@@ -331,7 +362,16 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category *</Label>
-                  <Select value={watch("category")} onValueChange={(value) => setValue("category", value)}>
+                  <Select 
+                    value={watch("category")} 
+                    onValueChange={(value) => {
+                      setValue("category", value);
+                      setShowOtherCategory(value === "other");
+                      if (value !== "other") {
+                        setOtherCategoryValue('');
+                      }
+                    }}
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -350,6 +390,23 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   </Select>
                   {errors.category && (
                     <p className="text-sm text-red-600 mt-1">{errors.category.message}</p>
+                  )}
+                  
+                  {/* Other Category Input */}
+                  {showOtherCategory && (
+                    <div className="mt-3">
+                      <Label htmlFor="other_category">Suggest a new category</Label>
+                      <Input
+                        id="other_category"
+                        value={otherCategoryValue}
+                        onChange={(e) => setOtherCategoryValue(e.target.value)}
+                        placeholder="Enter your category suggestion"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        This will be reviewed for inclusion in future category options
+                      </p>
+                    </div>
                   )}
                 </div>
 

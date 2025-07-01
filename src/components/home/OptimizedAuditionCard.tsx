@@ -155,21 +155,6 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             </div>
           )}
 
-          {/* Deadline */}
-          {audition.deadline && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock className="h-4 w-4 mr-2 text-red-500 flex-shrink-0" />
-              <span>Deadline: {new Date(audition.deadline).toLocaleDateString()}</span>
-            </div>
-          )}
-
-          {/* Audition Date */}
-          {audition.audition_date && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-              <span>Audition: {new Date(audition.audition_date).toLocaleDateString()}</span>
-            </div>
-          )}
         </div>
 
         {/* Badges Row */}
@@ -230,9 +215,8 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {creatorName}
+              Posted by {creatorName}
             </p>
-            <p className="text-xs text-gray-500">Posted this audition</p>
           </div>
         </div>
 

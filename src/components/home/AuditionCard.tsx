@@ -83,12 +83,6 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             <span className="font-medium">{audition.location}</span>
           </div>
           
-          {audition.audition_date && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="w-4 h-4 mr-3 text-maasta-purple flex-shrink-0" />
-              <span className="font-medium">{format(new Date(audition.audition_date), 'MMM dd, yyyy')}</span>
-            </div>
-          )}
           
           <div className="flex items-center text-sm text-gray-600">
             <Users className="w-4 h-4 mr-3 text-maasta-purple flex-shrink-0" />
@@ -121,22 +115,6 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
           </div>
         )}
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm">
-            {!isClosed && daysRemaining !== null ? (
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-2 text-maasta-orange" />
-                <span className={`font-medium ${daysRemaining <= 5 ? "text-red-600" : "text-gray-600"}`}>
-                  {daysRemaining} days left
-                </span>
-              </div>
-            ) : !isClosed ? (
-              <span className="text-gray-600">Open until filled</span>
-            ) : (
-              <span className="text-gray-500">Application period ended</span>
-            )}
-          </div>
-        </div>
 
         {/* Posted by Profile Section - moved before buttons */}
         {audition.posterProfile && (
@@ -152,9 +130,8 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {audition.posterProfile.full_name}
+                Posted by {audition.posterProfile.full_name}
               </p>
-              <p className="text-xs text-gray-500">Posted this audition</p>
             </div>
           </div>
         )}

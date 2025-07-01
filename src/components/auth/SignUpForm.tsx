@@ -17,18 +17,50 @@ export const SignUpForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('artist');
+const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [usernameError, setUsernameError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const navigate = useNavigate();
+
+  const validatePhoneNumber = () => {
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      setPhoneError('Phone number must be exactly 10 digits');
+      return false;
+    }
+    setPhoneError('');
+    return true;
+  };
 
   const validatePassword = () => {
     if (password !== confirmPassword) {
       setPasswordError('Passwords do not match');
       return false;
     }
-    if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return false;
+    }
+    // Check for at least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      setPasswordError('Password must contain at least one uppercase letter');
+      return false;
+    }
+    // Check for at least one lowercase letter
+    if (!/[a-z]/.test(password)) {
+      setPasswordError('Password must contain at least one lowercase letter');
+      return false;
+    }
+    // Check for at least one digit
+    if (!/\d/.test(password)) {
+      setPasswordError('Password must contain at least one digit');
+      return false;
+    }
+    // Check for at least one special character
+    if (!/[@#!$%^&*()_+\-=\[\]{}|;':"\\|,.<>\/?]/.test(password)) {
+      setPasswordError('Password must contain at least one special character (@, #, !, etc.)');
       return false;
     }
     setPasswordError('');
@@ -44,8 +76,14 @@ export const SignUpForm = () => {
       setUsernameError('Username must be at most 30 characters');
       return false;
     }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameError('Username can only contain letters, numbers, and underscores');
+    // Check if username contains uppercase letters
+    if (/[A-Z]/.test(username)) {
+      setUsernameError('Username must be lowercase only');
+      return false;
+    }
+    // Check if username contains spaces or special characters (except underscore)
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      setUsernameError('Username can only contain lowercase letters, numbers, and underscores');
       return false;
     }
 
@@ -82,6 +120,10 @@ export const SignUpForm = () => {
     if (!isUsernameValid) {
       return;
     }
+
+    if (!validatePhoneNumber()) {
+      return;
+    }
     
     setIsLoading(true);
     
@@ -94,6 +136,7 @@ export const SignUpForm = () => {
             full_name: fullName,
             username: username,
             role,
+            phone_number: `+91${phoneNumber}`, // Auto-prepend +91
           },
           emailRedirectTo: `${window.location.origin}/`
         }
@@ -166,12 +209,35 @@ export const SignUpForm = () => {
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
-              placeholder="Choose a unique username"
+              placeholder="lowercase_username_only"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
               required
             />
             {usernameError && <p className="text-sm text-red-500">{usernameError}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <div className="flex">
+              <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md">
+                <span className="text-sm text-gray-600">+91</span>
+              </div>
+              <Input
+                id="phoneNumber"
+                placeholder="Enter 10-digit phone number"
+                value={phoneNumber}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                  if (value.length <= 10) {
+                    setPhoneNumber(value);
+                  }
+                }}
+                className="rounded-l-none"
+                required
+              />
+            </div>
+            {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
           </div>
           
           <div className="space-y-2">
