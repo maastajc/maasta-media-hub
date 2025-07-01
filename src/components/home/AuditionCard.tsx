@@ -32,9 +32,12 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
     toast.info("You have already applied for this audition");
   };
 
-  const truncateHeadline = (headline: string, maxLength: number = 100) => {
-    if (headline.length <= maxLength) return headline;
-    return headline.slice(0, maxLength).trim() + '...';
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
   };
   
   return (
@@ -73,35 +76,6 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
         </div>
         
         <h3 className="font-bold text-xl mb-2 line-clamp-2 text-gray-900">{audition.title}</h3>
-        
-        {/* Poster Profile Section */}
-        {audition.posterProfile && (
-          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-            <Avatar className="h-8 w-8">
-              <AvatarImage 
-                src={audition.posterProfile.profile_picture} 
-                alt={audition.posterProfile.full_name}
-              />
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                Posted by {audition.posterProfile.full_name}
-              </p>
-            </div>
-          </div>
-        )}
-        
-        {/* Headline instead of description */}
-        {audition.requirements && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {truncateHeadline(audition.requirements)}
-            </p>
-          </div>
-        )}
         
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-gray-600">
@@ -163,6 +137,27 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             )}
           </div>
         </div>
+
+        {/* Posted by Profile Section - moved before buttons */}
+        {audition.posterProfile && (
+          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={audition.posterProfile.profile_picture} 
+                alt={audition.posterProfile.full_name}
+              />
+              <AvatarFallback className="bg-maasta-orange text-white font-semibold text-xs">
+                {getInitials(audition.posterProfile.full_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {audition.posterProfile.full_name}
+              </p>
+              <p className="text-xs text-gray-500">Posted this audition</p>
+            </div>
+          </div>
+        )}
         
         <div className="flex gap-2">
           <Link to={`/auditions/${audition.id}`} className="flex-1">

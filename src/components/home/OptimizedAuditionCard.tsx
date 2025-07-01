@@ -97,11 +97,6 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 
   const compensationInfo = parseCompensation(audition.compensation);
 
-  const truncateHeadline = (headline: string, maxLength: number = 100) => {
-    if (headline.length <= maxLength) return headline;
-    return headline.slice(0, maxLength).trim() + '...';
-  };
-
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white relative">
       {/* Closed badge in top-right corner */}
@@ -115,53 +110,30 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12 border-2 border-maasta-orange/20">
-              {!imageError && creatorImage ? (
-                <AvatarImage 
-                  src={creatorImage} 
-                  alt={creatorName}
-                  className="object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <AvatarFallback className="bg-maasta-orange text-white font-semibold">
-                  {getInitials(creatorName)}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 truncate">Posted by {creatorName}</p>
-              {audition.created_at && (
-                <p className="text-xs text-gray-500">
-                  {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
-                </p>
-              )}
-            </div>
+          <div className="flex-1">
+            {audition.applicationStatus && !isClosed && (
+              <div className="mb-2">
+                <Badge 
+                  variant="outline" 
+                  className={`text-xs ${getStatusColor(audition.applicationStatus)}`}
+                >
+                  {audition.applicationStatus}
+                </Badge>
+              </div>
+            )}
+            <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-maasta-purple transition-colors leading-tight">
+              {audition.title}
+            </CardTitle>
+            {audition.created_at && (
+              <p className="text-xs text-gray-500 mt-1">
+                {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
+              </p>
+            )}
           </div>
-          {audition.applicationStatus && !isClosed && (
-            <Badge 
-              variant="outline" 
-              className={`text-xs ${getStatusColor(audition.applicationStatus)}`}
-            >
-              {audition.applicationStatus}
-            </Badge>
-          )}
         </div>
-        
-        <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-maasta-purple transition-colors leading-tight">
-          {audition.title}
-        </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Headline instead of description */}
-        {audition.requirements && (
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-            {truncateHeadline(audition.requirements)}
-          </p>
-        )}
-
         {/* Key Details Grid */}
         <div className="grid grid-cols-1 gap-3">
           {/* Location */}
@@ -239,6 +211,30 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             )}
           </div>
         )}
+
+        {/* Posted by Profile - moved to bottom */}
+        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <Avatar className="h-8 w-8">
+            {!imageError && creatorImage ? (
+              <AvatarImage 
+                src={creatorImage} 
+                alt={creatorName}
+                className="object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <AvatarFallback className="bg-maasta-orange text-white font-semibold text-xs">
+                {getInitials(creatorName)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {creatorName}
+            </p>
+            <p className="text-xs text-gray-500">Posted this audition</p>
+          </div>
+        </div>
 
         {/* Action Button */}
         <Button 

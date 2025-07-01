@@ -2,15 +2,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from "@/components/ui/carousel";
 import OptimizedAuditionCard from "./OptimizedAuditionCard";
 import AuditionCardSkeleton from "./AuditionCardSkeleton";
 import { fetchRecentAuditions } from "@/services/auditionService";
 import { Audition } from "@/types/audition";
+import Autoplay from "embla-carousel-autoplay";
 
 const RecentAuditions = () => {
   const [auditions, setAuditions] = useState<Audition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     const getRecentAuditions = async () => {
@@ -54,9 +56,16 @@ const RecentAuditions = () => {
         ) : auditions.length > 0 ? (
           <div className="relative">
             <Carousel
+              setApi={setApi}
+              plugins={[
+                Autoplay({
+                  delay: 2000,
+                  stopOnInteraction: true,
+                })
+              ]}
               opts={{
                 align: "start",
-                loop: false,
+                loop: true,
               }}
               className="w-full"
             >
