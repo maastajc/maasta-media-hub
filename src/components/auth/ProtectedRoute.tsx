@@ -15,18 +15,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
+  // Show loading spinner while auth is initializing
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-maasta-purple"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-maasta-purple"></div>
       </div>
     );
   }
 
+  // Redirect to sign-in if not authenticated
   if (!user) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
+  // Check role requirements
   if (requiredRole && profile?.role !== requiredRole) {
     toast.error("Access Denied", {
       description: "You do not have permission to view this page.",
@@ -36,3 +39,4 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   return <>{children}</>;
 };
+

@@ -28,15 +28,15 @@ const Artists = () => {
     refetch,
     filterArtists
   } = useArtists({
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    staleTime: 5 * 60 * 1000 // 5 minutes cache
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    retry: 2 // Reduce retry attempts
   });
 
-  // Remove aggressive cache clearing on mount - let the hook handle it
+  // Simplified initialization without aggressive cache clearing
   useEffect(() => {
-    console.log('Artists page mounted');
-    // Removed: cacheManager.forceClearCache('artists');
-  }, []);
+    console.log('Artists page mounted, artists count:', artists?.length || 0);
+  }, [artists]);
 
   // Extract unique tags from artists data
   const uniqueTags = Array.from(
@@ -103,20 +103,22 @@ const Artists = () => {
 
   const handleRefresh = async () => {
     console.log('Manual refresh triggered');
-    // Only clear specific cache, not everything
-    cacheManager.forceClearCache('artists');
-    await refetch();
-    toast.success("Data refreshed!");
+    try {
+      // Only clear specific cache, not everything
+      cacheManager.forceClearCache('artists');
+      await refetch();
+      toast.success("Data refreshed!");
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error("Failed to refresh data");
+    }
   };
 
+  // Simplified error handling without session checks that could cause loops
   useEffect(() => {
     if (isError && error) {
-      // Add session check for better error messaging
-      if (!cacheManager.isSessionValid()) {
-        toast.error("Session expired. Please sign in again.");
-      } else {
-        toast.error("Failed to load artists. Please try again.");
-      }
+      console.error('Artists loading error:', error);
+      toast.error("Failed to load artists. Please try refreshing the page.");
     }
   }, [isError, error]);
 
@@ -170,3 +172,4 @@ const Artists = () => {
 };
 
 export default Artists;
+

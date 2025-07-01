@@ -65,50 +65,114 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
+    let isMounted = true;
+    
+    console.log('Setting up auth state listener...');
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, 'Session:', session);
+      (event, session) => {
+        if (!isMounted) return;
+        
+        console.log('Auth event:', event, 'Session exists:', !!session);
+        
+        // Synchronous state updates only
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch profile when user signs in
-        if (session?.user) {
-          const userProfile = await fetchProfile(session.user.id);
-          setProfile(userProfile);
-          
-          // Handle OAuth redirect to profile page
-          const isOAuthCallback = location.pathname === '/' && 
-            (window.location.hash.includes('access_token') || 
-             window.location.search.includes('code'));
-          
-          if (event === 'SIGNED_IN' && (isOAuthCallback || location.pathname === '/sign-in')) {
-            setTimeout(() => {
-              navigate('/profile');
-            }, 100);
-          }
-        } else {
+        // Defer any async operations to prevent blocking
+        if (session?.user && event !== 'TOKEN_REFRESHED') {
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            try {
+              const userProfile = await fetchProfile(session.user.id);
+              if (isMounted) {
+                setProfile(userProfile);
+              }
+            } catch (error) {
+              console.error('Error fetching profile after auth change:', error);
+              if (isMounted) {
+                setProfile(null);
+              }
+            }
+            
+            // Handle navigation only for specific events
+            if (event === 'SIGNED_IN' && isMounted) {
+              const isOAuthCallback = location.pathname === '/' && 
+                (window.location.hash.includes('access_token') || 
+                 window.location.search.includes('code'));
+              
+              if (isOAuthCallback || location.pathname === '/sign-in') {
+                setTimeout(() => {
+                  if (isMounted) {
+                    navigate('/profile');
+                  }
+                }, 100);
+              }
+            }
+          }, 0);
+        } else if (!session) {
           setProfile(null);
         }
         
-        setLoading(false);
+        // Always set loading to false after processing auth state
+        setTimeout(() => {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }, 100);
       }
     );
 
-    // Get existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const userProfile = await fetchProfile(session.user.id);
-        setProfile(userProfile);
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (isMounted) {
+            setLoading(false);
+          }
+          return;
+        }
+        
+        if (!isMounted) return;
+        
+        console.log('Initial session check:', !!existingSession);
+        
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
+        
+        if (existingSession?.user) {
+          try {
+            const userProfile = await fetchProfile(existingSession.user.id);
+            if (isMounted) {
+              setProfile(userProfile);
+            }
+          } catch (error) {
+            console.error('Error fetching initial profile:', error);
+          }
+        }
+        
+        if (isMounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in auth initialization:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      
-      setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, location]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
@@ -138,9 +202,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    navigate('/');
+    try {
+      await supabase.auth.signOut();
+      setProfile(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const value = {
@@ -159,3 +227,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
