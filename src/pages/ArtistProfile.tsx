@@ -23,7 +23,7 @@ const ArtistProfile = () => {
 
   // Use the unified hook for data fetching with enhanced error handling
   const { 
-    profile: artistData, 
+    data: artistData, 
     isLoading, 
     isError, 
     error,
@@ -140,3 +140,4 @@ const ArtistProfile = () => {
 };
 
 export default ArtistProfile;
+

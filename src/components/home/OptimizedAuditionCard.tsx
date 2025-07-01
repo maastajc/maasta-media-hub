@@ -20,7 +20,7 @@ interface OptimizedAuditionCardProps {
   audition: {
     id: string;
     title: string;
-    description: string;
+    description?: string; // Made optional to match Audition type
     location: string;
     audition_date?: string;
     deadline?: string;
@@ -72,6 +72,23 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
   const creatorName = audition.creator_profile?.full_name || audition.company || 'Unknown Creator';
   const creatorImage = audition.creator_profile?.profile_picture;
 
+  // Parse compensation to show amount and duration
+  const parseCompensation = (compensation?: string) => {
+    if (!compensation) return null;
+    
+    // Try to extract amount and duration from compensation string
+    const match = compensation.match(/(\d+(?:,\d+)*)\s*(?:per\s+(day|month|project))?/i);
+    if (match) {
+      const amount = match[1];
+      const duration = match[2] || '';
+      return { amount, duration };
+    }
+    
+    return { amount: compensation, duration: '' };
+  };
+
+  const compensationInfo = parseCompensation(audition.compensation);
+
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white">
       <CardHeader className="pb-3">
@@ -115,9 +132,11 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       
       <CardContent className="space-y-4">
         {/* Description */}
-        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-          {audition.description}
-        </p>
+        {audition.description && (
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+            {audition.description}
+          </p>
+        )}
 
         {/* Key Details Grid */}
         <div className="grid grid-cols-1 gap-3">
@@ -128,10 +147,15 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
           </div>
 
           {/* Salary with Duration */}
-          {audition.compensation && (
+          {compensationInfo && (
             <div className="flex items-center text-sm text-gray-600">
               <IndianRupee className="h-4 w-4 mr-2 text-green-600 flex-shrink-0" />
-              <span className="font-medium text-green-700">{audition.compensation}</span>
+              <span className="font-medium text-green-700">
+                ₹{compensationInfo.amount}
+                {compensationInfo.duration && (
+                  <span className="text-gray-500 ml-1">per {compensationInfo.duration}</span>
+                )}
+              </span>
             </div>
           )}
 
@@ -207,3 +231,4 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 };
 
 export default OptimizedAuditionCard;
+

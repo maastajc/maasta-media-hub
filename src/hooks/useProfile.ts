@@ -2,7 +2,8 @@
 // This hook is deprecated - use useArtistProfile instead
 import { useArtistProfile } from './useArtistProfile';
 
-export const useProfile = () => {
+export const useProfile = (artistId?: string, options = {}) => {
   console.warn('useProfile is deprecated. Please use useArtistProfile instead.');
-  return useArtistProfile();
+  return useArtistProfile(artistId, options);
 };
+
