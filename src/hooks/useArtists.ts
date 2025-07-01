@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
-import { useAuth } from '@/contexts/AuthContext';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -38,7 +39,6 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { sessionValid, refreshSession } = useAuth();
 
   const fetchArtists = async () => {
     return withRetry(async () => {
@@ -48,10 +48,9 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       setIsError(false);
       setError(null);
 
-      // Check session validity and refresh if needed
-      if (!sessionValid) {
-        console.log('Session invalid, attempting refresh...');
-        await refreshSession();
+      // Check session validity before fetching
+      if (!cacheManager.isSessionValid()) {
+        console.log('Session invalid, user may need to re-authenticate');
       }
 
       const timeoutPromise = new Promise<never>((_, reject) => 
@@ -59,85 +58,15 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       );
 
       // Use clean Supabase client without cache-busting
-      const fetchPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      const { data, error: fetchError } = await Promise.race([
-        fetchPromise,
-        timeoutPromise
-      ]);
-
       if (fetchError) {
         console.error('Error fetching artists:', fetchError);
-        
-        // If it's an auth error, try refreshing session once
-        if (fetchError.message.includes('JWT') || fetchError.message.includes('auth')) {
-          console.log('Auth error detected, refreshing session and retrying...');
-          await refreshSession();
-          
-          // Retry the fetch after session refresh
-          const { data: retryData, error: retryError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false })
-            .limit(100);
-            
-          if (retryError) {
-            throw new Error(`Database error after retry: ${retryError.message}`);
-          }
-          
-          // Use retry data if successful
-          const finalData = retryData;
-          
-          // Transform retry data
-          const transformedData = (finalData || []).map((profile: any) => ({
-            id: profile.id,
-            full_name: profile.full_name || 'Unknown Artist',
-            email: profile.email,
-            username: profile.username,
-            profile_picture_url: profile.profile_picture_url,
-            category: profile.category || 'actor',
-            experience_level: profile.experience_level || 'beginner',
-            bio: profile.bio,
-            about: profile.about,
-            headline: profile.headline,
-            city: profile.city,
-            state: profile.state,
-            country: profile.country,
-            years_of_experience: profile.years_of_experience || 0,
-            skills: [],
-            created_at: profile.created_at,
-            status: profile.status,
-            personal_website: profile.personal_website,
-            linkedin: profile.linkedin,
-            youtube_vimeo: profile.youtube_vimeo,
-            instagram: profile.instagram,
-            verified: profile.verified || false,
-            phone_number: profile.phone_number,
-            date_of_birth: profile.date_of_birth,
-            gender: profile.gender,
-            cover_image_url: profile.cover_image_url,
-            preferred_domains: profile.preferred_domains,
-            role: profile.role || 'artist',
-            work_preference: profile.work_preference || 'any',
-            willing_to_relocate: profile.willing_to_relocate || false,
-            imdb_profile: profile.imdb_profile,
-            behance: profile.behance,
-            association_membership: profile.association_membership,
-            rate_card: profile.rate_card,
-            updated_at: profile.updated_at
-          })) as Artist[];
-
-          console.log(`Successfully fetched ${transformedData.length} artists after retry`);
-          setArtists(transformedData);
-          return transformedData;
-        }
-        
         throw new Error(`Database error: ${fetchError.message}`);
       }
 
@@ -188,6 +117,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
+      // Only clear specific cache, not everything
+      cacheManager.forceClearCache('artists');
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -240,6 +171,12 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   useEffect(() => {
     const initializeFetch = async () => {
       try {
+        // Only refresh cache if it's actually stale (6 hours)
+        if (cacheManager.shouldRefreshCache()) {
+          console.log('Cache is stale, refreshing data');
+          cacheManager.forceClearCache('artists');
+        }
+        
         await fetchArtists();
       } catch (err: any) {
         console.error('Error in useArtists:', err);
@@ -251,7 +188,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
     };
 
     initializeFetch();
-  }, [sessionValid]); // Re-fetch when session validity changes
+  }, []);
 
   return {
     artists,

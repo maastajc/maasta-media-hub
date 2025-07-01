@@ -2,13 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
-import { useAuth } from "@/contexts/AuthContext";
+import { cacheManager } from "@/utils/cacheManager";
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
-  const { sessionValid, refreshSession } = useAuth();
-  
   return useQuery({
-    queryKey: ['artist-profile', artistId, sessionValid],
+    queryKey: ['artist-profile', artistId],
     queryFn: async (): Promise<Artist> => {
       if (!artistId) {
         throw new Error('Artist ID is required');
@@ -16,63 +14,23 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
 
       console.log('Fetching artist profile for ID:', artistId);
 
-      // Check session validity and refresh if needed
-      if (!sessionValid) {
-        console.log('Session invalid, attempting refresh before profile fetch...');
-        await refreshSession();
+      // Check session validity
+      if (!cacheManager.isSessionValid()) {
+        console.warn('Session may be invalid for profile fetch');
       }
 
       try {
         // First, get the basic profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select(`*`)
+          .select(`
+            *
+          `)
           .eq('id', artistId)
           .maybeSingle();
 
         if (profileError) {
           console.error('Profile fetch error:', profileError);
-          
-          // If it's an auth error, try refreshing session once
-          if (profileError.message.includes('JWT') || profileError.message.includes('auth')) {
-            console.log('Auth error in profile fetch, refreshing session and retrying...');
-            await refreshSession();
-            
-            // Retry the fetch after session refresh
-            const { data: retryProfile, error: retryError } = await supabase
-              .from('profiles')
-              .select(`*`)
-              .eq('id', artistId)
-              .maybeSingle();
-              
-            if (retryError) {
-              throw new Error(`Failed to fetch profile after retry: ${retryError.message}`);
-            }
-            
-            if (!retryProfile) {
-              console.log('No profile found for ID after retry:', artistId);
-              throw new Error('Artist not found');
-            }
-            
-            // Use retry profile data
-            const retryArtistData: Artist = {
-              ...retryProfile,
-              category: retryProfile.category as ArtistCategory,
-              experience_level: retryProfile.experience_level as ExperienceLevel,
-              skills: [],
-              projects: [],
-              education_training: [],
-              special_skills: [],
-              language_skills: [],
-              tools_software: [],
-              professional_references: [],
-              media_assets: []
-            };
-
-            console.log('Profile data assembled after retry:', retryArtistData);
-            return retryArtistData;
-          }
-          
           throw new Error(`Failed to fetch profile: ${profileError.message}`);
         }
 
