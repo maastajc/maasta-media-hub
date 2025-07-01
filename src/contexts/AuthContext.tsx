@@ -9,6 +9,7 @@ interface UserProfile {
   full_name: string;
   email: string;
   role: string;
+  profile_picture_url?: string;
   // Add other profile fields as needed
 }
 

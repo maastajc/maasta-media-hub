@@ -108,7 +108,7 @@ const Navbar = () => {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={profile?.profile_picture_url} alt={profile?.full_name} />
+                            <AvatarImage src={profile?.profile_picture_url || ''} alt={profile?.full_name} />
                             <AvatarFallback>
                               {profile?.full_name ? getInitials(profile.full_name) : <User className="h-4 w-4" />}
                             </AvatarFallback>
@@ -204,7 +204,7 @@ const Navbar = () => {
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <div className="flex items-center px-3 py-2">
                       <Avatar className="h-8 w-8 mr-3">
-                        <AvatarImage src={profile?.profile_picture_url} alt={profile?.full_name} />
+                        <AvatarImage src={profile?.profile_picture_url || ''} alt={profile?.full_name} />
                         <AvatarFallback>
                           {profile?.full_name ? getInitials(profile.full_name) : <User className="h-4 w-4" />}
                         </AvatarFallback>
