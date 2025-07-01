@@ -7,6 +7,7 @@ import { cacheManager } from '@/utils/cacheManager';
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
   staleTime?: number;
+  retry?: number;
 }
 
 const MAX_RETRIES = 2;
@@ -112,7 +113,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
       console.log(`Successfully fetched ${transformedData.length} artists`);
       setArtists(transformedData);
       return transformedData;
-    });
+    }, options.retry || MAX_RETRIES);
   };
 
   const refetch = async () => {
