@@ -32,13 +32,8 @@ export default defineConfig(({ mode }) => ({
         }
       }
     },
-    // Force cache invalidation
+    // Force cache invalidation without terser dependency
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: false, // Keep console logs for debugging
-      },
-    },
+    minify: 'esbuild', // Use esbuild instead of terser (built into Vite)
   }
 }));
