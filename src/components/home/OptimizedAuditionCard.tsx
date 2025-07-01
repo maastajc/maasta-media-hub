@@ -72,6 +72,14 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
   const creatorName = audition.creator_profile?.full_name || audition.company || 'Unknown Creator';
   const creatorImage = audition.creator_profile?.profile_picture;
 
+  // Check if deadline has passed
+  const isDeadlinePassed = audition.deadline ? new Date(audition.deadline) < new Date() : false;
+  
+  // Check if audition date has passed
+  const isExpired = audition.audition_date ? new Date(audition.audition_date) < new Date() : false;
+  
+  const isClosed = isDeadlinePassed || isExpired;
+
   // Parse compensation to show amount and duration
   const parseCompensation = (compensation?: string) => {
     if (!compensation) return null;
@@ -89,8 +97,22 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 
   const compensationInfo = parseCompensation(audition.compensation);
 
+  const truncateHeadline = (headline: string, maxLength: number = 100) => {
+    if (headline.length <= maxLength) return headline;
+    return headline.slice(0, maxLength).trim() + '...';
+  };
+
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white">
+    <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white relative">
+      {/* Closed badge in top-right corner */}
+      {isClosed && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 font-semibold">
+            Closed
+          </Badge>
+        </div>
+      )}
+      
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -109,7 +131,7 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
               )}
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 truncate">{creatorName}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">Posted by {creatorName}</p>
               {audition.created_at && (
                 <p className="text-xs text-gray-500">
                   {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
@@ -117,7 +139,7 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
               )}
             </div>
           </div>
-          {audition.applicationStatus && (
+          {audition.applicationStatus && !isClosed && (
             <Badge 
               variant="outline" 
               className={`text-xs ${getStatusColor(audition.applicationStatus)}`}
@@ -133,10 +155,10 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Description */}
-        {audition.description && (
+        {/* Headline instead of description */}
+        {audition.requirements && (
           <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-            {audition.description}
+            {truncateHeadline(audition.requirements)}
           </p>
         )}
 
@@ -221,11 +243,16 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
         {/* Action Button */}
         <Button 
           onClick={handleViewDetails}
-          className="w-full bg-maasta-orange hover:bg-maasta-orange/90 text-white font-medium"
+          disabled={isClosed}
+          className={`w-full font-medium ${
+            isClosed 
+              ? 'bg-gray-400 text-white cursor-not-allowed' 
+              : 'bg-maasta-orange hover:bg-maasta-orange/90 text-white'
+          }`}
           size="sm"
         >
           <ExternalLink className="h-4 w-4 mr-2" />
-          View Details & Apply
+          {isClosed ? 'Closed' : 'View Details & Apply'}
         </Button>
       </CardContent>
     </Card>

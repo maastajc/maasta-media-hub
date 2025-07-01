@@ -21,13 +21,33 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
   
   // Check if audition date has passed
   const isExpired = audition.audition_date ? new Date(audition.audition_date) < new Date() : false;
+  
+  // Check if deadline has passed
+  const isDeadlinePassed = audition.deadline ? new Date(audition.deadline) < new Date() : false;
+  
+  // Card is closed if either audition date or deadline has passed
+  const isClosed = isExpired || isDeadlinePassed;
 
   const handleAlreadyApplied = () => {
     toast.info("You have already applied for this audition");
   };
+
+  const truncateHeadline = (headline: string, maxLength: number = 100) => {
+    if (headline.length <= maxLength) return headline;
+    return headline.slice(0, maxLength).trim() + '...';
+  };
   
   return (
-    <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+    <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 relative">
+      {/* Closed badge in top-right corner */}
+      {isClosed && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 font-semibold">
+            Closed
+          </Badge>
+        </div>
+      )}
+      
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
@@ -41,18 +61,13 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {audition.applicationStatus && (
+            {audition.applicationStatus && !isClosed && (
               <Badge variant="outline" className="text-xs capitalize bg-green-100 text-green-800 border-green-300 font-semibold">
                 {audition.applicationStatus}
               </Badge>
             )}
-            {audition.urgent && !audition.applicationStatus && !isExpired && (
+            {audition.urgent && !audition.applicationStatus && !isClosed && (
               <Badge className="bg-red-500 text-white animate-pulse">Urgent</Badge>
-            )}
-            {isExpired && (
-              <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
-                Closed
-              </Badge>
             )}
           </div>
         </div>
@@ -76,6 +91,15 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
                 Posted by {audition.posterProfile.full_name}
               </p>
             </div>
+          </div>
+        )}
+        
+        {/* Headline instead of description */}
+        {audition.requirements && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {truncateHeadline(audition.requirements)}
+            </p>
           </div>
         )}
         
@@ -105,12 +129,6 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
           )}
         </div>
         
-        {audition.requirements && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 line-clamp-2">{audition.requirements}</p>
-          </div>
-        )}
-        
         {audition.tags && audition.tags.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-1">
             {audition.tags.slice(0, 3).map((tag, idx) => (
@@ -131,17 +149,17 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
         
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm">
-            {!isExpired && daysRemaining !== null ? (
+            {!isClosed && daysRemaining !== null ? (
               <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-2 text-maasta-orange" />
                 <span className={`font-medium ${daysRemaining <= 5 ? "text-red-600" : "text-gray-600"}`}>
                   {daysRemaining} days left
                 </span>
               </div>
-            ) : !isExpired ? (
+            ) : !isClosed ? (
               <span className="text-gray-600">Open until filled</span>
             ) : (
-              <span className="text-gray-500">Audition date passed</span>
+              <span className="text-gray-500">Application period ended</span>
             )}
           </div>
         </div>
@@ -156,7 +174,7 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
             </Button>
           </Link>
           
-          {isExpired ? (
+          {isClosed ? (
             <Button 
               disabled
               className="flex-1 bg-gray-400 text-white font-semibold py-2 rounded-lg cursor-not-allowed"

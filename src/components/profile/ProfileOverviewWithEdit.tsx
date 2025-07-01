@@ -21,10 +21,47 @@ const ProfileOverviewWithEdit = ({
 }: ProfileOverviewWithEditProps) => {
   return (
     <div className="space-y-6">
+      {/* Overview Section */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            Overview
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEditBasicInfo}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {artist.bio && (
+            <div>
+              <p className="text-sm text-gray-600">{artist.bio}</p>
+            </div>
+          )}
+          {artist.headline && (
+            <div>
+              <p className="text-sm font-medium text-gray-500">Headline</p>
+              <p className="text-sm italic">"{artist.headline}"</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Basic Information */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Basic Information</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Basic Information
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
           {isOwnProfile && (
             <Button 
               variant="outline" 
@@ -60,19 +97,16 @@ const ProfileOverviewWithEdit = ({
               <p className="text-sm">{artist.phone_number || 'Not provided'}</p>
             </div>
           </div>
-          {artist.bio && (
-            <div>
-              <p className="text-sm font-medium text-gray-500">Bio</p>
-              <p className="text-sm">{artist.bio}</p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
       {/* Work Preferences */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Work Preferences</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Work Preferences
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
           {isOwnProfile && (
             <Button 
               variant="outline" 
@@ -116,7 +150,10 @@ const ProfileOverviewWithEdit = ({
       {/* Portfolio Links */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Portfolio Links</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Portfolio
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
           {isOwnProfile && (
             <Button 
               variant="outline" 

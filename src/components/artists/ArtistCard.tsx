@@ -27,6 +27,11 @@ const ArtistCard = ({ artist, onViewProfile }: ArtistCardProps) => {
     navigate(`/artists/${artist.id}`);
   };
 
+  const truncateBio = (bio: string, maxLength: number = 120) => {
+    if (bio.length <= maxLength) return bio;
+    return bio.slice(0, maxLength).trim() + '...';
+  };
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md hover:shadow-xl hover:-translate-y-1">
       <CardHeader className="pb-4">
@@ -55,21 +60,28 @@ const ArtistCard = ({ artist, onViewProfile }: ArtistCardProps) => {
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className="space-y-3">
-          {/* Headline */}
-          {artist.headline && (
-            <p className="text-sm text-gray-700 font-medium line-clamp-2 leading-relaxed">
-              {artist.headline}
+        <div className="space-y-4">
+          {/* Bio - Always Display */}
+          <div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {artist.bio ? truncateBio(artist.bio) : 'No bio available'}
             </p>
-          )}
+          </div>
 
-          {/* Location */}
-          {(artist.city || artist.state || artist.country) && (
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">
-                {[artist.city, artist.state, artist.country].filter(Boolean).join(', ')}
-              </span>
+          {/* Location - Always Display */}
+          <div className="flex items-center text-sm text-gray-600">
+            <MapPin className="h-4 w-4 mr-2 flex-shrink-0 text-maasta-orange" />
+            <span className="truncate">
+              {[artist.city, artist.state, artist.country].filter(Boolean).join(', ') || 'Location not specified'}
+            </span>
+          </div>
+
+          {/* Headline if available */}
+          {artist.headline && (
+            <div>
+              <p className="text-sm text-gray-600 font-medium italic">
+                "{artist.headline}"
+              </p>
             </div>
           )}
 
