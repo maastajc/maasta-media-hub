@@ -26,7 +26,7 @@ interface OptimizedAuditionCardProps {
     deadline?: string;
     compensation?: string;
     requirements?: string;
-    status: string;
+    status?: string; // Made optional to match Audition type
     category?: string;
     experience_level?: string;
     gender?: string;
@@ -231,4 +231,3 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 };
 
 export default OptimizedAuditionCard;
-

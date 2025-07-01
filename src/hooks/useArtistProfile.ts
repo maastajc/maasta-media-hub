@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist, ArtistCategory } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
 import { cacheManager } from "@/utils/cacheManager";
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
@@ -61,6 +61,7 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
         const artistData: Artist = {
           ...profile,
           category: profile.category as ArtistCategory, // Type cast to ensure compatibility
+          experience_level: profile.experience_level as ExperienceLevel, // Type cast to ensure compatibility
           skills: skillsArray,
           projects: projects || [],
           education_training: education || [],
@@ -93,4 +94,3 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
     ...options
   });
 };
-
