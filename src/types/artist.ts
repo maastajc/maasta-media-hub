@@ -44,6 +44,7 @@ export interface Artist {
   tools_software?: Tool[];
   professional_references?: ProfessionalReference[];
   media_assets?: MediaAsset[];
+  awards?: Award[];
 }
 
 export type ArtistCategory = "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
@@ -114,4 +115,15 @@ export interface MediaAsset {
   is_embed?: boolean;
   embed_source?: string;
   created_at?: string;
+}
+
+export interface Award {
+  id: string;
+  artist_id: string;
+  title: string;
+  organization?: string;
+  year?: number;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
 }

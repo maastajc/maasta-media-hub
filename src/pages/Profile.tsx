@@ -73,7 +73,7 @@ const Profile = () => {
   const handleViewPublicProfile = () => {
     if (profileData?.id) {
       // Open public profile in new tab with correct user ID
-      const publicProfileUrl = `/artist/${profileData.id}`;
+      const publicProfileUrl = `/artists/${profileData.id}`;
       window.open(publicProfileUrl, '_blank');
     }
   };

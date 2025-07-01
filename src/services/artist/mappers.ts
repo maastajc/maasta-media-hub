@@ -1,5 +1,5 @@
 
-import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset, Award } from "@/types/artist";
 import { FeaturedArtistRow, ArtistByIdRow } from "./types";
 
 export const mapFeaturedArtistToArtist = (artist: any): Artist => {
@@ -40,6 +40,7 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
     media_assets: [],
     language_skills: [],
     tools_software: [],
+    awards: [],
     special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill: skillName, artist_id: artist.id })),
     skills: skillsArray
   } as Artist;
@@ -79,6 +80,7 @@ export const mapFallbackArtistToArtist = (artist: any): Artist => {
     media_assets: [],
     language_skills: [],
     tools_software: [],
+    awards: [],
     special_skills: [],
     skills: []
   } as Artist;
@@ -92,6 +94,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     projects,
     education_training,
     media_assets,
+    awards,
     ...artistData 
   } = artistFromDb;
   
@@ -152,6 +155,15 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     }))
     : [];
 
+  const mappedAwards: Award[] = Array.isArray(awards)
+    ? awards.map(a => ({
+        ...a,
+        id: a.id || crypto.randomUUID(),
+        title: a.title || "",
+        artist_id: artistFromDb.id
+    }))
+    : [];
+
   return {
     ...artistData,
     id: artistData.id,
@@ -187,6 +199,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     projects: mappedProjects,
     education_training: mappedEducationTraining,
     media_assets: mappedMediaAssets,
+    awards: mappedAwards,
     skills: mappedSpecialSkills.map(s => s.skill)
   } as Artist;
 };

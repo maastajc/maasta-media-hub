@@ -81,6 +81,13 @@ const fetchArtistByIdQuery = (id: string) => {
       tools_software (
         id,
         tool_name
+      ),
+      awards (
+        id,
+        title,
+        organization,
+        year,
+        description
       )
     `)
     .eq('id', id)

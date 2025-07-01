@@ -36,6 +36,21 @@ const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) =>
   const handleAddAward = async () => {
     if (!newAward.title.trim() || !userId) return;
 
+    // Check for duplicates
+    const isDuplicate = awards.some((award: any) => 
+      award.title.toLowerCase() === newAward.title.trim().toLowerCase() && 
+      award.organization?.toLowerCase() === newAward.organization.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: "❌ Duplicate Award",
+        description: "This award already exists in your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsAddingAward(true);
       await saveAward({
@@ -46,10 +61,6 @@ const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) =>
       });
       setNewAward({ title: "", organization: "", year: "", description: "" });
       onUpdate();
-      toast({
-        title: "✅ Award added successfully!",
-        description: "Your award has been updated in your profile.",
-      });
     } catch (error: any) {
       console.error("Error adding award:", error.message);
       toast({
@@ -66,10 +77,6 @@ const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) =>
     try {
       await deleteAward(awardId);
       onUpdate();
-      toast({
-        title: "✅ Award deleted",
-        description: "Award has been removed from your profile.",
-      });
     } catch (error: any) {
       console.error("Error deleting award:", error.message);
       toast({

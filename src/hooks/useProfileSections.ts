@@ -329,10 +329,6 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast({
-        title: '✅ Award saved successfully!',
-        description: 'Your award has been updated in your profile.',
-      });
     },
     onError: (error: any) => {
       console.error('Error saving award:', error);
@@ -351,10 +347,6 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast({
-        title: '✅ Award deleted',
-        description: 'Award has been removed from your profile.',
-      });
     },
     onError: (error: any) => {
       console.error('Error deleting award:', error);

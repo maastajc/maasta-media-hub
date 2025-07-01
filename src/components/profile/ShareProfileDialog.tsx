@@ -19,7 +19,7 @@ interface ShareProfileDialogProps {
 const ShareProfileDialog = ({ isOpen, onClose, artist }: ShareProfileDialogProps) => {
   const [copied, setCopied] = useState(false);
   
-  const profileUrl = `${window.location.origin}/artist/${artist.id}`;
+  const profileUrl = `${window.location.origin}/artists/${artist.id}`;
   
   const copyToClipboard = async () => {
     try {

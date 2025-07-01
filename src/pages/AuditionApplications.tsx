@@ -94,7 +94,7 @@ const AuditionApplications = () => {
   };
 
   const handleViewProfile = (artistId: string) => {
-    navigate(`/artist/${artistId}`);
+    navigate(`/artists/${artistId}`);
   };
 
   const formatDate = (dateString: string) => {

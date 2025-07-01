@@ -16,4 +16,5 @@ export type ArtistByIdRow = ArtistDetailsRow & {
   media_assets: Database['public']['Tables']['media_assets']['Row'][];
   language_skills: Database['public']['Tables']['language_skills']['Row'][];
   tools_software: Database['public']['Tables']['tools_software']['Row'][];
+  awards: Database['public']['Tables']['awards']['Row'][];
 };

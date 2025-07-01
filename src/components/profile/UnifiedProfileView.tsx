@@ -439,11 +439,69 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     );
   };
 
+  const renderAwards = () => {
+    const awards = artist.awards || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-maasta-purple" />
+            Awards & Achievements
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('awards')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {awards.length === 0 ? (
+            <div className="italic text-gray-400">No awards or achievements listed.</div>
+          ) : (
+            <div className="space-y-4">
+              {awards.map((award: any) => (
+                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{award.title}</h4>
+                      {award.organization && (
+                        <p className="text-maasta-orange font-medium">{award.organization}</p>
+                      )}
+                      {award.description && (
+                        <p className="text-gray-600 mt-1">{award.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {award.year && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {award.year}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-0">
       {renderMediaSection()}
       {renderPortfolioLinks()}
       {renderProjects()}
+      {renderAwards()}
       {renderSkills()}
       {renderEducation()}
       {renderLanguages()}
