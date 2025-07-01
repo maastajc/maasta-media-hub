@@ -28,14 +28,14 @@ const Artists = () => {
     refetch,
     filterArtists
   } = useArtists({
-    refetchOnWindowFocus: true, // Always refetch on focus
-    staleTime: 0 // Always fetch fresh data
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    staleTime: 5 * 60 * 1000 // 5 minutes cache
   });
 
-  // Clear cache on component mount
+  // Remove aggressive cache clearing on mount - let the hook handle it
   useEffect(() => {
-    console.log('Artists page mounted - clearing cache');
-    cacheManager.forceClearCache('artists');
+    console.log('Artists page mounted');
+    // Removed: cacheManager.forceClearCache('artists');
   }, []);
 
   // Extract unique tags from artists data
@@ -102,15 +102,21 @@ const Artists = () => {
   };
 
   const handleRefresh = async () => {
-    console.log('Manual refresh triggered - clearing all cache');
-    cacheManager.bustCache();
+    console.log('Manual refresh triggered');
+    // Only clear specific cache, not everything
+    cacheManager.forceClearCache('artists');
     await refetch();
-    toast.success("Fresh data loaded!");
+    toast.success("Data refreshed!");
   };
 
   useEffect(() => {
     if (isError && error) {
-      toast.error("Failed to load artists. Please try again.");
+      // Add session check for better error messaging
+      if (!cacheManager.isSessionValid()) {
+        toast.error("Session expired. Please sign in again.");
+      } else {
+        toast.error("Failed to load artists. Please try again.");
+      }
     }
   }, [isError, error]);
 

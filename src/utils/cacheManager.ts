@@ -1,13 +1,13 @@
 
-// Enhanced cache management system with aggressive cache clearing
+// Refined cache management system - less aggressive approach
 class CacheManager {
   private static instance: CacheManager;
   private version: string;
   private cachePrefix = 'maasta_app_';
 
   private constructor() {
-    // Use timestamp for aggressive cache busting
-    this.version = Date.now().toString();
+    // Use a more stable version identifier
+    this.version = this.getAppVersion();
     this.initializeVersion();
   }
 
@@ -18,36 +18,34 @@ class CacheManager {
     return CacheManager.instance;
   }
 
-  private initializeVersion() {
-    // Always clear cache on app initialization
-    console.log('Initializing cache manager - clearing all caches');
-    this.clearAllCaches();
-    localStorage.setItem(`${this.cachePrefix}version`, this.version);
-    
-    // Force refresh on version mismatch
-    this.checkVersionMismatch();
+  private getAppVersion(): string {
+    // Try to get version from package.json or use date-based fallback
+    return localStorage.getItem(`${this.cachePrefix}app_version`) || Date.now().toString();
   }
 
-  private checkVersionMismatch() {
+  private initializeVersion() {
     const storedVersion = localStorage.getItem(`${this.cachePrefix}version`);
+    
+    // Only clear cache if there's a version mismatch (actual app update)
     if (storedVersion && storedVersion !== this.version) {
-      console.log('Version mismatch detected, forcing cache clear');
-      this.bustCache();
-      window.location.reload();
+      console.log('App version mismatch detected, clearing cache');
+      this.clearAllCaches();
     }
+    
+    localStorage.setItem(`${this.cachePrefix}version`, this.version);
   }
 
   clearAllCaches() {
-    // Clear localStorage with our prefix
+    // Clear only our app-specific cache, preserve auth tokens
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith(this.cachePrefix)) {
+      if (key.startsWith(this.cachePrefix) && !key.includes('supabase')) {
         localStorage.removeItem(key);
       }
     });
 
-    // Clear sessionStorage with our prefix
+    // Clear sessionStorage with our prefix, but preserve auth
     Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith(this.cachePrefix)) {
+      if (key.startsWith(this.cachePrefix) && !key.includes('supabase')) {
         sessionStorage.removeItem(key);
       }
     });
@@ -56,39 +54,31 @@ class CacheManager {
     if ('caches' in window) {
       caches.keys().then(cacheNames => {
         cacheNames.forEach(cacheName => {
-          caches.delete(cacheName);
+          // Only clear our app caches, not system caches
+          if (cacheName.includes('maasta') || cacheName.includes('workbox')) {
+            caches.delete(cacheName);
+          }
         });
       });
     }
 
-    // Clear service worker cache if exists
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          registration.unregister();
-        });
-      });
-    }
-
-    console.log('All app caches cleared');
+    console.log('App-specific caches cleared, auth tokens preserved');
   }
 
-  // Force clear cache for specific patterns
+  // Clear cache for specific patterns only
   forceClearCache(pattern?: string) {
     if (pattern) {
       Object.keys(localStorage).forEach(key => {
-        if (key.includes(pattern) || key.startsWith(this.cachePrefix)) {
+        if (key.includes(pattern) && key.startsWith(this.cachePrefix) && !key.includes('supabase')) {
           localStorage.removeItem(key);
         }
       });
       
       Object.keys(sessionStorage).forEach(key => {
-        if (key.includes(pattern) || key.startsWith(this.cachePrefix)) {
+        if (key.includes(pattern) && key.startsWith(this.cachePrefix) && !key.includes('supabase')) {
           sessionStorage.removeItem(key);
         }
       });
-    } else {
-      this.clearAllCaches();
     }
   }
 
@@ -104,47 +94,52 @@ class CacheManager {
     return this.version;
   }
 
-  // Generate new version to bust cache
+  // Only bust cache when there's a real version change
   bustCache() {
-    this.version = Date.now().toString();
-    localStorage.setItem(`${this.cachePrefix}version`, this.version);
+    // Don't generate new version automatically, only on actual updates
     this.clearAllCaches();
   }
 
-  // Add method to check if cache should be refreshed
+  // Check if cache should be refreshed (less aggressive timing)
   shouldRefreshCache(): boolean {
     const lastClear = localStorage.getItem(`${this.cachePrefix}last_clear`);
     const now = Date.now();
-    const oneHour = 60 * 60 * 1000;
+    const sixHours = 6 * 60 * 60 * 1000; // Increased from 1 hour to 6 hours
     
-    if (!lastClear || (now - parseInt(lastClear)) > oneHour) {
+    if (!lastClear || (now - parseInt(lastClear)) > sixHours) {
       localStorage.setItem(`${this.cachePrefix}last_clear`, now.toString());
       return true;
     }
     
     return false;
   }
+
+  // Add session validation
+  isSessionValid(): boolean {
+    try {
+      const authData = localStorage.getItem('sb-jadphaypzbsxofowrjvy-auth-token');
+      if (!authData) return false;
+      
+      const parsed = JSON.parse(authData);
+      const expiresAt = parsed?.expires_at;
+      
+      if (!expiresAt) return false;
+      
+      return Date.now() < (expiresAt * 1000);
+    } catch (error) {
+      console.warn('Session validation failed:', error);
+      return false;
+    }
+  }
 }
 
 export const cacheManager = CacheManager.getInstance();
 
-// Enhanced cache headers for API requests
+// Simplified cache headers for API requests (less aggressive)
 export const getApiHeaders = () => ({
   'X-Requested-With': 'XMLHttpRequest',
-  'Cache-Control': 'no-cache, no-store, must-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0',
-  'X-Cache-Bust': Date.now().toString()
+  'Cache-Control': 'no-cache', // Simplified cache control
 });
 
-// Add global cache buster for all fetch requests
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-  const url = args[0] as string;
-  if (typeof url === 'string' && !url.includes('?')) {
-    args[0] = `${url}?_cb=${Date.now()}`;
-  } else if (typeof url === 'string') {
-    args[0] = `${url}&_cb=${Date.now()}`;
-  }
-  return originalFetch.apply(this, args);
-};
+// Remove the global fetch interceptor - let React Query handle caching
+// The original aggressive fetch override is removed

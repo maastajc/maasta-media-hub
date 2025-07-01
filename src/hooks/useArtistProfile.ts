@@ -14,6 +14,11 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
 
       console.log('Fetching artist profile for ID:', artistId);
 
+      // Check session validity
+      if (!cacheManager.isSessionValid()) {
+        console.warn('Session may be invalid for profile fetch');
+      }
+
       try {
         // First, get the basic profile
         const { data: profile, error: profileError } = await supabase
@@ -60,8 +65,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
 
         const artistData: Artist = {
           ...profile,
-          category: profile.category as ArtistCategory, // Type cast to ensure compatibility
-          experience_level: profile.experience_level as ExperienceLevel, // Type cast to ensure compatibility
+          category: profile.category as ArtistCategory,
+          experience_level: profile.experience_level as ExperienceLevel,
           skills: skillsArray,
           projects: projects || [],
           education_training: education || [],
@@ -81,9 +86,9 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
       }
     },
     enabled: !!artistId,
-    staleTime: 0, // Always fetch fresh data
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reasonable caching
+    refetchOnMount: false, // Don't always refetch on mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: (failureCount, error: any) => {
       // Don't retry if it's a "not found" error
       if (error?.message?.includes('not found') || error?.message?.includes('Artist not found')) {

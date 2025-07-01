@@ -9,13 +9,13 @@
     <meta name="author" content="Lovable" />
     <link rel="icon" href="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" type="image/png">
 
-    <!-- Aggressive cache prevention -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <!-- Improved cache control for index.html -->
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     
-    <!-- Cache busting timestamp -->
-    <meta name="cache-bust" content="<?php echo time(); ?>" />
+    <!-- Version identifier for cache management -->
+    <meta name="app-version" content="<?php echo time(); ?>" />
 
     <meta property="og:title" content="maasta-media-hub" />
     <meta property="og:description" content="Lovable Generated Project" />
@@ -33,34 +33,30 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Cache detection and clearing script -->
+    <!-- Simplified cache health check -->
     <script>
-      // Check if we're loading stale content
-      const checkCacheHealth = () => {
-        const scripts = document.querySelectorAll('script[src*="/assets/"]');
-        const links = document.querySelectorAll('link[href*="/assets/"]');
-        
-        // If we have old asset references, clear cache and reload
-        if (scripts.length > 0 || links.length > 0) {
-          const now = Date.now();
-          const lastCheck = localStorage.getItem('maasta_cache_check');
-          
-          if (!lastCheck || (now - parseInt(lastCheck)) > 300000) { // 5 minutes
-            localStorage.setItem('maasta_cache_check', now.toString());
-            if ('caches' in window) {
-              caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-              });
+      // Basic cache health check without aggressive clearing
+      const checkSessionHealth = () => {
+        try {
+          const authData = localStorage.getItem('sb-jadphaypzbsxofowrjvy-auth-token');
+          if (authData) {
+            const parsed = JSON.parse(authData);
+            const expiresAt = parsed?.expires_at;
+            
+            if (expiresAt && Date.now() > (expiresAt * 1000)) {
+              console.log('Session expired, user will need to re-authenticate');
             }
           }
+        } catch (error) {
+          console.warn('Session health check failed:', error);
         }
       };
       
-      // Run cache health check
+      // Run session health check on load
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', checkCacheHealth);
+        document.addEventListener('DOMContentLoaded', checkSessionHealth);
       } else {
-        checkCacheHealth();
+        checkSessionHealth();
       }
     </script>
   </body>

@@ -5,10 +5,10 @@ import App from './App.tsx'
 import './index.css'
 import { cacheManager } from './utils/cacheManager'
 
-// Initialize cache manager immediately
-cacheManager.forceClearCache();
+// Only initialize cache manager, don't force clear on every load
+console.log('Initializing app with cache version:', cacheManager.getVersion());
 
-// Add global error handler for cache-related issues
+// Add global error handler for chunk-related issues only
 window.addEventListener('error', (event) => {
   if (event.message.includes('Loading chunk') || 
       event.message.includes('Loading CSS chunk') ||
@@ -19,7 +19,7 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// Handle unhandled promise rejections (often cache-related)
+// Handle unhandled promise rejections (chunk-related only)
 window.addEventListener('unhandledrejection', (event) => {
   if (event.reason?.message?.includes('Loading chunk') ||
       event.reason?.message?.includes('ChunkLoadError')) {

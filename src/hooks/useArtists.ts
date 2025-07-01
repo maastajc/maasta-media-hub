@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Artist } from '@/types/artist';
-import { cacheManager, getApiHeaders } from '@/utils/cacheManager';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface UseArtistsOptions {
   refetchOnWindowFocus?: boolean;
@@ -42,23 +42,22 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const fetchArtists = async () => {
     return withRetry(async () => {
-      console.log('Fetching fresh artists data...');
-      
-      // Always clear cache before fetching to ensure fresh data
-      cacheManager.forceClearCache('artists');
+      console.log('Fetching artists data...');
       
       setIsLoading(true);
       setIsError(false);
       setError(null);
 
+      // Check session validity before fetching
+      if (!cacheManager.isSessionValid()) {
+        console.log('Session invalid, user may need to re-authenticate');
+      }
+
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
       );
 
-      // Force fresh data by adding timestamp and cache-busting headers
-      const timestamp = Date.now();
-      
-      // Use Supabase client with cache-busting
+      // Use clean Supabase client without cache-busting
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -110,7 +109,7 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         updated_at: profile.updated_at
       })) as Artist[];
 
-      console.log(`Successfully fetched ${transformedData.length} fresh artists`);
+      console.log(`Successfully fetched ${transformedData.length} artists`);
       setArtists(transformedData);
       return transformedData;
     });
@@ -118,8 +117,8 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
 
   const refetch = async () => {
     try {
-      // Bust cache before refetch to ensure completely fresh data
-      cacheManager.bustCache();
+      // Only clear specific cache, not everything
+      cacheManager.forceClearCache('artists');
       await fetchArtists();
     } catch (err: any) {
       console.error('Error in refetch:', err);
@@ -172,8 +171,9 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
   useEffect(() => {
     const initializeFetch = async () => {
       try {
-        // Check if cache should be refreshed
+        // Only refresh cache if it's actually stale (6 hours)
         if (cacheManager.shouldRefreshCache()) {
+          console.log('Cache is stale, refreshing data');
           cacheManager.forceClearCache('artists');
         }
         
