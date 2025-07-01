@@ -23,6 +23,7 @@ const ProfilePictureUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState(currentImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -64,6 +65,10 @@ const ProfilePictureUpload = ({
       setIsUploading(true);
       setShowCropper(false);
       
+      // Create preview URL immediately for instant UI update
+      const previewUrl = URL.createObjectURL(croppedImageBlob);
+      setPreviewImageUrl(previewUrl);
+      
       // Create a file from the blob
       const croppedFile = new File([croppedImageBlob], 'profile-picture.jpg', {
         type: 'image/jpeg'
@@ -71,8 +76,12 @@ const ProfilePictureUpload = ({
       
       const imageUrl = await uploadProfileImage(croppedFile, userId);
       
-      // Update parent component immediately
+      // Update with final URL and trigger parent update
+      setPreviewImageUrl(imageUrl);
       onImageUpdate(imageUrl);
+      
+      // Clean up the temporary preview URL
+      URL.revokeObjectURL(previewUrl);
       
       toast({
         title: "✅ Profile picture updated successfully!",
@@ -89,6 +98,8 @@ const ProfilePictureUpload = ({
         description: error.message || "Failed to upload profile picture. Please try again.",
         variant: "destructive"
       });
+      // Revert to original image on error
+      setPreviewImageUrl(currentImageUrl);
     } finally {
       setIsUploading(false);
     }
@@ -119,16 +130,17 @@ const ProfilePictureUpload = ({
       <div className="relative group">
         <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
           <AvatarImage 
-            src={currentImageUrl} 
+            src={previewImageUrl} 
             alt={fullName}
             className="object-cover"
+            key={previewImageUrl} // Force re-render on URL change
           />
           <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
             {getAvatarLetter()}
           </AvatarFallback>
         </Avatar>
         
-        {/* Upload overlay - Fixed positioning */}
+        {/* Upload overlay */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer">
           {isUploading ? (
             <div className="text-white text-center">
@@ -138,7 +150,7 @@ const ProfilePictureUpload = ({
           ) : (
             <div className="text-white text-center" onClick={triggerFileSelect}>
               <Camera className="w-8 h-8 mx-auto mb-2" />
-              <span className="text-sm">{currentImageUrl ? 'Change Photo' : 'Add Photo'}</span>
+              <span className="text-sm">{previewImageUrl ? 'Change Photo' : 'Add Photo'}</span>
             </div>
           )}
         </div>
@@ -153,7 +165,7 @@ const ProfilePictureUpload = ({
         />
       </div>
 
-      {/* Upload button for mobile/fallback - Better visibility */}
+      {/* Upload button for mobile/fallback */}
       <div className="mt-4 w-full flex justify-center">
         <Button
           onClick={triggerFileSelect}
@@ -163,11 +175,11 @@ const ProfilePictureUpload = ({
           variant="outline"
         >
           <Camera className="w-4 h-4 mr-2" />
-          {currentImageUrl ? 'Change Photo' : 'Add Photo'}
+          {previewImageUrl ? 'Change Photo' : 'Add Photo'}
         </Button>
       </div>
 
-      {/* Image Cropper */}
+      {/* Enhanced Image Cropper */}
       {selectedImageUrl && (
         <ImageCropper
           isOpen={showCropper}

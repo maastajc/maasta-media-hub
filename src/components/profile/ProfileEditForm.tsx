@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
@@ -23,7 +27,10 @@ const profileSchema = z.object({
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must be at most 30 characters")
     .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
-  bio: z.string().optional(),
+  bio: z.string().min(10, "Bio must be at least 10 characters long"),
+  date_of_birth: z.date({
+    required_error: "Date of birth is required",
+  }),
   category: z.string().min(1, "Category is required"),
   experience_level: z.string().min(1, "Experience level is required"),
   years_of_experience: z.number().min(0).optional(),
@@ -55,12 +62,13 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const [profileImageUrl, setProfileImageUrl] = useState(profileData.profile_picture_url);
   const [coverImageUrl, setCoverImageUrl] = useState(profileData.cover_image_url);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProfileFormData>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: profileData.full_name || "",
       username: profileData.username || "",
       bio: profileData.bio || "",
+      date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
       category: profileData.category || "",
       experience_level: profileData.experience_level || "",
       years_of_experience: profileData.years_of_experience || 0,
@@ -78,6 +86,20 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       preferred_domains: profileData.preferred_domains || "",
     }
   });
+
+  const selectedDate = watch("date_of_birth");
+
+  const calculateAge = (birthDate: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!userId) return;
@@ -100,10 +122,14 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         return;
       }
 
+      // Calculate age from date of birth
+      const age = calculateAge(data.date_of_birth);
+
       const { error } = await supabase
         .from('profiles')
         .update({
           ...data,
+          date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
           profile_picture_url: profileImageUrl,
           cover_image_url: coverImageUrl,
           updated_at: new Date().toISOString()
@@ -205,14 +231,55 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               </div>
 
               <div>
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-1",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => setValue("date_of_birth", date!)}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {errors.date_of_birth && (
+                  <p className="text-sm text-red-600 mt-1">{errors.date_of_birth.message}</p>
+                )}
+                {selectedDate && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Age: {calculateAge(selectedDate)} years
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="bio">Bio *</Label>
                 <Textarea
                   id="bio"
                   {...register("bio")}
                   className="mt-1"
                   rows={4}
-                  placeholder="Tell us about yourself..."
+                  placeholder="Tell us about yourself... (minimum 10 characters)"
                 />
+                {errors.bio && (
+                  <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
