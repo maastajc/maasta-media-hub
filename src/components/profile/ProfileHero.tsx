@@ -1,9 +1,10 @@
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, MapPin, Briefcase, ArrowLeft } from "lucide-react";
+import { Edit, MapPin, Briefcase, ArrowLeft, Share2 } from "lucide-react";
 import { Artist } from "@/types/artist";
 import ShareProfileDialog from "./ShareProfileDialog";
 
@@ -14,6 +15,8 @@ interface ProfileHeroProps {
 }
 
 const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -107,7 +110,14 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                         Edit Profile
                       </Button>
                     )}
-                    <ShareProfileDialog artist={artist} />
+                    <Button
+                      onClick={() => setIsShareDialogOpen(true)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Share2 size={16} />
+                      Share Profile
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -115,6 +125,13 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Share Profile Dialog */}
+      <ShareProfileDialog
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
+        artist={artist}
+      />
     </div>
   );
 };
