@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import CoverImageUpload from "./CoverImageUpload";
+import MediaSection from "./MediaSection";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -350,6 +351,20 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Media Portfolio Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Media Portfolio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MediaSection 
+                profileData={profileData} 
+                onUpdate={onUpdate}
+                userId={userId}
+              />
             </CardContent>
           </Card>
 
