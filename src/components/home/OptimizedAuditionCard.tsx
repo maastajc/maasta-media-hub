@@ -197,28 +197,6 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
           </div>
         )}
 
-        {/* Posted by Profile - moved to bottom */}
-        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-          <Avatar className="h-8 w-8">
-            {!imageError && creatorImage ? (
-              <AvatarImage 
-                src={creatorImage} 
-                alt={creatorName}
-                className="object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <AvatarFallback className="bg-maasta-orange text-white font-semibold text-xs">
-                {getInitials(creatorName)}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              Posted by {creatorName}
-            </p>
-          </div>
-        </div>
 
         {/* Action Button */}
         <Button 

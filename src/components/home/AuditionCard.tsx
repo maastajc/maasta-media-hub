@@ -116,25 +116,6 @@ const AuditionCard = ({ audition }: AuditionCardProps) => {
         )}
         
 
-        {/* Posted by Profile Section - moved before buttons */}
-        {audition.posterProfile && (
-          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-            <Avatar className="h-8 w-8">
-              <AvatarImage 
-                src={audition.posterProfile.profile_picture} 
-                alt={audition.posterProfile.full_name}
-              />
-              <AvatarFallback className="bg-maasta-orange text-white font-semibold text-xs">
-                {getInitials(audition.posterProfile.full_name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                Posted by {audition.posterProfile.full_name}
-              </p>
-            </div>
-          </div>
-        )}
         
         <div className="flex gap-2">
           <Link to={`/auditions/${audition.id}`} className="flex-1">
