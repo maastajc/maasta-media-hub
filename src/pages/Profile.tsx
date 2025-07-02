@@ -515,18 +515,18 @@ const Profile = () => {
         {/* Skills Section */}
         <div id="section-skills" className="scroll-mt-24">
           <SkillsSection
-            profileData={profileData}
-            onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            artist={profileData}
+            isOwner={true}
+            isEditing={true}
           />
         </div>
 
         {/* Awards Section */}
         <div id="section-awards" className="scroll-mt-24">
           <AwardsSection
-            profileData={profileData}
-            onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            artist={profileData}
+            isOwner={true}
+            isEditing={true}
           />
         </div>
 

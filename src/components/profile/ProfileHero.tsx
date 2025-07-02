@@ -10,11 +10,14 @@ import ShareProfileDialog from "./ShareProfileDialog";
 
 interface ProfileHeroProps {
   artist: Artist;
+  isOwner?: boolean;
+  onEditClick?: () => void;
+  onShareClick?: () => void;
   onEditProfile?: () => void;
   onBack?: () => void;
 }
 
-const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
+const ProfileHero = ({ artist, isOwner = false, onEditClick, onShareClick, onEditProfile, onBack }: ProfileHeroProps) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   const getInitials = (name: string) => {
@@ -28,6 +31,14 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
   const formatExperience = (years: number, level: string) => {
     if (years === 0) return level.charAt(0).toUpperCase() + level.slice(1);
     return `${years} year${years !== 1 ? 's' : ''} • ${level.charAt(0).toUpperCase() + level.slice(1)}`;
+  };
+
+  const handleShareClick = () => {
+    if (onShareClick) {
+      onShareClick();
+    } else {
+      setIsShareDialogOpen(true);
+    }
   };
 
   return (
@@ -101,9 +112,9 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                         Back
                       </Button>
                     )}
-                    {onEditProfile && (
+                    {(onEditProfile || onEditClick) && (
                       <Button 
-                        onClick={onEditProfile}
+                        onClick={onEditProfile || onEditClick}
                         className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
                       >
                         <Edit size={16} className="mr-2" />
@@ -111,7 +122,7 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                       </Button>
                     )}
                     <Button
-                      onClick={() => setIsShareDialogOpen(true)}
+                      onClick={handleShareClick}
                       variant="outline"
                       className="flex items-center gap-2"
                     >
