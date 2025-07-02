@@ -6,16 +6,18 @@ import { Artist } from "@/types/artist";
 
 interface ProfileOverviewWithEditProps {
   artist: Artist;
-  isOwner: boolean;
-  isEditing: boolean;
-  onSave: () => void;
+  isOwnProfile: boolean;
+  onEditBasicInfo: () => void;
+  onEditWorkPreferences: () => void;
+  onEditPortfolioLinks: () => void;
 }
 
 const ProfileOverviewWithEdit = ({ 
   artist, 
-  isOwner, 
-  isEditing,
-  onSave
+  isOwnProfile, 
+  onEditBasicInfo, 
+  onEditWorkPreferences, 
+  onEditPortfolioLinks 
 }: ProfileOverviewWithEditProps) => {
   return (
     <div className="space-y-6">
@@ -24,8 +26,19 @@ const ProfileOverviewWithEdit = ({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             Overview
-            {isOwner && <Edit className="w-4 h-4 text-gray-400" />}
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
           </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEditBasicInfo}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           {artist.bio && (
@@ -47,8 +60,19 @@ const ProfileOverviewWithEdit = ({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             Basic Information
-            {isOwner && <Edit className="w-4 h-4 text-gray-400" />}
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
           </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEditBasicInfo}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,8 +105,19 @@ const ProfileOverviewWithEdit = ({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             Work Preferences
-            {isOwner && <Edit className="w-4 h-4 text-gray-400" />}
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
           </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEditWorkPreferences}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,6 +143,66 @@ const ProfileOverviewWithEdit = ({
               <p className="text-sm font-medium text-gray-500">Available For</p>
               <p className="text-sm">{artist.preferred_domains}</p>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Portfolio Links */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            Portfolio
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEditPortfolioLinks}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {artist.personal_website && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">Personal Website</p>
+                <a href={artist.personal_website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  {artist.personal_website}
+                </a>
+              </div>
+            )}
+            {artist.imdb_profile && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">IMDb Profile</p>
+                <a href={artist.imdb_profile} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  View IMDb Profile
+                </a>
+              </div>
+            )}
+            {artist.instagram && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">Instagram</p>
+                <a href={artist.instagram} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  @{artist.instagram.split('/').pop()}
+                </a>
+              </div>
+            )}
+            {artist.linkedin && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">LinkedIn</p>
+                <a href={artist.linkedin} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  View LinkedIn Profile
+                </a>
+              </div>
+            )}
+          </div>
+          {!artist.personal_website && !artist.imdb_profile && !artist.instagram && !artist.linkedin && (
+            <p className="text-sm text-gray-500 italic">No portfolio links provided</p>
           )}
         </CardContent>
       </Card>

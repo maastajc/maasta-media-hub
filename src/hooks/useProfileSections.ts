@@ -1,6 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { 
   saveProject, 
   saveSkill, 
@@ -19,8 +19,9 @@ import { saveAward, deleteAward } from '@/services/awardsService';
 
 export const useProfileSections = (userId?: string) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  // Project mutations - simplified to prevent duplicate notifications
+  // Project mutations
   const saveProjectMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!userId) throw new Error('User ID is required');
@@ -28,11 +29,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project saved successfully!');
+      toast({
+        title: '✅ Project saved successfully!',
+        description: 'Your project has been updated in your portfolio.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving project:', error);
-      // Don't show toast here - let the component handle it to avoid duplicates
+      toast({
+        title: '❌ Failed to save project',
+        description: error.message || 'Failed to save project. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -43,11 +51,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Project deleted successfully!');
+      toast({
+        title: '✅ Project deleted',
+        description: 'Project has been removed from your portfolio.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting project:', error);
-      // Don't show toast here - let the component handle it to avoid duplicates
+      toast({
+        title: '❌ Failed to delete project',
+        description: error.message || 'Failed to delete project. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -59,7 +74,10 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill saved successfully!');
+      toast({
+        title: '✅ Skill saved successfully!',
+        description: 'Your skill has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving skill:', error);
@@ -71,7 +89,11 @@ export const useProfileSections = (userId?: string) => {
         errorMessage = 'Request timed out. Please check your connection and try again.';
       }
       
-      toast.error(errorMessage);
+      toast({
+        title: '❌ Failed to save skill',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
@@ -82,11 +104,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Skill deleted successfully!');
+      toast({
+        title: '✅ Skill deleted',
+        description: 'Skill has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting skill:', error);
-      toast.error('Failed to delete skill. Please try again.');
+      toast({
+        title: '❌ Failed to delete skill',
+        description: error.message || 'Failed to delete skill. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -98,11 +127,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education saved successfully!');
+      toast({
+        title: '✅ Education saved successfully!',
+        description: 'Your education has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving education:', error);
-      toast.error('Failed to save education. Please try again.');
+      toast({
+        title: '❌ Failed to save education',
+        description: error.message || 'Failed to save education. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -113,11 +149,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Education deleted successfully!');
+      toast({
+        title: '✅ Education deleted',
+        description: 'Education has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting education:', error);
-      toast.error('Failed to delete education. Please try again.');
+      toast({
+        title: '❌ Failed to delete education',
+        description: error.message || 'Failed to delete education. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -130,7 +173,10 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language saved successfully!');
+      toast({
+        title: '✅ Language saved successfully!',
+        description: 'Your language skill has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving language:', error);
@@ -144,7 +190,11 @@ export const useProfileSections = (userId?: string) => {
         errorMessage = 'Please select a valid proficiency level.';
       }
       
-      toast.error(errorMessage);
+      toast({
+        title: '❌ Failed to save language',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
@@ -155,11 +205,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Language deleted successfully!');
+      toast({
+        title: '✅ Language deleted',
+        description: 'Language has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting language:', error);
-      toast.error('Failed to delete language. Please try again.');
+      toast({
+        title: '❌ Failed to delete language',
+        description: error.message || 'Failed to delete language. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -172,7 +229,10 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool saved successfully!');
+      toast({
+        title: '✅ Tool saved successfully!',
+        description: 'Your tool/software has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving tool:', error);
@@ -186,7 +246,11 @@ export const useProfileSections = (userId?: string) => {
         errorMessage = 'Please enter a valid tool name.';
       }
       
-      toast.error(errorMessage);
+      toast({
+        title: '❌ Failed to save tool',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     },
   });
 
@@ -197,11 +261,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Tool deleted successfully!');
+      toast({
+        title: '✅ Tool deleted',
+        description: 'Tool/software has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting tool:', error);
-      toast.error('Failed to delete tool. Please try again.');
+      toast({
+        title: '❌ Failed to delete tool',
+        description: error.message || 'Failed to delete tool. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -213,11 +284,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media saved successfully!');
+      toast({
+        title: '✅ Media asset saved successfully!',
+        description: 'Your media has been updated in your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error saving media asset:', error);
-      toast.error('Failed to save media. Please try again.');
+      toast({
+        title: '❌ Failed to save media asset',
+        description: error.message || 'Failed to save media asset. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -228,11 +306,18 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Media deleted successfully!');
+      toast({
+        title: '✅ Media asset deleted',
+        description: 'Media has been removed from your profile.',
+      });
     },
     onError: (error: any) => {
       console.error('Error deleting media asset:', error);
-      toast.error('Failed to delete media. Please try again.');
+      toast({
+        title: '❌ Failed to delete media asset',
+        description: error.message || 'Failed to delete media asset. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -244,11 +329,14 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Award saved successfully!');
     },
     onError: (error: any) => {
       console.error('Error saving award:', error);
-      toast.error('Failed to save award. Please try again.');
+      toast({
+        title: '❌ Failed to save award',
+        description: error.message || 'Failed to save award. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -259,11 +347,14 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
-      toast.success('Award deleted successfully!');
     },
     onError: (error: any) => {
       console.error('Error deleting award:', error);
-      toast.error('Failed to delete award. Please try again.');
+      toast({
+        title: '❌ Failed to delete award',
+        description: error.message || 'Failed to delete award. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -278,32 +369,60 @@ export const useProfileSections = (userId?: string) => {
                 deleteToolMutation.isPending || deleteMediaAssetMutation.isPending ||
                 deleteAwardMutation.isPending,
     
-    // Project functions - return the mutation directly to avoid double notifications
-    saveProject: saveProjectMutation.mutateAsync,
-    deleteProject: deleteProjectMutation.mutateAsync,
+    // Project functions - prevent double notifications
+    saveProject: async (data: any) => {
+      await saveProjectMutation.mutateAsync(data);
+    },
+    deleteProject: async (id: string) => {
+      await deleteProjectMutation.mutateAsync(id);
+    },
     
-    // Skills functions
-    saveSkill: saveSkillMutation.mutateAsync,
-    deleteSkill: deleteSkillMutation.mutateAsync,
+    // Skills functions - prevent double notifications
+    saveSkill: async (data: any) => {
+      await saveSkillMutation.mutateAsync(data);
+    },
+    deleteSkill: async (id: string) => {
+      await deleteSkillMutation.mutateAsync(id);
+    },
     
-    // Education functions
-    saveEducation: saveEducationMutation.mutateAsync,
-    deleteEducation: deleteEducationMutation.mutateAsync,
+    // Education functions - prevent double notifications
+    saveEducation: async (data: any) => {
+      await saveEducationMutation.mutateAsync(data);
+    },
+    deleteEducation: async (id: string) => {
+      await deleteEducationMutation.mutateAsync(id);
+    },
     
-    // Language functions
-    saveLanguage: saveLanguageMutation.mutateAsync,
-    deleteLanguage: deleteLanguageMutation.mutateAsync,
+    // Language functions - prevent double notifications
+    saveLanguage: async (data: any) => {
+      await saveLanguageMutation.mutateAsync(data);
+    },
+    deleteLanguage: async (id: string) => {
+      await deleteLanguageMutation.mutateAsync(id);
+    },
     
-    // Tools functions
-    saveTool: saveToolMutation.mutateAsync,
-    deleteTool: deleteToolMutation.mutateAsync,
+    // Tools functions - prevent double notifications
+    saveTool: async (data: any) => {
+      await saveToolMutation.mutateAsync(data);
+    },
+    deleteTool: async (id: string) => {
+      await deleteToolMutation.mutateAsync(id);
+    },
     
-    // Media functions
-    saveMediaAsset: saveMediaAssetMutation.mutateAsync,
-    deleteMediaAsset: deleteMediaAssetMutation.mutateAsync,
+    // Media functions - prevent double notifications
+    saveMediaAsset: async (data: any) => {
+      await saveMediaAssetMutation.mutateAsync(data);
+    },
+    deleteMediaAsset: async (id: string) => {
+      await deleteMediaAssetMutation.mutateAsync(id);
+    },
     
-    // Award functions
-    saveAward: saveAwardMutation.mutateAsync,
-    deleteAward: deleteAwardMutation.mutateAsync,
+    // Award functions - prevent double notifications
+    saveAward: async (data: any) => {
+      await saveAwardMutation.mutateAsync(data);
+    },
+    deleteAward: async (id: string) => {
+      await deleteAwardMutation.mutateAsync(id);
+    },
   };
 };

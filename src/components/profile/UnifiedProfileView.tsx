@@ -1,222 +1,511 @@
-
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import ProfileHero from "./ProfileHero";
-import ProfileOverviewWithEdit from "./ProfileOverviewWithEdit";
-import MediaSection from "./MediaSection";
-import ProjectsSection from "./ProjectsSection";
-import SkillsSection from "./SkillsSection";
-import EducationSection from "./EducationSection";
-import AwardsSection from "./AwardsSection";
-import SocialLinksForm from "./SocialLinksForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Globe,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Film,
+  Calendar,
+  MapPin,
+  Star,
+  Award,
+  GraduationCap,
+  Languages,
+  Wrench,
+  ExternalLink,
+  Play,
+  Edit
+} from "lucide-react";
 import { Artist } from "@/types/artist";
-import ShareProfileDialog from "./ShareProfileDialog";
+import React from "react";
 
 interface UnifiedProfileViewProps {
   artist: Artist;
-  isOwner?: boolean;
-  onProfileUpdate?: () => void;
+  isOwnProfile?: boolean;
+  onEditSection?: (section: string) => void;
 }
 
-const UnifiedProfileView = ({ artist, isOwner = false, onProfileUpdate }: UnifiedProfileViewProps) => {
-  const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
+const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: UnifiedProfileViewProps) => {
+  // Keep console logs for debugging but remove the visual debug section
+  React.useEffect(() => {
+    console.log("[UnifiedProfileView] artist received:", artist);
+    if (artist) {
+      console.log("Skills:", artist.special_skills);
+      console.log("Projects:", artist.projects);
+      console.log("Education:", artist.education_training);
+      console.log("Media:", artist.media_assets);
+      console.log("Languages:", artist.language_skills);
+      console.log("Tools:", artist.tools_software);
+    }
+  }, [artist]);
 
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
+  const socialLinks = [
+    { icon: Globe, url: artist.personal_website, label: 'Website' },
+    { icon: Instagram, url: artist.instagram, label: 'Instagram' },
+    { icon: Linkedin, url: artist.linkedin, label: 'LinkedIn' },
+    { icon: Youtube, url: artist.youtube_vimeo, label: 'YouTube/Vimeo' },
+    { icon: Film, url: artist.imdb_profile, label: 'IMDB' },
+  ].filter(link => link.url);
+
+  const handleEditClick = (section: string) => {
+    if (onEditSection) {
+      onEditSection(section);
+    }
   };
 
-  const handleProfileUpdate = () => {
-    setIsEditing(false);
-    onProfileUpdate?.();
+  const renderMediaSection = () => {
+    const mediaAssets = artist.media_assets || [];
+    const videos = mediaAssets.filter(asset => asset.is_video);
+    const images = mediaAssets.filter(asset => !asset.is_video);
+
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Play className="w-5 h-5 text-maasta-purple" />
+            Portfolio
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('portfolio')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {mediaAssets.length === 0 ? (
+            <div className="italic text-gray-400">No portfolio media uploaded.</div>
+          ) : (
+            <>
+              {videos.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-3">Videos</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {videos.map((video) => (
+                      <div key={video.id} className="relative">
+                        {video.is_embed ? (
+                          <div className="aspect-video">
+                            <iframe
+                              src={video.url}
+                              className="w-full h-full rounded-lg"
+                              allowFullScreen
+                              title={video.description || video.file_name}
+                            />
+                          </div>
+                        ) : (
+                          <video
+                            src={video.url}
+                            controls
+                            className="w-full aspect-video rounded-lg object-cover"
+                            title={video.description || video.file_name}
+                          />
+                        )}
+                        {video.description && (
+                          <p className="text-sm text-gray-600 mt-2">{video.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {images.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3">Images</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {images.map((image) => (
+                      <div key={image.id} className="group">
+                        <img
+                          src={image.url}
+                          alt={image.description || image.file_name}
+                          className="w-full aspect-square object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                        />
+                        {image.description && (
+                          <p className="text-xs text-gray-600 mt-1 truncate">{image.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderPortfolioLinks = () => {
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-maasta-purple" />
+            Portfolio Links
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('portfolio-links')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {socialLinks.length === 0 ? (
+            <div className="italic text-gray-400">No portfolio links provided.</div>
+          ) : (
+            <div className="flex flex-wrap gap-4">
+              {socialLinks.map((link, index) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-maasta-purple hover:text-white rounded-lg transition-colors"
+                  >
+                    <Icon size={20} />
+                    <span className="font-medium">{link.label}</span>
+                    <ExternalLink size={16} />
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderProjects = () => {
+    const projects = artist.projects || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-maasta-purple" />
+            Projects
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('projects')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {projects.length === 0 ? (
+            <div className="italic text-gray-400">No projects listed.</div>
+          ) : (
+            <div className="space-y-6">
+              {projects.map((project) => (
+                <div key={project.id} className="border-l-4 border-maasta-orange pl-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{project.project_name}</h4>
+                      <p className="text-maasta-purple font-medium">{project.role_in_project}</p>
+                      {project.director_producer && (
+                        <p className="text-gray-600">Director/Producer: {project.director_producer}</p>
+                      )}
+                      {project.streaming_platform && (
+                        <p className="text-gray-600">Platform: {project.streaming_platform}</p>
+                      )}
+                    </div>
+                    <div className="text-right ml-4">
+                      <Badge variant="outline" className="mb-2">
+                        {project.project_type?.replace('_', ' ')}
+                      </Badge>
+                      {project.year_of_release && (
+                        <p className="text-sm text-gray-500">{project.year_of_release}</p>
+                      )}
+                    </div>
+                  </div>
+                  {project.link && (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-600 hover:underline mt-2"
+                    >
+                      View Project <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderSkills = () => {
+    const skills = artist.special_skills || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-maasta-purple" />
+            Skills
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('skills')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {skills.length === 0 ? (
+            <div className="italic text-gray-400">No skills added.</div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <Badge key={skill.id} variant="secondary" className="px-3 py-1">
+                  {skill.skill}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderEducation = () => {
+    const education = artist.education_training || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-maasta-purple" />
+            Education & Training
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('education')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {education.length === 0 ? (
+            <div className="italic text-gray-400">No education or training listed.</div>
+          ) : (
+            <div className="space-y-4">
+              {education.map((edu) => (
+                <div key={edu.id} className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">{edu.qualification_name}</h4>
+                    {edu.institution && (
+                      <p className="text-gray-600">{edu.institution}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-1">
+                      {edu.year_completed && (
+                        <span className="text-sm text-gray-500">
+                          <Calendar className="inline w-4 h-4 mr-1" />
+                          {edu.year_completed}
+                        </span>
+                      )}
+                      <Badge variant={edu.is_academic ? "default" : "secondary"} className="text-xs">
+                        {edu.is_academic ? "Academic" : "Professional"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderLanguages = () => {
+    const languages = artist.language_skills || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-maasta-purple" />
+            Languages
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('languages')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {languages.length === 0 ? (
+            <div className="italic text-gray-400">No language skills provided.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {languages.map((lang) => (
+                <div key={lang.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="font-medium">{lang.language}</span>
+                  <Badge variant="outline" className="capitalize">
+                    {lang.proficiency}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderTools = () => {
+    const tools = artist.tools_software || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-maasta-purple" />
+            Tools & Software
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('tools')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {tools.length === 0 ? (
+            <div className="italic text-gray-400">No tools or software listed.</div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tools.map((tool) => (
+                <Badge key={tool.id} variant="outline" className="px-3 py-1">
+                  {tool.tool_name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderAwards = () => {
+    const awards = artist.awards || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-maasta-purple" />
+            Awards & Achievements
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('awards')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {awards.length === 0 ? (
+            <div className="italic text-gray-400">No awards or achievements listed.</div>
+          ) : (
+            <div className="space-y-4">
+              {awards.map((award: any) => (
+                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{award.title}</h4>
+                      {award.organization && (
+                        <p className="text-maasta-orange font-medium">{award.organization}</p>
+                      )}
+                      {award.description && (
+                        <p className="text-gray-600 mt-1">{award.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {award.year && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {award.year}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProfileHero
-        artist={artist}
-        isOwner={isOwner}
-        onEditClick={handleEditToggle}
-        onShareClick={() => setShowShareDialog(true)}
-      />
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Overview Section */}
-            <ProfileOverviewWithEdit
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
-              onSave={handleProfileUpdate}
-            />
-
-            {/* Media Section - Moved after Overview */}
-            <MediaSection
-              profileData={artist}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-
-            {/* Portfolio Links - Moved after Media */}
-            {isEditing && (
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Portfolio Links
-                </h3>
-                <SocialLinksForm
-                  profileData={artist}
-                  onUpdate={handleProfileUpdate}
-                  userId={user?.id}
-                />
-              </div>
-            )}
-
-            {/* Projects Section */}
-            <ProjectsSection
-              profileData={artist}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-
-            {/* Skills Section */}
-            <SkillsSection
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
-            />
-
-            {/* Education Section */}
-            <EducationSection
-              profileData={artist}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-            />
-
-            {/* Awards Section */}
-            <AwardsSection
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
-            />
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Edit Toggle Button for Mobile */}
-            {isOwner && (
-              <div className="lg:hidden">
-                <Button
-                  onClick={handleEditToggle}
-                  variant={isEditing ? "destructive" : "default"}
-                  className="w-full"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {isEditing ? "Cancel Edit" : "Edit Profile"}
-                </Button>
-              </div>
-            )}
-
-            {/* Portfolio Links Display (when not editing) */}
-            {!isEditing && (
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-lg font-semibold mb-4">Portfolio Links</h3>
-                <div className="space-y-3">
-                  {artist.personal_website && (
-                    <a
-                      href={artist.personal_website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      Personal Website
-                    </a>
-                  )}
-                  {artist.linkedin && (
-                    <a
-                      href={artist.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      LinkedIn
-                    </a>
-                  )}
-                  {artist.instagram && (
-                    <a
-                      href={artist.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      Instagram
-                    </a>
-                  )}
-                  {artist.youtube_vimeo && (
-                    <a
-                      href={artist.youtube_vimeo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      YouTube/Vimeo
-                    </a>
-                  )}
-                  {artist.imdb_profile && (
-                    <a
-                      href={artist.imdb_profile}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      IMDb Profile
-                    </a>
-                  )}
-                  {artist.behance && (
-                    <a
-                      href={artist.behance}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      Behance
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Additional Info */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h3 className="text-lg font-semibold mb-4">Profile Info</h3>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">Member since:</span>
-                  <span className="ml-2 text-gray-600">
-                    {new Date(artist.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                {artist.verified && (
-                  <div className="flex items-center">
-                    <span className="text-green-600">✓ Verified Profile</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <ShareProfileDialog
-        artist={artist}
-        isOpen={showShareDialog}
-        onClose={() => setShowShareDialog(false)}
-      />
+    <div className="space-y-0">
+      {renderMediaSection()}
+      {renderPortfolioLinks()}
+      {renderProjects()}
+      {renderAwards()}
+      {renderSkills()}
+      {renderEducation()}
+      {renderLanguages()}
+      {renderTools()}
     </div>
   );
 };

@@ -821,12 +821,7 @@ export type Database = {
         | "intermediate"
         | "expert"
         | "veteran"
-      language_proficiency:
-        | "basic"
-        | "intermediate"
-        | "fluent"
-        | "native"
-        | "advanced"
+      language_proficiency: "basic" | "intermediate" | "fluent" | "native"
       profile_status: "active" | "inactive" | "under_review"
       project_type:
         | "feature_film"
@@ -835,10 +830,6 @@ export type Database = {
         | "ad"
         | "music_video"
         | "other"
-        | "theater"
-        | "commercial"
-        | "documentary"
-        | "tv_show"
       user_role: "artist" | "event_organizer" | "casting_agent" | "admin"
       work_preference: "freelance" | "contract" | "full_time" | "any"
     }
@@ -975,13 +966,7 @@ export const Constants = {
         "expert",
         "veteran",
       ],
-      language_proficiency: [
-        "basic",
-        "intermediate",
-        "fluent",
-        "native",
-        "advanced",
-      ],
+      language_proficiency: ["basic", "intermediate", "fluent", "native"],
       profile_status: ["active", "inactive", "under_review"],
       project_type: [
         "feature_film",
@@ -990,10 +975,6 @@ export const Constants = {
         "ad",
         "music_video",
         "other",
-        "theater",
-        "commercial",
-        "documentary",
-        "tv_show",
       ],
       user_role: ["artist", "event_organizer", "casting_agent", "admin"],
       work_preference: ["freelance", "contract", "full_time", "any"],

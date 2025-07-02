@@ -3,184 +3,173 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Award } from "lucide-react";
-import { Artist } from "@/types/artist";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useProfileSectionUpdate } from "@/hooks/useProfileSectionUpdate";
-import { validateAwardEntry } from "@/utils/profileValidation";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, Award, Calendar } from "lucide-react";
+import { useProfileSections } from "@/hooks/useProfileSections";
+import { useToast } from "@/hooks/use-toast";
 
 interface AwardsSectionProps {
-  artist: Artist;
-  isOwner: boolean;
-  isEditing: boolean;
+  profileData: any;
+  onUpdate: () => void;
+  userId?: string;
 }
 
-const AwardsSection = ({ artist, isOwner, isEditing }: AwardsSectionProps) => {
-  const { user } = useAuth();
+const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) => {
   const [newAward, setNewAward] = useState({
     title: "",
     organization: "",
     year: "",
     description: ""
   });
+  const [isAddingAward, setIsAddingAward] = useState(false);
+  const { toast } = useToast();
 
-  const { handleSubmit, isSubmitting } = useProfileSectionUpdate({
-    successMessage: "Award updated successfully!",
-    errorMessage: "Failed to update award. Please try again."
-  });
+  const { 
+    saveAward, 
+    deleteAward,
+    isSaving,
+    isDeleting 
+  } = useProfileSections(userId);
+
+  const awards = profileData?.awards || [];
 
   const handleAddAward = async () => {
-    if (!newAward.title.trim() || !user?.id) return;
+    if (!newAward.title.trim() || !userId) return;
 
-    const yearNum = newAward.year ? parseInt(newAward.year) : undefined;
-    const validation = validateAwardEntry(
-      newAward.title.trim(),
-      newAward.organization.trim(),
-      yearNum || 0,
-      artist.awards || []
+    // Check for duplicates
+    const isDuplicate = awards.some((award: any) => 
+      award.title.toLowerCase() === newAward.title.trim().toLowerCase() && 
+      award.organization?.toLowerCase() === newAward.organization.trim().toLowerCase()
     );
 
-    if (!validation.isValid) {
-      toast.error(validation.message);
+    if (isDuplicate) {
+      toast({
+        title: "❌ Duplicate Award",
+        description: "This award already exists in your profile.",
+        variant: "destructive"
+      });
       return;
     }
 
-    await handleSubmit(async () => {
-      const { error } = await supabase
-        .from('awards')
-        .insert({
-          artist_id: user.id,
-          title: newAward.title.trim(),
-          organization: newAward.organization.trim() || null,
-          year: yearNum || null,
-          description: newAward.description.trim() || null
-        });
-
-      if (error) throw error;
-
+    try {
+      setIsAddingAward(true);
+      await saveAward({
+        title: newAward.title.trim(),
+        organization: newAward.organization.trim(),
+        year: newAward.year ? parseInt(newAward.year) : null,
+        description: newAward.description.trim()
+      });
       setNewAward({ title: "", organization: "", year: "", description: "" });
-      window.location.reload();
-    });
+      onUpdate();
+    } catch (error: any) {
+      console.error("Error adding award:", error.message);
+      toast({
+        title: "❌ Failed to add award",
+        description: error.message || "Failed to add award. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAddingAward(false);
+    }
   };
 
   const handleDeleteAward = async (awardId: string) => {
-    if (!user?.id) return;
-
-    await handleSubmit(async () => {
-      const { error } = await supabase
-        .from('awards')
-        .delete()
-        .eq('id', awardId)
-        .eq('artist_id', user.id);
-
-      if (error) throw error;
-      window.location.reload();
-    }, {
-      successMessage: "Award removed successfully!",
-      errorMessage: "Failed to remove award. Please try again."
-    });
+    try {
+      await deleteAward(awardId);
+      onUpdate();
+    } catch (error: any) {
+      console.error("Error deleting award:", error.message);
+      toast({
+        title: "❌ Failed to delete award",
+        description: error.message || "Failed to delete award. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
-
-  if (!isEditing && (!artist.awards || artist.awards.length === 0)) {
-    return null;
-  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Award className="w-5 h-5 mr-2" />
-          Awards & Recognition
+        <CardTitle className="flex items-center gap-2">
+          <Award className="w-5 h-5 text-maasta-purple" />
+          Awards & Achievements ({awards.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Add Award Form */}
+        <div className="space-y-3 p-4 border rounded-lg bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Input
+              placeholder="Award title..."
+              value={newAward.title}
+              onChange={(e) => setNewAward(prev => ({ ...prev, title: e.target.value }))}
+            />
+            <Input
+              placeholder="Organization..."
+              value={newAward.organization}
+              onChange={(e) => setNewAward(prev => ({ ...prev, organization: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Input
+              placeholder="Year (optional)..."
+              type="number"
+              value={newAward.year}
+              onChange={(e) => setNewAward(prev => ({ ...prev, year: e.target.value }))}
+            />
+            <Input
+              placeholder="Description (optional)..."
+              value={newAward.description}
+              onChange={(e) => setNewAward(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </div>
+          <Button 
+            onClick={handleAddAward}
+            disabled={!newAward.title.trim() || isAddingAward || isSaving}
+            className="bg-maasta-purple hover:bg-maasta-purple/90 w-full"
+          >
+            <Plus size={16} className="mr-1" />
+            {isAddingAward ? "Adding..." : "Add Award"}
+          </Button>
+        </div>
+
+        {/* Awards List */}
         <div className="space-y-4">
-          {artist.awards?.map((award) => (
-            <div key={award.id} className="border-l-4 border-maasta-purple pl-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-semibold">{award.title}</h4>
+          {awards.map((award: any) => (
+            <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg">{award.title}</h4>
                   {award.organization && (
-                    <p className="text-sm text-gray-600">{award.organization}</p>
-                  )}
-                  {award.year && (
-                    <p className="text-sm text-gray-500">{award.year}</p>
+                    <p className="text-maasta-orange font-medium">{award.organization}</p>
                   )}
                   {award.description && (
-                    <p className="text-sm text-gray-700 mt-1">{award.description}</p>
+                    <p className="text-gray-600 mt-1">{award.description}</p>
                   )}
                 </div>
-                {isEditing && isOwner && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <div className="flex items-center gap-2 ml-4">
+                  {award.year && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Calendar size={12} />
+                      {award.year}
+                    </Badge>
+                  )}
+                  <button
                     onClick={() => handleDeleteAward(award.id)}
-                    disabled={isSubmitting}
+                    disabled={isDeleting}
+                    className="text-red-500 hover:text-red-700 p-1"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
-
-          {isEditing && isOwner && (
-            <div className="border-t pt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="award-title">Award Title *</Label>
-                  <Input
-                    id="award-title"
-                    placeholder="e.g., Best Actor Award"
-                    value={newAward.title}
-                    onChange={(e) => setNewAward({ ...newAward, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="award-organization">Organization</Label>
-                  <Input
-                    id="award-organization"
-                    placeholder="e.g., Film Festival Name"
-                    value={newAward.organization}
-                    onChange={(e) => setNewAward({ ...newAward, organization: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="award-year">Year</Label>
-                  <Input
-                    id="award-year"
-                    type="number"
-                    placeholder="2023"
-                    value={newAward.year}
-                    onChange={(e) => setNewAward({ ...newAward, year: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="award-description">Description</Label>
-                  <Input
-                    id="award-description"
-                    placeholder="Brief description (optional)"
-                    value={newAward.description}
-                    onChange={(e) => setNewAward({ ...newAward, description: e.target.value })}
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={handleAddAward}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Award
-              </Button>
-            </div>
-          )}
         </div>
+
+        {awards.length === 0 && (
+          <p className="text-gray-500 text-center py-8">No awards or achievements added yet</p>
+        )}
       </CardContent>
     </Card>
   );
