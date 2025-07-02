@@ -24,7 +24,6 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><Link to="/artists" className="text-sm hover:text-maasta-orange">Tamil Artist Portfolios</Link></li>
               <li><Link to="/auditions" className="text-sm hover:text-maasta-orange">Kolywood Auditions</Link></li>
-              <li><Link to="/networking" className="text-sm hover:text-maasta-orange">Artist Network</Link></li>
             </ul>
           </div>
           
