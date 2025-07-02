@@ -138,7 +138,7 @@ const [phoneNumber, setPhoneNumber] = useState('');
             role,
             phone_number: `+91${phoneNumber}`, // Auto-prepend +91
           },
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/profile`
         }
       });
 
@@ -147,7 +147,7 @@ const [phoneNumber, setPhoneNumber] = useState('');
       }
 
       toast.success('Account created successfully! Please check your email to verify your account.');
-      navigate('/sign-in');
+      navigate('/profile');
     } catch (error: any) {
       console.error('Sign up error:', error);
       toast.error(error.message || 'Failed to create account');
@@ -163,8 +163,8 @@ const [phoneNumber, setPhoneNumber] = useState('');
       // Use the current domain instead of localhost for redirect
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
-        ? 'https://preview--maasta-media-hub.lovable.app/'
-        : `${currentDomain}/`;
+        ? 'https://preview--maasta-media-hub.lovable.app/profile'
+        : `${currentDomain}/profile`;
 
       console.log('Google sign-up redirect URL:', redirectUrl);
 
