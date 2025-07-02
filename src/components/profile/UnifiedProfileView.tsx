@@ -57,9 +57,9 @@ const UnifiedProfileView = ({ artist, isOwner = false, onProfileUpdate }: Unifie
 
             {/* Media Section - Moved after Overview */}
             <MediaSection
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
+              profileData={artist}
+              onUpdate={handleProfileUpdate}
+              userId={user?.id}
             />
 
             {/* Portfolio Links - Moved after Media */}
@@ -70,17 +70,18 @@ const UnifiedProfileView = ({ artist, isOwner = false, onProfileUpdate }: Unifie
                   Portfolio Links
                 </h3>
                 <SocialLinksForm
-                  artist={artist}
-                  onSave={handleProfileUpdate}
+                  profileData={artist}
+                  onUpdate={handleProfileUpdate}
+                  userId={user?.id}
                 />
               </div>
             )}
 
             {/* Projects Section */}
             <ProjectsSection
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
+              profileData={artist}
+              onUpdate={handleProfileUpdate}
+              userId={user?.id}
             />
 
             {/* Skills Section */}
@@ -92,9 +93,9 @@ const UnifiedProfileView = ({ artist, isOwner = false, onProfileUpdate }: Unifie
 
             {/* Education Section */}
             <EducationSection
-              artist={artist}
-              isOwner={isOwner}
-              isEditing={isEditing}
+              profileData={artist}
+              onUpdate={handleProfileUpdate}
+              userId={user?.id}
             />
 
             {/* Awards Section */}
@@ -213,8 +214,8 @@ const UnifiedProfileView = ({ artist, isOwner = false, onProfileUpdate }: Unifie
 
       <ShareProfileDialog
         artist={artist}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
       />
     </div>
   );

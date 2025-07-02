@@ -12,6 +12,7 @@ import { saveRelatedData, deleteRelatedData } from "@/services/profileService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileSectionUpdate } from "@/hooks/useProfileSectionUpdate";
 import { validateSkillEntry, validateToolEntry, validateLanguageEntry } from "@/utils/profileValidation";
+import { toast } from "sonner";
 
 interface SkillsSectionProps {
   artist: Artist;
