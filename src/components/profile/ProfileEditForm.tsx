@@ -169,10 +169,13 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Cover Image Section */}
+          {/* Cover Image Section - MOVED TO TOP */}
           <Card>
             <CardHeader>
-              <CardTitle>Cover Image</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-lg">📸</span>
+                Upload Cover Photo
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <CoverImageUpload
@@ -180,6 +183,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 onImageUpdate={setCoverImageUrl}
                 userId={userId || ""}
               />
+              <p className="text-sm text-gray-500 mt-2">
+                Recommended: 1200x675px (16:9 ratio) • Max 5MB • JPG, PNG formats
+              </p>
             </CardContent>
           </Card>
 
@@ -555,7 +561,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
             </CardContent>
           </Card>
 
-          {/* Media Portfolio Section - MOVED BEFORE PROJECTS */}
+          {/* Media Portfolio Section */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Media Portfolio</CardTitle>

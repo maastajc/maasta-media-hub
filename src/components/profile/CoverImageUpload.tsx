@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, X, Upload, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import CoverImageCropper from "./CoverImageCropper";
 
 interface CoverImageUploadProps {
   currentImageUrl?: string;
@@ -13,42 +14,58 @@ interface CoverImageUploadProps {
 
 const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = async (croppedBlob: Blob) => {
     try {
       setIsUploading(true);
       
-      // Upload the cover image directly to supabase storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/cover-${Date.now()}.${fileExt}`;
+      // Create filename with timestamp for cache busting
+      const timestamp = Date.now();
+      const fileName = `${userId}/cover-${timestamp}.jpg`;
       
       const { data, error: uploadError } = await supabase.storage
         .from('profile-images')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL
+      // Get the public URL with cache busting
       const { data: { publicUrl } } = supabase.storage
         .from('profile-images')
         .getPublicUrl(fileName);
       
+      const cachebustedUrl = `${publicUrl}?t=${timestamp}`;
+      
       // Update the profile with the new cover image URL
       const { error } = await supabase
         .from('profiles')
-        .update({ cover_image_url: publicUrl })
+        .update({ 
+          cover_image_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (error) throw error;
 
-      onImageUpdate(publicUrl);
+      onImageUpdate(cachebustedUrl);
       toast.success("Cover image updated successfully!");
+      setIsCropperOpen(false);
     } catch (error) {
       console.error("Error uploading cover image:", error);
       toast.error("Failed to upload cover image. Please try again.");
     } finally {
       setIsUploading(false);
+      // Clean up temp URL
+      if (tempImageUrl) {
+        URL.revokeObjectURL(tempImageUrl);
+        setTempImageUrl("");
+      }
     }
   };
 
@@ -59,7 +76,10 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       // Update the profile to remove the cover image URL
       const { error } = await supabase
         .from('profiles')
-        .update({ cover_image_url: null })
+        .update({ 
+          cover_image_url: null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (error) throw error;
@@ -88,63 +108,103 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
         return;
       }
       
-      handleImageUpload(file);
+      // Create temporary URL for cropping
+      const tempUrl = URL.createObjectURL(file);
+      setTempImageUrl(tempUrl);
+      setIsCropperOpen(true);
     }
+    
+    // Reset input
+    event.target.value = '';
   };
 
+  const displayImageUrl = currentImageUrl ? 
+    `${currentImageUrl}${currentImageUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : 
+    currentImageUrl;
+
   return (
-    <div className="relative">
-      {currentImageUrl ? (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/90 hover:bg-white backdrop-blur-sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            <Edit size={16} className="mr-1" />
-            Change Cover
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/90 hover:bg-white backdrop-blur-sm"
-            onClick={handleRemoveImage}
-            disabled={isUploading}
-          >
-            <X size={16} />
-          </Button>
-        </div>
-      ) : (
+    <div className="space-y-4">
+      {/* Cover Image Display */}
+      <div className="relative w-full h-48 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden">
+        {displayImageUrl ? (
+          <img
+            src={displayImageUrl}
+            alt="Cover"
+            className="w-full h-full object-cover"
+            key={displayImageUrl} // Force re-render on URL change
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
+            <div className="text-center text-gray-500">
+              <Camera size={32} className="mx-auto mb-2" />
+              <p className="text-sm">No cover image uploaded</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Upload Controls */}
+      <div className="flex gap-2">
         <Button
           variant="outline"
           size="sm"
-          className="bg-white/90 hover:bg-white backdrop-blur-sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
+          className="flex items-center gap-2"
         >
           {isUploading ? (
             <>
-              <Upload size={16} className="mr-1 animate-spin" />
+              <Upload size={16} className="animate-spin" />
               Uploading...
+            </>
+          ) : currentImageUrl ? (
+            <>
+              <Edit size={16} />
+              Change Cover
             </>
           ) : (
             <>
-              <Camera size={16} className="mr-1" />
-              Add Cover
+              <Camera size={16} />
+              Upload Cover Photo
             </>
           )}
         </Button>
-      )}
+        
+        {currentImageUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRemoveImage}
+            disabled={isUploading}
+            className="flex items-center gap-2"
+          >
+            <X size={16} />
+            Remove
+          </Button>
+        )}
+      </div>
       
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/jpg"
         onChange={handleFileSelect}
         className="hidden"
         disabled={isUploading}
+      />
+
+      {/* Cover Image Cropper */}
+      <CoverImageCropper
+        isOpen={isCropperOpen}
+        onClose={() => {
+          setIsCropperOpen(false);
+          if (tempImageUrl) {
+            URL.revokeObjectURL(tempImageUrl);
+            setTempImageUrl("");
+          }
+        }}
+        onCropComplete={handleImageUpload}
+        imageUrl={tempImageUrl}
       />
     </div>
   );
