@@ -1,63 +1,34 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>maasta-media-hub</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-    <link rel="icon" href="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" type="image/png">
-
-    <!-- Improved cache control for index.html -->
-    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+    <title>Maasta – Create Your Artist Portfolio & Apply for Film Auditions Online</title>
+    <meta name="description" content="Build a stunning digital portfolio as an actor, director, or artist. Apply to verified film auditions and casting calls across India with Maasta – the platform for media talent." />
+    <meta name="keywords" content="artist portfolio India, apply for auditions, casting calls India, portfolio for media professionals, digital resume for actors, media artist platform, online auditions platform, auditions in India, artist portfolio builder" />
+    <meta name="author" content="Maasta" />
     
-    <!-- Version identifier for cache management -->
-    <meta name="app-version" content="<?php echo time(); ?>" />
-
-    <meta property="og:title" content="maasta-media-hub" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Maasta – Create Your Artist Portfolio & Apply for Film Auditions Online" />
+    <meta property="og:description" content="Build a stunning digital portfolio as an actor, director, or artist. Apply to verified film auditions and casting calls across India with Maasta – the platform for media talent." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
+    <meta property="og:site_name" content="Maasta" />
+    
+    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="Maasta – Create Your Artist Portfolio & Apply for Film Auditions Online" />
+    <meta name="twitter:description" content="Build a stunning digital portfolio as an actor, director, or artist. Apply to verified film auditions and casting calls across India with Maasta – the platform for media talent." />
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
+    <link rel="canonical" href="https://maasta.com" />
   </head>
-
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Simplified cache health check -->
-    <script>
-      // Basic cache health check without aggressive clearing
-      const checkSessionHealth = () => {
-        try {
-          const authData = localStorage.getItem('sb-jadphaypzbsxofowrjvy-auth-token');
-          if (authData) {
-            const parsed = JSON.parse(authData);
-            const expiresAt = parsed?.expires_at;
-            
-            if (expiresAt && Date.now() > (expiresAt * 1000)) {
-              console.log('Session expired, user will need to re-authenticate');
-            }
-          }
-        } catch (error) {
-          console.warn('Session health check failed:', error);
-        }
-      };
-      
-      // Run session health check on load
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', checkSessionHealth);
-      } else {
-        checkSessionHealth();
-      }
-    </script>
   </body>
 </html>
