@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -557,8 +558,11 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
           {/* Media Portfolio Section */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Media Portfolio</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
             </CardHeader>
             <CardContent>
               <MediaSection 
@@ -566,6 +570,54 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 onUpdate={onUpdate}
                 userId={userId}
               />
+            </CardContent>
+          </Card>
+
+          {/* Projects & Portfolio */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Projects & Portfolio</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <p>Projects section will be implemented here</p>
+                <p className="text-sm">This will include filmography, theater work, and other projects</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Education & Training */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Education & Training</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <p>Education & Training section will be implemented here</p>
+                <p className="text-sm">This will include formal education, workshops, and training programs</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Skills & Expertise */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Skills & Expertise</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <p>Skills & Expertise section will be implemented here</p>
+                <p className="text-sm">This will include technical skills, languages, special abilities, and tools</p>
+              </div>
             </CardContent>
           </Card>
 
