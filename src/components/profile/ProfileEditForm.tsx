@@ -199,8 +199,11 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
           {/* Basic Information */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Basic Information</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -354,24 +357,13 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
             </CardContent>
           </Card>
 
-          {/* Media Portfolio Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Media Portfolio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MediaSection 
-                profileData={profileData} 
-                onUpdate={onUpdate}
-                userId={userId}
-              />
-            </CardContent>
-          </Card>
-
           {/* Work Preferences */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Work Preferences</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -488,8 +480,11 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
           {/* Portfolio Links */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Portfolio Links</CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <span className="text-sm">✏️</span>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -557,6 +552,20 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Media Portfolio Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Media Portfolio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MediaSection 
+                profileData={profileData} 
+                onUpdate={onUpdate}
+                userId={userId}
+              />
             </CardContent>
           </Card>
 
