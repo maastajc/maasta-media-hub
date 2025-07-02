@@ -147,7 +147,7 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             <div className="flex items-center text-sm text-gray-600">
               <IndianRupee className="h-4 w-4 mr-2 text-green-600 flex-shrink-0" />
               <span className="font-medium text-green-700">
-                ₹{compensationInfo.amount}
+                {compensationInfo.amount}
                 {compensationInfo.duration && (
                   <span className="text-gray-500 ml-1">per {compensationInfo.duration}</span>
                 )}
