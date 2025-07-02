@@ -2,334 +2,294 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Brain } from "lucide-react";
-import { useProfileSections } from "@/hooks/useProfileSections";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, Star, Code, Languages } from "lucide-react";
+import { Artist } from "@/types/artist";
+import { saveRelatedData, deleteRelatedData } from "@/services/profileService";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfileSectionUpdate } from "@/hooks/useProfileSectionUpdate";
+import { validateSkillEntry, validateToolEntry, validateLanguageEntry } from "@/utils/profileValidation";
 
 interface SkillsSectionProps {
-  profileData: any;
-  onUpdate: () => void;
-  userId?: string;
+  artist: Artist;
+  isOwner: boolean;
+  isEditing: boolean;
 }
 
-const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) => {
+const SkillsSection = ({ artist, isOwner, isEditing }: SkillsSectionProps) => {
+  const { user } = useAuth();
   const [newSkill, setNewSkill] = useState("");
-  const [newLanguage, setNewLanguage] = useState("");
-  const [newLanguageProficiency, setNewLanguageProficiency] = useState("basic");
   const [newTool, setNewTool] = useState("");
-  const [isAddingSkill, setIsAddingSkill] = useState(false);
-  const [isAddingLanguage, setIsAddingLanguage] = useState(false);
-  const [isAddingTool, setIsAddingTool] = useState(false);
-  const { toast } = useToast();
+  const [newLanguage, setNewLanguage] = useState("");
+  const [newProficiency, setNewProficiency] = useState("");
 
-  const { 
-    saveSkill, 
-    deleteSkill, 
-    saveLanguage, 
-    deleteLanguage, 
-    saveTool, 
-    deleteTool,
-    isSaving,
-    isDeleting 
-  } = useProfileSections(userId);
+  const { handleSubmit: handleSkillSubmit, isSubmitting: isSkillSubmitting } = useProfileSectionUpdate({
+    successMessage: "Skill added successfully!",
+    errorMessage: "Failed to add skill. Please try again."
+  });
 
-  const skills = profileData?.special_skills || [];
-  const languages = profileData?.language_skills || [];
-  const tools = profileData?.tools_software || [];
+  const { handleSubmit: handleToolSubmit, isSubmitting: isToolSubmitting } = useProfileSectionUpdate({
+    successMessage: "Tool added successfully!",
+    errorMessage: "Failed to add tool. Please try again."
+  });
+
+  const { handleSubmit: handleLanguageSubmit, isSubmitting: isLanguageSubmitting } = useProfileSectionUpdate({
+    successMessage: "Language added successfully!",
+    errorMessage: "Failed to add language. Please try again."
+  });
 
   const handleAddSkill = async () => {
-    if (!newSkill.trim() || !userId) return;
+    if (!newSkill.trim() || !user?.id) return;
 
-    try {
-      setIsAddingSkill(true);
-      await saveSkill({ skill: newSkill.trim() });
-      setNewSkill("");
-      onUpdate();
-      toast({
-        title: "✅ Skill added successfully!",
-        description: "Your skill has been updated in your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error adding skill:", error.message);
-      toast({
-        title: "❌ Failed to add skill",
-        description: error.message || "Failed to add skill. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAddingSkill(false);
+    const validation = validateSkillEntry(newSkill.trim(), artist.special_skills || []);
+    if (!validation.isValid) {
+      toast.error(validation.message);
+      return;
     }
+
+    await handleSkillSubmit(async () => {
+      await saveRelatedData('special_skills', { skill: newSkill.trim() }, user.id);
+      setNewSkill("");
+      window.location.reload();
+    });
   };
 
   const handleDeleteSkill = async (skillId: string) => {
-    try {
-      await deleteSkill(skillId);
-      onUpdate();
-      toast({
-        title: "✅ Skill deleted",
-        description: "Skill has been removed from your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting skill:", error.message);
-      toast({
-        title: "❌ Failed to delete skill",
-        description: error.message || "Failed to delete skill. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+    if (!user?.id) return;
 
-  const handleAddLanguage = async () => {
-    if (!newLanguage.trim() || !userId) return;
-
-    try {
-      setIsAddingLanguage(true);
-      await saveLanguage({ 
-        language: newLanguage.trim(), 
-        proficiency: newLanguageProficiency 
-      });
-      setNewLanguage("");
-      setNewLanguageProficiency("basic");
-      onUpdate();
-      toast({
-        title: "✅ Language added successfully!",
-        description: "Your language skill has been updated in your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error adding language:", error.message);
-      toast({
-        title: "❌ Failed to add language",
-        description: error.message || "Failed to add language. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAddingLanguage(false);
-    }
-  };
-
-  const handleDeleteLanguage = async (languageId: string) => {
-    try {
-      await deleteLanguage(languageId);
-      onUpdate();
-      toast({
-        title: "✅ Language deleted",
-        description: "Language has been removed from your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting language:", error.message);
-      toast({
-        title: "❌ Failed to delete language",
-        description: error.message || "Failed to delete language. Please try again.",
-        variant: "destructive"
-      });
-    }
+    await handleSkillSubmit(async () => {
+      await deleteRelatedData('special_skills', skillId, user.id);
+      window.location.reload();
+    }, {
+      successMessage: "Skill removed successfully!",
+      errorMessage: "Failed to remove skill. Please try again."
+    });
   };
 
   const handleAddTool = async () => {
-    if (!newTool.trim() || !userId) return;
+    if (!newTool.trim() || !user?.id) return;
 
-    try {
-      setIsAddingTool(true);
-      await saveTool({ tool_name: newTool.trim() });
-      setNewTool("");
-      onUpdate();
-      toast({
-        title: "✅ Tool added successfully!",
-        description: "Your tool/software has been updated in your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error adding tool:", error.message);
-      toast({
-        title: "❌ Failed to add tool",
-        description: error.message || "Failed to add tool. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAddingTool(false);
+    const validation = validateToolEntry(newTool.trim(), artist.tools_software || []);
+    if (!validation.isValid) {
+      toast.error(validation.message);
+      return;
     }
+
+    await handleToolSubmit(async () => {
+      await saveRelatedData('tools_software', { tool_name: newTool.trim() }, user.id);
+      setNewTool("");
+      window.location.reload();
+    });
   };
 
   const handleDeleteTool = async (toolId: string) => {
-    try {
-      await deleteTool(toolId);
-      onUpdate();
-      toast({
-        title: "✅ Tool deleted",
-        description: "Tool/software has been removed from your profile.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting tool:", error.message);
-      toast({
-        title: "❌ Failed to delete tool",
-        description: error.message || "Failed to delete tool. Please try again.",
-        variant: "destructive"
-      });
+    if (!user?.id) return;
+
+    await handleToolSubmit(async () => {
+      await deleteRelatedData('tools_software', toolId, user.id);
+      window.location.reload();
+    }, {
+      successMessage: "Tool removed successfully!",
+      errorMessage: "Failed to remove tool. Please try again."
+    });
+  };
+
+  const handleAddLanguage = async () => {
+    if (!newLanguage.trim() || !newProficiency || !user?.id) return;
+
+    const validation = validateLanguageEntry(newLanguage.trim(), newProficiency, artist.language_skills || []);
+    if (!validation.isValid) {
+      toast.error(validation.message);
+      return;
     }
+
+    await handleLanguageSubmit(async () => {
+      await saveRelatedData('language_skills', { 
+        language: newLanguage.trim(), 
+        proficiency: newProficiency 
+      }, user.id);
+      setNewLanguage("");
+      setNewProficiency("");
+      window.location.reload();
+    });
+  };
+
+  const handleDeleteLanguage = async (languageId: string) => {
+    if (!user?.id) return;
+
+    await handleLanguageSubmit(async () => {
+      await deleteRelatedData('language_skills', languageId, user.id);
+      window.location.reload();
+    }, {
+      successMessage: "Language removed successfully!",
+      errorMessage: "Failed to remove language. Please try again."
+    });
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold flex items-center">
-          <Brain className="mr-2 text-maasta-purple" size={28} />
-          Skills & Expertise
-        </h2>
-      </div>
-
-      {/* Special Skills Section */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Special Skills */}
       <Card>
         <CardHeader>
-          <CardTitle>Special Skills ({skills.length})</CardTitle>
+          <CardTitle className="flex items-center">
+            <Star className="w-5 h-5 mr-2" />
+            Special Skills
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a special skill..."
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
-            />
-            <Button 
-              onClick={handleAddSkill}
-              disabled={!newSkill.trim() || isAddingSkill || isSaving}
-              className="bg-maasta-purple hover:bg-maasta-purple/90"
-            >
-              <Plus size={16} className="mr-1" />
-              {isAddingSkill ? "Adding..." : "Add"}
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill: any) => (
-              <Badge 
-                key={skill.id} 
-                variant="outline" 
-                className="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 border-purple-200"
-              >
-                {skill.skill}
-                <button
-                  onClick={() => handleDeleteSkill(skill.id)}
-                  disabled={isDeleting}
-                  className="ml-1 text-red-500 hover:text-red-700"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </Badge>
-            ))}
-          </div>
-
-          {skills.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No special skills added yet</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Languages Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Languages ({languages.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a language..."
-              value={newLanguage}
-              onChange={(e) => setNewLanguage(e.target.value)}
-              className="flex-1"
-            />
-            <select
-              value={newLanguageProficiency}
-              onChange={(e) => setNewLanguageProficiency(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="basic">Basic</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-              <option value="native">Native</option>
-            </select>
-            <Button 
-              onClick={handleAddLanguage}
-              disabled={!newLanguage.trim() || isAddingLanguage || isSaving}
-              className="bg-maasta-orange hover:bg-maasta-orange/90"
-            >
-              <Plus size={16} className="mr-1" />
-              {isAddingLanguage ? "Adding..." : "Add"}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {languages.map((language: any) => (
-              <div key={language.id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3">
-                <div>
-                  <span className="font-medium">{language.language}</span>
-                  <Badge className="ml-2 text-xs bg-orange-100 text-orange-700">
-                    {language.proficiency}
-                  </Badge>
-                </div>
-                <button
-                  onClick={() => handleDeleteLanguage(language.id)}
-                  disabled={isDeleting}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 size={16} />
-                </button>
+        <CardContent>
+          <div className="space-y-3">
+            {artist.special_skills?.map((skill) => (
+              <div key={skill.id} className="flex items-center justify-between">
+                <Badge variant="secondary">{skill.skill}</Badge>
+                {isEditing && isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteSkill(skill.id)}
+                    disabled={isSkillSubmitting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             ))}
+            
+            {isEditing && isOwner && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a skill"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                />
+                <Button
+                  onClick={handleAddSkill}
+                  size="sm"
+                  disabled={isSkillSubmitting}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
-
-          {languages.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No languages added yet</p>
-          )}
         </CardContent>
       </Card>
 
-      {/* Tools & Software Section */}
+      {/* Tools & Software */}
       <Card>
         <CardHeader>
-          <CardTitle>Tools & Software ({tools.length})</CardTitle>
+          <CardTitle className="flex items-center">
+            <Code className="w-5 h-5 mr-2" />
+            Tools & Software
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a tool or software..."
-              value={newTool}
-              onChange={(e) => setNewTool(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTool()}
-            />
-            <Button 
-              onClick={handleAddTool}
-              disabled={!newTool.trim() || isAddingTool || isSaving}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Plus size={16} className="mr-1" />
-              {isAddingTool ? "Adding..." : "Add"}
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {tools.map((tool: any) => (
-              <Badge 
-                key={tool.id} 
-                variant="outline" 
-                className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 border-green-200"
-              >
-                {tool.tool_name}
-                <button
-                  onClick={() => handleDeleteTool(tool.id)}
-                  disabled={isDeleting}
-                  className="ml-1 text-red-500 hover:text-red-700"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </Badge>
+        <CardContent>
+          <div className="space-y-3">
+            {artist.tools_software?.map((tool) => (
+              <div key={tool.id} className="flex items-center justify-between">
+                <Badge variant="outline">{tool.tool_name}</Badge>
+                {isEditing && isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteTool(tool.id)}
+                    disabled={isToolSubmitting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             ))}
+            
+            {isEditing && isOwner && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a tool"
+                  value={newTool}
+                  onChange={(e) => setNewTool(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddTool()}
+                />
+                <Button
+                  onClick={handleAddTool}
+                  size="sm"
+                  disabled={isToolSubmitting}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
+        </CardContent>
+      </Card>
 
-          {tools.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No tools or software added yet</p>
-          )}
+      {/* Languages */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Languages className="w-5 h-5 mr-2" />
+            Languages
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {artist.language_skills?.map((lang) => (
+              <div key={lang.id} className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">{lang.language}</span>
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {lang.proficiency}
+                  </Badge>
+                </div>
+                {isEditing && isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteLanguage(lang.id)}
+                    disabled={isLanguageSubmitting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            
+            {isEditing && isOwner && (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Language"
+                    value={newLanguage}
+                    onChange={(e) => setNewLanguage(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select value={newProficiency} onValueChange={setNewProficiency}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="fluent">Fluent</SelectItem>
+                      <SelectItem value="native">Native</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleAddLanguage}
+                  size="sm"
+                  className="w-full"
+                  disabled={isLanguageSubmitting}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Language
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

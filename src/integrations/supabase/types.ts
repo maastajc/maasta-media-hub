@@ -821,7 +821,12 @@ export type Database = {
         | "intermediate"
         | "expert"
         | "veteran"
-      language_proficiency: "basic" | "intermediate" | "fluent" | "native"
+      language_proficiency:
+        | "basic"
+        | "intermediate"
+        | "fluent"
+        | "native"
+        | "advanced"
       profile_status: "active" | "inactive" | "under_review"
       project_type:
         | "feature_film"
@@ -966,7 +971,13 @@ export const Constants = {
         "expert",
         "veteran",
       ],
-      language_proficiency: ["basic", "intermediate", "fluent", "native"],
+      language_proficiency: [
+        "basic",
+        "intermediate",
+        "fluent",
+        "native",
+        "advanced",
+      ],
       profile_status: ["active", "inactive", "under_review"],
       project_type: [
         "feature_film",
