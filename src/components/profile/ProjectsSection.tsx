@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Calendar, Film, ExternalLink, Save } from "lucide-react";
 import { useProfileSections } from "@/hooks/useProfileSections";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Artist } from "@/types/artist";
 
 interface ProjectsSectionProps {
@@ -21,6 +22,7 @@ interface ProjectsSectionProps {
 const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps) => {
   const [showAddProject, setShowAddProject] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     project_name: "",
     role_in_project: "",
@@ -31,8 +33,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     link: "",
   });
 
-  const { saveProject, deleteProject, isSaving, isDeleting } = useProfileSections(userId);
-  const { toast } = useToast();
+  const { saveProject, deleteProject, isDeleting } = useProfileSections(userId);
 
   // Updated project types to match database enum values
   const projectTypes = [
@@ -47,15 +48,32 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     { value: "other", label: "Other" },
   ];
 
+  // Check for duplicate projects
+  const isDuplicateProject = (projectName: string, projectType: string, role: string) => {
+    if (!profileData?.projects) return false;
+    
+    return profileData.projects.some(project => 
+      project.id !== editingProject?.id && // Exclude current project when editing
+      project.project_name.toLowerCase() === projectName.toLowerCase() &&
+      project.project_type === projectType &&
+      project.role_in_project.toLowerCase() === role.toLowerCase()
+    );
+  };
+
   const handleSave = async () => {
     if (!formData.project_name || !formData.role_in_project || !formData.project_type) {
-      toast({
-        title: "❌ Missing required fields",
-        description: "Please fill in project name, role, and project type.",
-        variant: "destructive"
-      });
+      toast.error("Please fill in project name, role, and project type.");
       return;
     }
+
+    // Check for duplicates
+    if (isDuplicateProject(formData.project_name, formData.project_type, formData.role_in_project)) {
+      toast.error("This project already exists in your portfolio.");
+      return;
+    }
+
+    if (isSubmitting) return; // Prevent multiple submissions
+    setIsSubmitting(true);
 
     try {
       const projectData = {
@@ -67,11 +85,8 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
       console.log('Saving project:', projectData);
       await saveProject(projectData);
       
-      toast({
-        title: "✅ Project saved successfully!",
-        description: `"${formData.project_name}" has been ${editingProject ? 'updated' : 'added'} to your portfolio.`,
-      });
-
+      // Single toast notification - the hook handles this, so we don't need to duplicate it
+      
       // Reset form and close dialog
       setFormData({
         project_name: "",
@@ -87,11 +102,10 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
       onUpdate();
     } catch (error: any) {
       console.error('Error saving project:', error);
-      toast({
-        title: "❌ Failed to save project",
-        description: error.message || "There was an error saving your project. Please try again.",
-        variant: "destructive"
-      });
+      // Only show error toast here since success is handled by the hook
+      toast.error(error.message || "Failed to save project. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -114,18 +128,12 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
 
     try {
       await deleteProject(projectId);
-      toast({
-        title: "✅ Project deleted",
-        description: `"${projectName}" has been removed from your portfolio.`,
-      });
+      // The hook handles the success toast
       onUpdate();
     } catch (error: any) {
       console.error('Error deleting project:', error);
-      toast({
-        title: "❌ Failed to delete project",
-        description: error.message || "There was an error deleting the project. Please try again.",
-        variant: "destructive"
-      });
+      // Only show error toast here
+      toast.error(error.message || "Failed to delete project. Please try again.");
     }
   };
 
@@ -141,6 +149,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
     });
     setEditingProject(null);
     setShowAddProject(false);
+    setIsSubmitting(false);
   };
 
   return (
@@ -354,15 +363,16 @@ const ProjectsSection = ({ profileData, onUpdate, userId }: ProjectsSectionProps
                 variant="outline" 
                 onClick={resetForm}
                 className="flex-1"
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSubmitting}
                 className="flex-1 bg-maasta-purple hover:bg-maasta-purple/90 text-white"
               >
-                {isSaving ? (
+                {isSubmitting ? (
                   <>
                     <Save className="w-4 h-4 mr-2 animate-spin" />
                     Saving...

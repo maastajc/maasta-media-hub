@@ -835,6 +835,10 @@ export type Database = {
         | "ad"
         | "music_video"
         | "other"
+        | "theater"
+        | "commercial"
+        | "documentary"
+        | "tv_show"
       user_role: "artist" | "event_organizer" | "casting_agent" | "admin"
       work_preference: "freelance" | "contract" | "full_time" | "any"
     }
@@ -986,6 +990,10 @@ export const Constants = {
         "ad",
         "music_video",
         "other",
+        "theater",
+        "commercial",
+        "documentary",
+        "tv_show",
       ],
       user_role: ["artist", "event_organizer", "casting_agent", "admin"],
       work_preference: ["freelance", "contract", "full_time", "any"],
