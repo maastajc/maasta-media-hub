@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Artist } from "@/types/artist";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import CoverImageUpload from "./CoverImageUpload";
-import MediaSection from "./MediaSection";
+import MediaUploadSection from "./MediaUploadSection";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -556,7 +555,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
             </CardContent>
           </Card>
 
-          {/* Media Portfolio Section */}
+          {/* Media Portfolio Section - MOVED BEFORE PROJECTS */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Media Portfolio</CardTitle>
@@ -565,7 +564,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               </Button>
             </CardHeader>
             <CardContent>
-              <MediaSection 
+              <MediaUploadSection 
                 profileData={profileData} 
                 onUpdate={onUpdate}
                 userId={userId}
