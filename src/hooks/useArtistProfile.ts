@@ -86,9 +86,9 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
       }
     },
     enabled: !!artistId,
-    staleTime: 5 * 60 * 1000, // 5 minutes - reasonable caching
-    refetchOnMount: false, // Don't always refetch on mount
-    refetchOnWindowFocus: false, // Don't refetch on window focus
+    staleTime: 1 * 60 * 1000, // Reduced to 1 minute for more frequent updates
+    refetchOnMount: false,
+    refetchOnWindowFocus: true, // Enable refetch on window focus to catch updates
     retry: (failureCount, error: any) => {
       // Don't retry if it's a "not found" error
       if (error?.message?.includes('not found') || error?.message?.includes('Artist not found')) {

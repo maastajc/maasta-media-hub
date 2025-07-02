@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchArtistById } from "@/services/artist/artistById";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +40,7 @@ import { toast } from "sonner";
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
@@ -54,9 +54,8 @@ const Profile = () => {
     queryKey: ["artistProfile", user?.id],
     queryFn: () => fetchArtistById(user?.id || ""),
     enabled: !!user?.id,
-    retry: 2,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // Reduced stale time for more frequent updates
+    refetchOnWindowFocus: true, // Enable refetch on window focus
   });
 
   useEffect(() => {
@@ -65,8 +64,11 @@ const Profile = () => {
     }
   }, [profileData]);
 
-  const handleProfileUpdate = () => {
-    refetch();
+  const handleProfileUpdate = async () => {
+    await refetch();
+    // Also invalidate other related queries
+    await queryClient.invalidateQueries({ queryKey: ['artist-profile', user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['featured-artists'] });
     toast.success("Profile updated successfully!");
   };
 
@@ -78,9 +80,16 @@ const Profile = () => {
     }
   };
 
-  const handleProfileImageUpdate = (imageUrl: string) => {
+  const handleProfileImageUpdate = async (imageUrl: string) => {
     setProfileImageUrl(imageUrl);
-    refetch(); // Refetch to get updated data
+    
+    // Invalidate all profile-related queries to ensure updates everywhere
+    await queryClient.invalidateQueries({ queryKey: ["artistProfile", user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['artist-profile', user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['featured-artists'] });
+    
+    // Force refetch to get updated data
+    await refetch();
   };
 
   const getInitials = (name: string) => {

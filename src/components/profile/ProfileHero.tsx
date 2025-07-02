@@ -44,6 +44,7 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                     src={artist.profile_picture_url} 
                     alt={artist.full_name}
                     className="object-cover"
+                    key={`${artist.profile_picture_url}-${Date.now()}`} // Force re-render for updates
                   />
                   <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
                     {getInitials(artist.full_name)}

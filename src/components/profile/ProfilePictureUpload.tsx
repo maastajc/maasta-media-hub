@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadProfileImage } from "@/utils/optimizedProfileImageUpload";
+import { useQueryClient } from "@tanstack/react-query";
 import ImageCropper from "./ImageCropper";
 
 interface ProfilePictureUploadProps {
@@ -26,6 +27,7 @@ const ProfilePictureUpload = ({
   const [previewImageUrl, setPreviewImageUrl] = useState(currentImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,6 +82,12 @@ const ProfilePictureUpload = ({
       setPreviewImageUrl(imageUrl);
       onImageUpdate(imageUrl);
       
+      // Invalidate all relevant caches to ensure immediate updates everywhere
+      await queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
+      await queryClient.invalidateQueries({ queryKey: ['artist-profile', userId] });
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      await queryClient.invalidateQueries({ queryKey: ['featured-artists'] });
+      
       // Clean up the temporary preview URL
       URL.revokeObjectURL(previewUrl);
       
@@ -133,7 +141,7 @@ const ProfilePictureUpload = ({
             src={previewImageUrl} 
             alt={fullName}
             className="object-cover"
-            key={previewImageUrl} // Force re-render on URL change
+            key={`${previewImageUrl}-${Date.now()}`} // Force re-render with timestamp
           />
           <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
             {getAvatarLetter()}
