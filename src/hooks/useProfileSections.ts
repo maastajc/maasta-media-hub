@@ -329,14 +329,11 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
+      queryClient.invalidateQueries({ queryKey: ['artist-profile', userId] });
     },
     onError: (error: any) => {
       console.error('Error saving award:', error);
-      toast({
-        title: '❌ Failed to save award',
-        description: error.message || 'Failed to save award. Please try again.',
-        variant: 'destructive'
-      });
+      throw error; // Let the component handle the error and toast
     },
   });
 
@@ -347,14 +344,11 @@ export const useProfileSections = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artistProfile', userId] });
+      queryClient.invalidateQueries({ queryKey: ['artist-profile', userId] });
     },
     onError: (error: any) => {
       console.error('Error deleting award:', error);
-      toast({
-        title: '❌ Failed to delete award',
-        description: error.message || 'Failed to delete award. Please try again.',
-        variant: 'destructive'
-      });
+      throw error; // Let the component handle the error and toast
     },
   });
 

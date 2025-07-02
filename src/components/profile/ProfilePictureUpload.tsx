@@ -141,7 +141,7 @@ const ProfilePictureUpload = ({
             src={previewImageUrl} 
             alt={fullName}
             className="object-cover"
-            key={`${previewImageUrl}-${Date.now()}`} // Force re-render with timestamp
+            key={`avatar-${previewImageUrl || 'default'}-${Date.now()}`} // Force re-render with better key
           />
           <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
             {getAvatarLetter()}

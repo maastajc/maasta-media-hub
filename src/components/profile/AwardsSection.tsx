@@ -61,6 +61,10 @@ const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) =>
       });
       setNewAward({ title: "", organization: "", year: "", description: "" });
       onUpdate();
+      toast({
+        title: "✅ Award added successfully!",
+        description: "Your award has been added to your profile.",
+      });
     } catch (error: any) {
       console.error("Error adding award:", error.message);
       toast({
@@ -77,6 +81,10 @@ const AwardsSection = ({ profileData, onUpdate, userId }: AwardsSectionProps) =>
     try {
       await deleteAward(awardId);
       onUpdate();
+      toast({
+        title: "✅ Award deleted",
+        description: "Award has been removed from your profile.",
+      });
     } catch (error: any) {
       console.error("Error deleting award:", error.message);
       toast({

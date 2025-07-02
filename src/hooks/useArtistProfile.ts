@@ -49,7 +49,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           { data: languages },
           { data: tools },
           { data: references },
-          { data: mediaAssets }
+          { data: mediaAssets },
+          { data: awards }
         ] = await Promise.all([
           supabase.from('projects').select('*').eq('artist_id', artistId),
           supabase.from('education_training').select('*').eq('artist_id', artistId),
@@ -57,7 +58,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           supabase.from('language_skills').select('*').eq('artist_id', artistId),
           supabase.from('tools_software').select('*').eq('artist_id', artistId),
           supabase.from('professional_references').select('*').eq('artist_id', artistId),
-          supabase.from('media_assets').select('*').eq('artist_id', artistId)
+          supabase.from('media_assets').select('*').eq('artist_id', artistId),
+          supabase.from('awards').select('*').eq('artist_id', artistId)
         ]);
 
         // Map skills to the skills array format expected by the frontend
@@ -74,7 +76,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           language_skills: languages || [],
           tools_software: tools || [],
           professional_references: references || [],
-          media_assets: mediaAssets || []
+          media_assets: mediaAssets || [],
+          awards: awards || []
         };
 
         console.log('Complete artist data assembled:', artistData);
