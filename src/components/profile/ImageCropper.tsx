@@ -47,9 +47,19 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     ctx.fillStyle = '#f3f4f6';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     
-    // Calculate scaled dimensions
-    const scaledWidth = Math.min(image.width, image.height) * scale;
-    const scaledHeight = Math.min(image.width, image.height) * scale;
+    // Calculate scaled dimensions maintaining aspect ratio
+    const imageAspect = image.width / image.height;
+    let scaledWidth, scaledHeight;
+    
+    if (imageAspect > 1) {
+      // Image is wider than tall
+      scaledWidth = canvasSize * scale;
+      scaledHeight = scaledWidth / imageAspect;
+    } else {
+      // Image is taller than wide
+      scaledHeight = canvasSize * scale;
+      scaledWidth = scaledHeight * imageAspect;
+    }
     
     // Calculate position with offset
     const x = (canvasSize - scaledWidth) / 2 + offsetX;
@@ -95,23 +105,51 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
     
     const newOffsetX = e.clientX - dragStart.x;
     const newOffsetY = e.clientY - dragStart.y;
     
-    // Limit movement to reasonable bounds
-    const maxOffset = 50;
+    // Allow full movement range for better mobile experience
+    const maxOffset = 150;
     setOffsetX(Math.max(-maxOffset, Math.min(maxOffset, newOffsetX)));
     setOffsetY(Math.max(-maxOffset, Math.min(maxOffset, newOffsetY)));
   };
 
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragStart({ x: touch.clientX - offsetX, y: touch.clientY - offsetY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const newOffsetX = touch.clientX - dragStart.x;
+    const newOffsetY = touch.clientY - dragStart.y;
+    
+    // Allow full movement range for better mobile experience
+    const maxOffset = 150;
+    setOffsetX(Math.max(-maxOffset, Math.min(maxOffset, newOffsetX)));
+    setOffsetY(Math.max(-maxOffset, Math.min(maxOffset, newOffsetY)));
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -139,18 +177,29 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
     const ctx = outputCanvas.getContext('2d');
     if (!ctx) return;
 
-    // Calculate the crop area based on current view
-    const scaledSize = outputSize * scale;
-    const x = (outputSize - scaledSize) / 2 + (offsetX * outputSize / 300);
-    const y = (outputSize - scaledSize) / 2 + (offsetY * outputSize / 300);
+    // Calculate the crop area based on current view maintaining aspect ratio
+    const imageAspect = image.width / image.height;
+    const canvasSize = 300;
+    
+    let scaledWidth, scaledHeight;
+    if (imageAspect > 1) {
+      scaledWidth = outputSize * scale;
+      scaledHeight = scaledWidth / imageAspect;
+    } else {
+      scaledHeight = outputSize * scale;
+      scaledWidth = scaledHeight * imageAspect;
+    }
+    
+    const x = (outputSize - scaledWidth) / 2 + (offsetX * outputSize / canvasSize);
+    const y = (outputSize - scaledHeight) / 2 + (offsetY * outputSize / canvasSize);
 
     // Create circular clipping path
     ctx.beginPath();
     ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, 2 * Math.PI);
     ctx.clip();
 
-    // Draw the final cropped image
-    ctx.drawImage(image, x, y, scaledSize, scaledSize);
+    // Draw the final cropped image with proper dimensions
+    ctx.drawImage(image, x, y, scaledWidth, scaledHeight);
 
     // Convert to blob
     outputCanvas.toBlob((blob) => {
@@ -176,12 +225,15 @@ const ImageCropper = ({ isOpen, onClose, onCropComplete, imageUrl }: ImageCroppe
                style={{ width: '300px', height: '300px' }}>
             <canvas
               ref={canvasRef}
-              className="cursor-move"
+              className="cursor-move touch-none"
               style={{ width: '300px', height: '300px' }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             />
             
             {/* Hidden image for processing */}
