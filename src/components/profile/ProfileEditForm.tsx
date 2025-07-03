@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist } from "@/types/artist";
+import { Artist, CustomLink } from "@/types/artist";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import CoverImageUpload from "./CoverImageUpload";
 import MediaUploadSection from "./MediaUploadSection";
@@ -51,12 +50,6 @@ const profileSchema = z.object({
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
-
-interface CustomLink {
-  id: string;
-  label: string;
-  url: string;
-}
 
 interface ProfileEditFormProps {
   profileData: Artist;

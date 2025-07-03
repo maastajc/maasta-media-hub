@@ -518,6 +518,7 @@ export type Database = {
           country: string | null
           cover_image_url: string | null
           created_at: string | null
+          custom_links: Json | null
           date_of_birth: string | null
           email: string
           email_verified: boolean | null
@@ -558,6 +559,7 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          custom_links?: Json | null
           date_of_birth?: string | null
           email: string
           email_verified?: boolean | null
@@ -598,6 +600,7 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          custom_links?: Json | null
           date_of_birth?: string | null
           email?: string
           email_verified?: boolean | null

@@ -1,4 +1,3 @@
-
 export interface Artist {
   id: string;
   full_name: string;
@@ -35,6 +34,7 @@ export interface Artist {
   created_at?: string;
   updated_at?: string;
   skills?: string[]; // Added skills property
+  custom_links?: CustomLink[]; // Added custom_links property
   
   // Related data
   projects?: Project[];
@@ -49,6 +49,12 @@ export interface Artist {
 
 export type ArtistCategory = "actor" | "director" | "cinematographer" | "musician" | "editor" | "art_director" | "stunt_coordinator" | "producer" | "writer" | "other";
 export type ExperienceLevel = "beginner" | "fresher" | "intermediate" | "expert" | "veteran";
+
+export interface CustomLink {
+  id: string;
+  label: string;
+  url: string;
+}
 
 export interface Project {
   id: string;
