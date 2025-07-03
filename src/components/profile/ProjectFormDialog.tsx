@@ -59,7 +59,9 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
       setIsSubmitting(true);
 
       const projectData = {
-        ...data,
+        project_name: data.project_name,
+        role_in_project: data.role_in_project,
+        project_type: data.project_type,
         artist_id: userId,
         year_of_release: data.year_of_release || null,
         link: data.link || null,

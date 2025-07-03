@@ -1,3 +1,4 @@
+
 export interface Artist {
   id: string;
   full_name: string;
@@ -66,6 +67,7 @@ export interface Project {
   director_producer?: string;
   streaming_platform?: string;
   link?: string;
+  project_description?: string; // Added project_description field
   created_at?: string;
   updated_at?: string;
 }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ArtistCategory, ExperienceLevel } from "@/types/artist";
 
 // Import our components
 import ProfileHero from "@/components/profile/ProfileHero";
@@ -123,6 +124,8 @@ const ArtistProfile = () => {
       
       return {
         ...artist,
+        category: artist.category as ArtistCategory,
+        experience_level: artist.experience_level as ExperienceLevel,
         custom_links: Array.isArray(artist.custom_links) ? artist.custom_links : [],
         special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
         projects: Array.isArray(artist.projects) ? artist.projects : [],

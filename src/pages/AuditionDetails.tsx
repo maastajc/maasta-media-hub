@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ const AuditionDetails = () => {
   const { auditionNumber } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
 
   // Fetch audition by audition_number
@@ -410,7 +409,7 @@ const AuditionDetails = () => {
       {/* Application Dialog */}
       {user && audition && (
         <AuditionApplicationDialog
-          open={showApplicationDialog}
+          isOpen={showApplicationDialog}
           onClose={() => setShowApplicationDialog(false)}
           audition={audition}
           onSuccess={handleApplySuccess}
