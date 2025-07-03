@@ -17,6 +17,7 @@ const formSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
   role_in_project: z.string().min(1, "Role is required"),
   project_type: z.enum(["feature_film", "short_film", "web_series", "tv_show", "commercial", "music_video", "documentary", "theater", "ad", "other"]),
+  description: z.string().optional(),
   year_of_release: z.number().min(1900).max(new Date().getFullYear() + 5).optional(),
   director_producer: z.string().optional(),
   streaming_platform: z.string().optional(),
@@ -49,6 +50,7 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
       project_name: project?.project_name || "",
       role_in_project: project?.role_in_project || "",
       project_type: mapProjectType(project?.project_type),
+      description: project?.description || "",
       year_of_release: project?.year_of_release || undefined,
       director_producer: project?.director_producer || "",
       streaming_platform: project?.streaming_platform || "",
@@ -73,6 +75,7 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
         project_name: values.project_name,
         role_in_project: values.role_in_project,
         project_type: values.project_type,
+        description: values.description || null,
         artist_id: userId,
         year_of_release: values.year_of_release || null,
         link: values.link || null,
@@ -153,6 +156,24 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Describe the project..."
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField

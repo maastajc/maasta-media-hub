@@ -126,6 +126,11 @@ const ProjectsSection = ({ projects, onUpdate, canEdit = false, userId }: Projec
                   <p className="text-sm text-gray-600 mb-2">
                     Role: <span className="font-medium">{project.role_in_project}</span>
                   </p>
+                  {project.description && (
+                    <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                      {project.description}
+                    </p>
+                  )}
                 </div>
                 {canEdit && (
                   <div className="flex gap-1">

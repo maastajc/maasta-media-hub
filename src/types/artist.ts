@@ -1,4 +1,3 @@
-
 export interface Artist {
   id: string;
   full_name: string;
@@ -59,15 +58,15 @@ export interface CustomLink {
 
 export interface Project {
   id: string;
-  artist_id: string;
   project_name: string;
-  project_type: string;
   role_in_project: string;
+  project_type: string;
+  description?: string;
   year_of_release?: number;
   director_producer?: string;
   streaming_platform?: string;
   link?: string;
-  project_description?: string; // Added project_description field
+  artist_id?: string;
   created_at?: string;
   updated_at?: string;
 }
