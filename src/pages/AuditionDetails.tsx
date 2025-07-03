@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -58,7 +57,7 @@ const AuditionDetails = () => {
             email
           )
         `)
-        .eq('audition_number', parseInt(auditionNumber))
+        .eq('id', auditionNumber)
         .eq('status', 'open')
         .single();
 
@@ -163,7 +162,7 @@ const AuditionDetails = () => {
             </h2>
             <p className="text-gray-600 mb-4">
               {isNotFound 
-                ? `We couldn't find audition #${auditionNumber}. The audition may have been removed or the link might be incorrect.`
+                ? `We couldn't find audition with ID ${auditionNumber}. The audition may have been removed or the link might be incorrect.`
                 : "We're having trouble loading this audition. Please try again."
               }
             </p>
@@ -210,7 +209,7 @@ const AuditionDetails = () => {
                   <div className="flex items-center gap-3 mb-2">
                     <h1 className="text-3xl font-bold text-gray-900">{audition.title}</h1>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Audition #{auditionNumber}
+                      ID: {auditionNumber}
                     </Badge>
                   </div>
                   
@@ -420,6 +419,7 @@ const AuditionDetails = () => {
           isOpen={showApplicationDialog}
           onClose={() => setShowApplicationDialog(false)}
           auditionId={audition.id}
+          auditionTitle={audition.title}
           onSuccess={handleApplySuccess}
         />
       )}

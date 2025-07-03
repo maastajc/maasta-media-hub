@@ -77,8 +77,12 @@ const Profile = () => {
   };
 
   const handleViewPublicProfile = () => {
-    if (profileData?.id) {
-      // Open public profile in new tab with correct user ID
+    if (profileData?.username) {
+      // Open public profile in new tab with username
+      const publicProfileUrl = `/artists/${profileData.username}`;
+      window.open(publicProfileUrl, '_blank');
+    } else if (profileData?.id) {
+      // Fallback to ID if username is not available
       const publicProfileUrl = `/artists/${profileData.id}`;
       window.open(publicProfileUrl, '_blank');
     }
@@ -518,11 +522,12 @@ const Profile = () => {
           />
         </div>
 
-        {/* Projects Section - Now after Media */}
+        {/* Projects Section - Now after Media with correct props */}
         <div id="section-projects" className="scroll-mt-24">
           <ProjectsSection
-            profileData={profileData}
+            projects={profileData.projects || []}
             onUpdate={handleProfileUpdate}
+            canEdit={true}
             userId={user?.id}
           />
         </div>

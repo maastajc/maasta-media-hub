@@ -141,14 +141,6 @@ const ProjectsSection = ({ projects, onUpdate, canEdit = false, userId }: Projec
                 )}
               </div>
 
-              {project.project_description && (
-                <div className="mb-3">
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {project.project_description}
-                  </p>
-                </div>
-              )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 {project.director_producer && (
                   <div>

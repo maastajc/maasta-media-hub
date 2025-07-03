@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
@@ -79,7 +78,6 @@ const ArtistProfile = () => {
             director_producer,
             streaming_platform,
             link,
-            project_description,
             created_at,
             updated_at
           ),
