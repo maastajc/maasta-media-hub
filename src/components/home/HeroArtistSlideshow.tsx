@@ -54,7 +54,7 @@ const staticImages = [
   },
   {
     id: '8',
-    url: '/https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.hajo-szivattyu.hu%2F%3Fp%3D15051003021620%26mod%3D1478ddb0%26uri%3Dsearch.php%253Fid%253D502842-1307%2526name%253Drajinikanth%2Bfull%2Bname&psig=AOvVaw0bYgTGYNslJAzTPX8riscO&ust=1751609466212000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCND0n_SDoI4DFQAAAAAdAAAAABAK',
+    url: '/https://igimage.indiaglitz.com/tamil/home/annamalai27062022m.jpg',
     name: 'Rajinikanth',
     category: 'Actor',
     city: 'Chennai'
