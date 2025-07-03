@@ -2,6 +2,7 @@
 export interface Project {
   id: string;
   artist_id: string;
+  user_id: string;
   project_name: string;
   project_type: string;
   role_in_project: string;
@@ -17,6 +18,7 @@ export interface Project {
 export interface Education {
   id: string;
   artist_id: string;
+  user_id: string;
   qualification_name: string;
   institution?: string;
   year_completed?: number;
@@ -27,30 +29,40 @@ export interface Education {
 export interface SpecialSkill {
   id: string;
   artist_id: string;
-  skill: string;
+  user_id: string;
+  skill_name: string;
 }
+
+// Export Skill as alias for SpecialSkill for backward compatibility
+export type Skill = SpecialSkill;
 
 export interface LanguageSkill {
   id: string;
   artist_id: string;
-  language: string;
+  user_id: string;
+  language_name: string;
   proficiency: string;
 }
 
 export interface ToolSoftware {
   id: string;
   artist_id: string;
+  user_id: string;
   tool_name: string;
 }
+
+// Export Tool as alias for ToolSoftware for backward compatibility
+export type Tool = ToolSoftware;
 
 export interface MediaAsset {
   id: string;
   artist_id?: string;
   user_id: string;
+  asset_type: string;
+  asset_url: string;
   file_name: string;
   file_type: string;
   file_size: number;
-  url: string;
   description?: string;
   is_video?: boolean;
   is_embed?: boolean;
@@ -61,8 +73,9 @@ export interface MediaAsset {
 export interface Award {
   id: string;
   artist_id: string;
-  title: string;
-  organization?: string;
+  user_id: string;
+  award_name: string;
+  awarding_organization?: string;
   year?: number;
   description?: string;
   created_at?: string;
@@ -72,8 +85,10 @@ export interface Award {
 export interface ProfessionalReference {
   id: string;
   artist_id: string;
-  name: string;
-  role: string;
+  user_id: string;
+  reference_name: string;
+  reference_title: string;
+  reference_company?: string;
   contact?: string;
   created_at?: string;
 }
@@ -132,4 +147,5 @@ export interface Artist {
   media_assets?: MediaAsset[];
   awards?: Award[];
   professional_references?: ProfessionalReference[];
+  skills?: string[]; // Add this for backward compatibility
 }

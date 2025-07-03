@@ -1,5 +1,5 @@
 
-import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset, Award, CustomLink } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel, Project, Education, SpecialSkill, LanguageSkill, ToolSoftware, MediaAsset, Award, CustomLink } from "@/types/artist";
 import { FeaturedArtistRow, ArtistByIdRow } from "./types";
 
 // Helper function to safely convert Json to CustomLink[]
@@ -66,7 +66,7 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
     language_skills: [],
     tools_software: [],
     awards: [],
-    special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill: skillName, artist_id: artist.id })),
+    special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill_name: skillName, artist_id: artist.id, user_id: artist.id })),
     skills: skillsArray
   } as Artist;
 };
@@ -127,28 +127,31 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     ...artistData 
   } = artistFromDb;
   
-  const mappedSpecialSkills: Skill[] = Array.isArray(special_skills) 
+  const mappedSpecialSkills: SpecialSkill[] = Array.isArray(special_skills) 
     ? special_skills.map(s => ({ 
         id: s.id || crypto.randomUUID(), 
-        skill: s.skill || "", 
-        artist_id: artistFromDb.id
+        skill_name: s.skill || "", 
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
       })) 
     : [];
 
   const mappedLanguageSkills: LanguageSkill[] = Array.isArray(language_skills) 
     ? language_skills.map(l => ({
         id: l.id || crypto.randomUUID(), 
-        language: l.language || "", 
+        language_name: l.language || "", 
         proficiency: l.proficiency || "beginner", 
-        artist_id: artistFromDb.id
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
       })) 
     : [];
     
-  const mappedToolsSoftware: Tool[] = Array.isArray(tools_software) 
+  const mappedToolsSoftware: ToolSoftware[] = Array.isArray(tools_software) 
     ? tools_software.map(t => ({
         id: t.id || crypto.randomUUID(), 
         tool_name: t.tool_name || "", 
-        artist_id: artistFromDb.id
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
       })) 
     : [];
 
@@ -159,7 +162,8 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
         project_name: p.project_name || "",
         role_in_project: p.role_in_project || "",
         project_type: p.project_type || "other",
-        artist_id: artistFromDb.id
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
     }))
     : [];
 
@@ -168,28 +172,31 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
         ...e,
         id: e.id || crypto.randomUUID(),
         qualification_name: e.qualification_name || "",
-        artist_id: artistFromDb.id
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
     }))
     : [];
 
   const mappedMediaAssets: MediaAsset[] = Array.isArray(media_assets)
     ? media_assets.map(m => ({
-        ...m,
         id: m.id || crypto.randomUUID(),
         file_name: m.file_name || "",
         file_type: m.file_type || "",
-        url: m.url || "",
+        asset_url: m.url || "",
+        asset_type: m.file_type || "",
         file_size: m.file_size || 0,
-        artist_id: artistFromDb.id
+        artist_id: artistFromDb.id,
+        user_id: m.user_id || artistFromDb.id
     }))
     : [];
 
   const mappedAwards: Award[] = Array.isArray(awards)
     ? awards.map(a => ({
-        ...a,
         id: a.id || crypto.randomUUID(),
-        title: a.title || "",
-        artist_id: artistFromDb.id
+        award_name: a.title || "",
+        awarding_organization: a.organization,
+        artist_id: artistFromDb.id,
+        user_id: artistFromDb.id
     }))
     : [];
 
@@ -233,6 +240,6 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     education_training: mappedEducationTraining,
     media_assets: mappedMediaAssets,
     awards: mappedAwards,
-    skills: mappedSpecialSkills.map(s => s.skill)
+    skills: mappedSpecialSkills.map(s => s.skill_name)
   } as Artist;
 };

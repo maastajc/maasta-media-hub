@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -38,11 +37,15 @@ const Artists = () => {
     console.log('Artists page mounted, artists count:', artists?.length || 0);
   }, [artists]);
 
-  // Extract unique tags from artists data
+  // Extract unique tags from artists data - use special_skills instead of skills
   const uniqueTags = Array.from(
     new Set(
       artists
-        .flatMap(artist => artist.skills || [])
+        .flatMap(artist => 
+          artist.special_skills?.map(skill => skill.skill) || 
+          artist.skills || 
+          []
+        )
         .filter(skill => skill && skill.trim().length > 0)
     )
   ).sort();
@@ -55,9 +58,13 @@ const Artists = () => {
       experienceLevel: experienceFilter || undefined,
       location: locationFilter || undefined
     }).filter(artist => {
-      // Additional tag filtering
+      // Additional tag filtering - check both special_skills and skills for compatibility
       if (selectedTags.length === 0) return true;
-      return selectedTags.some(tag => artist.skills?.includes(tag));
+      const artistSkills = [
+        ...(artist.special_skills?.map(skill => skill.skill) || []),
+        ...(artist.skills || [])
+      ];
+      return selectedTags.some(tag => artistSkills.includes(tag));
     });
 
     // Apply sorting
@@ -172,4 +179,3 @@ const Artists = () => {
 };
 
 export default Artists;
-

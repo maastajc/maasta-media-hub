@@ -1,7 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 import { cacheManager } from "@/utils/cacheManager";
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
@@ -82,8 +81,13 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           }
         }
 
+        // Create skills array for backward compatibility
+        const skillsArray = skills ? skills.map((s: any) => s.skill) : [];
+
         const artistData: Artist = {
           ...profile,
+          category: (profile.category as ArtistCategory) || 'actor',
+          experience_level: (profile.experience_level as ExperienceLevel) || 'beginner',
           custom_links: customLinksArray,
           projects: projects || [],
           education: education || [],
@@ -93,7 +97,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           tools_software: tools || [],
           professional_references: references || [],
           media_assets: mediaAssets || [],
-          awards: awards || []
+          awards: awards || [],
+          skills: skillsArray
         };
 
         console.log('Complete artist data assembled:', artistData);
