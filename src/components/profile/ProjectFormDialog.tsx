@@ -16,7 +16,7 @@ import { Project } from "@/types/artist";
 const projectSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
   role_in_project: z.string().min(1, "Role is required"),
-  project_type: z.string().min(1, "Project type is required"),
+  project_type: z.enum(["feature_film", "short_film", "web_series", "tv_show", "documentary", "commercial", "music_video", "theater", "ad", "other"]),
   project_description: z.string().optional(),
   director_producer: z.string().optional(),
   streaming_platform: z.string().optional(),
@@ -43,7 +43,7 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
     defaultValues: {
       project_name: project?.project_name || "",
       role_in_project: project?.role_in_project || "",
-      project_type: project?.project_type || "",
+      project_type: project?.project_type as ProjectFormData['project_type'] || "feature_film",
       project_description: project?.project_description || "",
       director_producer: project?.director_producer || "",
       streaming_platform: project?.streaming_platform || "",
@@ -162,7 +162,7 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="project_type">Project Type *</Label>
-              <Select value={watch("project_type")} onValueChange={(value) => setValue("project_type", value)}>
+              <Select value={watch("project_type")} onValueChange={(value) => setValue("project_type", value as ProjectFormData['project_type'])}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select project type" />
                 </SelectTrigger>

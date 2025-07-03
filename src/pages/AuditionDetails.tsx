@@ -1,6 +1,6 @@
 
-import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,19 +10,19 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
-  ArrowLeft, 
   Calendar, 
   MapPin, 
   Clock, 
+  DollarSign, 
   Users, 
-  DollarSign,
+  Briefcase, 
   AlertCircle,
-  RefreshCw
+  ArrowLeft,
+  UserCheck
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isAfter } from "date-fns";
 import AuditionApplicationDialog from "@/components/auditions/AuditionApplicationDialog";
 
 const AuditionDetails = () => {
@@ -39,23 +39,23 @@ const AuditionDetails = () => {
     error,
     refetch 
   } = useQuery({
-    queryKey: ['audition-by-number', auditionNumber],
+    queryKey: ['audition-details', auditionNumber],
     queryFn: async () => {
       if (!auditionNumber) {
         throw new Error('Audition number is required');
       }
 
-      console.log('Fetching audition for number:', auditionNumber);
+      console.log('Fetching audition details for number:', auditionNumber);
 
       const { data, error } = await supabase
         .from('auditions')
         .select(`
           *,
-          profiles:creator_id (
+          profiles!auditions_creator_id_fkey (
             id,
             full_name,
             profile_picture_url,
-            verified
+            email
           )
         `)
         .eq('audition_number', parseInt(auditionNumber))
@@ -74,37 +74,37 @@ const AuditionDetails = () => {
       console.log('Successfully fetched audition:', data.title);
       return data;
     },
-    enabled: !!auditionNumber
+    enabled: !!auditionNumber,
+    staleTime: 5 * 60 * 1000
   });
 
-  // Check if user has already applied
-  const { data: hasApplied } = useQuery({
-    queryKey: ['application-status', audition?.id, user?.id],
+  // Check if user already applied
+  const { data: existingApplication } = useQuery({
+    queryKey: ['user-application', audition?.id, user?.id],
     queryFn: async () => {
-      if (!audition?.id || !user?.id) return false;
+      if (!audition?.id || !user?.id) return null;
 
       const { data, error } = await supabase
         .from('audition_applications')
-        .select('id')
+        .select('*')
         .eq('audition_id', audition.id)
         .eq('artist_id', user.id)
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking application status:', error);
-        return false;
+        console.error('Error checking application:', error);
+        return null;
       }
 
-      return !!data;
+      return data;
     },
     enabled: !!audition?.id && !!user?.id
   });
 
   const handleApplySuccess = () => {
     setShowApplicationDialog(false);
-    toast.success("Application submitted successfully!");
-    // Refetch to update application status
     refetch();
+    toast.success("Your application has been submitted successfully!");
   };
 
   // Handle missing audition number
@@ -163,7 +163,7 @@ const AuditionDetails = () => {
             </h2>
             <p className="text-gray-600 mb-4">
               {isNotFound 
-                ? `We couldn't find audition #${auditionNumber}. It may have been removed or the link might be incorrect.`
+                ? `We couldn't find audition #${auditionNumber}. The audition may have been removed or the link might be incorrect.`
                 : "We're having trouble loading this audition. Please try again."
               }
             </p>
@@ -172,12 +172,6 @@ const AuditionDetails = () => {
               <Button onClick={() => navigate("/auditions")} variant="outline">
                 Browse All Auditions
               </Button>
-              {!isNotFound && (
-                <Button onClick={() => refetch()} className="flex items-center gap-2">
-                  <RefreshCw size={16} />
-                  Try Again
-                </Button>
-              )}
               <Button onClick={() => navigate("/")} variant="secondary">
                 Go Home
               </Button>
@@ -189,118 +183,131 @@ const AuditionDetails = () => {
     );
   }
 
-  const isOwner = user?.id === audition.creator_id;
+  const isDeadlinePassed = audition.deadline ? isAfter(new Date(), new Date(audition.deadline)) : false;
+  const hasApplied = !!existingApplication;
+  const canApply = user && !hasApplied && !isDeadlinePassed;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
       <main className="flex-grow">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Back Button */}
+          {/* Back button */}
           <Button 
+            onClick={() => navigate(-1)}
             variant="ghost" 
-            onClick={() => navigate("/auditions")}
-            className="mb-6 text-gray-600 hover:text-gray-900"
+            className="mb-6 flex items-center gap-2"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Auditions
+            <ArrowLeft size={16} />
+            Back
           </Button>
 
           {/* Audition Header */}
           <Card className="mb-8">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary">#{audition.audition_number}</Badge>
-                    <Badge variant="outline">{audition.category}</Badge>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900">{audition.title}</h1>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      Audition #{auditionNumber}
+                    </Badge>
                   </div>
-                  <CardTitle className="text-2xl mb-3">{audition.title}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {audition.location}
-                    </div>
-                    {audition.audition_date && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {format(new Date(audition.audition_date), "MMM dd, yyyy")}
-                      </div>
-                    )}
-                    {audition.deadline && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        Apply by {format(new Date(audition.deadline), "MMM dd, yyyy")}
-                      </div>
-                    )}
-                  </div>
+                  
+                  {audition.category && (
+                    <Badge variant="outline" className="mb-4">
+                      {audition.category.charAt(0).toUpperCase() + audition.category.slice(1)}
+                    </Badge>
+                  )}
+
+                  {audition.description && (
+                    <p className="text-gray-700 leading-relaxed">
+                      {audition.description}
+                    </p>
+                  )}
                 </div>
+
                 <div className="flex flex-col gap-2">
-                  {!isOwner && user && (
-                    <Button
+                  {canApply && (
+                    <Button 
                       onClick={() => setShowApplicationDialog(true)}
-                      disabled={hasApplied}
-                      className="bg-maasta-orange hover:bg-maasta-orange/90"
+                      className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
                     >
-                      {hasApplied ? "Already Applied" : "Apply Now"}
+                      Apply Now
                     </Button>
                   )}
-                  {isOwner && (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate(`/edit-audition/${audition.id}`)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate(`/auditions/${audition.audition_number}/applications`)}
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        Applications
-                      </Button>
-                    </div>
+                  
+                  {hasApplied && (
+                    <Button variant="outline" disabled className="flex items-center gap-2">
+                      <UserCheck size={16} />
+                      Applied
+                    </Button>
+                  )}
+                  
+                  {isDeadlinePassed && (
+                    <Button variant="outline" disabled>
+                      Deadline Passed
+                    </Button>
+                  )}
+                  
+                  {!user && (
+                    <Button onClick={() => navigate('/signin')}>
+                      Sign In to Apply
+                    </Button>
                   )}
                 </div>
               </div>
             </CardHeader>
           </Card>
 
-          {/* Audition Details */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {audition.description && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{audition.description}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {audition.requirements && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Requirements</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{audition.requirements}</p>
-                  </CardContent>
-                </Card>
-              )}
-
+              
+              {/* Project Details */}
               {audition.project_details && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Project Details</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="whitespace-pre-wrap">{audition.project_details}</p>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {audition.project_details}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Requirements */}
+              {audition.requirements && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Requirements</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {audition.requirements}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Posted by */}
+              {audition.profiles && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Posted by</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-maasta-orange rounded-full flex items-center justify-center text-white font-bold">
+                        {audition.profiles.full_name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium">{audition.profiles.full_name}</p>
+                        <p className="text-sm text-gray-500">{audition.profiles.email}</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -311,76 +318,78 @@ const AuditionDetails = () => {
               {/* Quick Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Info</CardTitle>
+                  <CardTitle>Audition Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {audition.experience_level && (
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-700 mb-1">Experience Level</h4>
-                      <p className="capitalize">{audition.experience_level.replace('_', ' ')}</p>
+                  {audition.audition_date && (
+                    <div className="flex items-center gap-3">
+                      <Calendar className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Audition Date</p>
+                        <p className="text-sm text-gray-600">
+                          {format(new Date(audition.audition_date), 'PPP')}
+                        </p>
+                      </div>
                     </div>
                   )}
-                  
-                  {audition.age_range && (
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-700 mb-1">Age Range</h4>
-                      <p>{audition.age_range}</p>
+
+                  {audition.deadline && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Application Deadline</p>
+                        <p className="text-sm text-gray-600">
+                          {format(new Date(audition.deadline), 'PPP')}
+                        </p>
+                      </div>
                     </div>
                   )}
-                  
-                  {audition.gender && (
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-700 mb-1">Gender</h4>
-                      <p className="capitalize">{audition.gender}</p>
+
+                  {audition.location && (
+                    <div className="flex items-center gap-3">
+                      <MapPin className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Location</p>
+                        <p className="text-sm text-gray-600">{audition.location}</p>
+                      </div>
                     </div>
                   )}
-                  
+
                   {audition.compensation && (
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-700 mb-1">Compensation</h4>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4 text-green-600" />
-                        <p>{audition.compensation}</p>
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Compensation</p>
+                        <p className="text-sm text-gray-600">{audition.compensation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {audition.experience_level && (
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Experience Level</p>
+                        <p className="text-sm text-gray-600">
+                          {audition.experience_level.charAt(0).toUpperCase() + audition.experience_level.slice(1)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(audition.gender || audition.age_range) && (
+                    <div className="flex items-center gap-3">
+                      <Users className="text-maasta-orange" size={20} />
+                      <div>
+                        <p className="font-medium">Looking for</p>
+                        <p className="text-sm text-gray-600">
+                          {[audition.gender, audition.age_range].filter(Boolean).join(', ')}
+                        </p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
-
-              {/* Posted By */}
-              {audition.profiles && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Posted By</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                        {audition.profiles.profile_picture_url ? (
-                          <img 
-                            src={audition.profiles.profile_picture_url} 
-                            alt={audition.profiles.full_name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-gray-600 font-medium">
-                            {audition.profiles.full_name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium flex items-center gap-1">
-                          {audition.profiles.full_name}
-                          {audition.profiles.verified && (
-                            <span className="text-blue-500">✓</span>
-                          )}
-                        </p>
-                        <p className="text-sm text-gray-600">Casting Director</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Tags */}
               {audition.tags && audition.tags.length > 0 && (
@@ -391,7 +400,7 @@ const AuditionDetails = () => {
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {audition.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="secondary">
                           {tag}
                         </Badge>
                       ))}
@@ -403,7 +412,6 @@ const AuditionDetails = () => {
           </div>
         </div>
       </main>
-
       <Footer />
 
       {/* Application Dialog */}
@@ -411,7 +419,7 @@ const AuditionDetails = () => {
         <AuditionApplicationDialog
           isOpen={showApplicationDialog}
           onClose={() => setShowApplicationDialog(false)}
-          audition={audition}
+          auditionId={audition.id}
           onSuccess={handleApplySuccess}
         />
       )}

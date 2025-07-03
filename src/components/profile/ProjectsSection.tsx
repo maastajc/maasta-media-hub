@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Edit2, ExternalLink } from "lucide-react";
 import { Project } from "@/types/artist";
 import ProjectFormDialog from "./ProjectFormDialog";
 

@@ -1,102 +1,123 @@
 
-import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MapPin, Briefcase } from "lucide-react";
 import { Artist } from "@/types/artist";
 
 interface ArtistCardProps {
   artist: Artist;
+  onViewProfile: (artistId: string) => void;
 }
 
-const ArtistCard = ({ artist }: ArtistCardProps) => {
-  const profileUrl = artist.username ? `/artists/${artist.username}` : `/artists/${artist.id}`;
-  const displayLocation = [artist.city, artist.state, artist.country].filter(Boolean).join(", ");
+const ArtistCard = ({ artist, onViewProfile }: ArtistCardProps) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
+  };
+
+  const formatCategory = (category: string) => {
+    return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const handleViewProfile = () => {
+    if (artist.username) {
+      onViewProfile(artist.username);
+    }
+  };
 
   return (
-    <Link to={profileUrl} className="block group">
-      <Card className="h-full hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-gray-200">
-        <CardContent className="p-0">
-          {/* Profile Image */}
-          <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
-            {artist.profile_picture_url ? (
-              <img
-                src={artist.profile_picture_url}
-                alt={artist.full_name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-maasta-orange/20 to-maasta-orange/40">
-                <span className="text-4xl font-bold text-maasta-orange">
-                  {artist.full_name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            {artist.verified && (
-              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-1">
-                <CheckCircle2 className="w-5 h-5 text-blue-500" />
-              </div>
-            )}
-          </div>
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
+      <div className="relative">
+        {/* Cover Image */}
+        <div className="h-32 bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
+          {artist.cover_image_url && (
+            <img
+              src={artist.cover_image_url}
+              alt={`${artist.full_name} cover`}
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+        
+        {/* Profile Picture */}
+        <div className="absolute -bottom-8 left-4">
+          <Avatar className="w-16 h-16 border-4 border-white shadow-lg">
+            <AvatarImage 
+              src={artist.profile_picture_url} 
+              alt={artist.full_name}
+              className="object-cover"
+            />
+            <AvatarFallback className="bg-maasta-orange text-white font-bold">
+              {getInitials(artist.full_name)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
 
-          {/* Artist Info */}
-          <div className="p-4 space-y-3">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-900 group-hover:text-maasta-orange transition-colors line-clamp-1">
-                {artist.full_name}
-              </h3>
-              {artist.username && (
-                <p className="text-sm text-gray-500">@{artist.username}</p>
-              )}
-            </div>
-
-            {/* Category and Experience */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="capitalize text-xs">
-                {artist.category?.replace('_', ' ')}
-              </Badge>
-              {artist.experience_level && (
-                <Badge variant="secondary" className="capitalize text-xs">
-                  {artist.experience_level.replace('_', ' ')}
-                </Badge>
-              )}
-            </div>
-
-            {/* Location */}
-            {displayLocation && (
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span className="line-clamp-1">{displayLocation}</span>
-              </div>
-            )}
-
-            {/* Bio Preview */}
+      <CardContent className="pt-12 pb-4">
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">
+              {artist.full_name}
+            </h3>
             {artist.bio && (
-              <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">
+              <p className="text-gray-600 text-sm line-clamp-2 mt-1">
                 {artist.bio}
               </p>
             )}
+          </div>
 
-            {/* Skills Preview */}
-            {artist.skills && artist.skills.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {artist.skills.slice(0, 3).map((skill, index) => (
-                  <Badge key={index} variant="outline" className="text-xs bg-gray-50">
-                    {skill}
-                  </Badge>
-                ))}
-                {artist.skills.length > 3 && (
-                  <Badge variant="outline" className="text-xs bg-gray-50">
-                    +{artist.skills.length - 3} more
-                  </Badge>
-                )}
+          <div className="flex flex-wrap gap-2">
+            {artist.category && (
+              <Badge variant="secondary" className="bg-maasta-orange/10 text-maasta-orange border-maasta-orange/20 text-xs">
+                {formatCategory(artist.category)}
+              </Badge>
+            )}
+            {artist.experience_level && (
+              <Badge variant="outline" className="text-xs">
+                {artist.experience_level.charAt(0).toUpperCase() + artist.experience_level.slice(1)}
+              </Badge>
+            )}
+          </div>
+
+          <div className="space-y-1 text-sm text-gray-500">
+            {(artist.city || artist.state || artist.country) && (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} />
+                <span className="line-clamp-1">
+                  {[artist.city, artist.state, artist.country].filter(Boolean).join(', ')}
+                </span>
+              </div>
+            )}
+            
+            {artist.years_of_experience !== undefined && (
+              <div className="flex items-center gap-1">
+                <Briefcase size={14} />
+                <span>
+                  {artist.years_of_experience === 0 
+                    ? 'Fresher' 
+                    : `${artist.years_of_experience} year${artist.years_of_experience !== 1 ? 's' : ''} exp`
+                  }
+                </span>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+
+          <Button 
+            onClick={handleViewProfile}
+            className="w-full bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+            size="sm"
+          >
+            View Profile
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

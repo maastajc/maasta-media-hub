@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArtistCategory, ExperienceLevel } from "@/types/artist";
+import { ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 
 // Import our components
 import ProfileHero from "@/components/profile/ProfileHero";
@@ -22,6 +22,27 @@ const ArtistProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Helper function to safely convert Json to CustomLink[]
+  const parseCustomLinks = (customLinksData: any): CustomLink[] => {
+    if (!customLinksData) return [];
+    
+    try {
+      if (Array.isArray(customLinksData)) {
+        return customLinksData.filter((link: any) => 
+          link && 
+          typeof link === 'object' && 
+          typeof link.id === 'string' && 
+          typeof link.label === 'string' && 
+          typeof link.url === 'string'
+        ) as CustomLink[];
+      }
+    } catch (e) {
+      console.error('Error parsing custom_links:', e);
+    }
+    
+    return [];
+  };
 
   // Fetch artist by username
   const { 
@@ -126,7 +147,7 @@ const ArtistProfile = () => {
         ...artist,
         category: artist.category as ArtistCategory,
         experience_level: artist.experience_level as ExperienceLevel,
-        custom_links: Array.isArray(artist.custom_links) ? artist.custom_links : [],
+        custom_links: parseCustomLinks(artist.custom_links),
         special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
         projects: Array.isArray(artist.projects) ? artist.projects : [],
         education_training: Array.isArray(artist.education_training) ? artist.education_training : [],
