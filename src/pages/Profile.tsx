@@ -60,7 +60,11 @@ const Profile = () => {
 
   useEffect(() => {
     if (profileData) {
-      setProfileImageUrl(profileData.profile_picture_url);
+      // Force cache-busted URL for profile image
+      const imageUrl = profileData.profile_picture_url ? 
+        `${profileData.profile_picture_url}${profileData.profile_picture_url.includes('?') ? '&' : '?'}t=${Date.now()}` : 
+        undefined;
+      setProfileImageUrl(imageUrl);
     }
   }, [profileData]);
 
@@ -81,7 +85,9 @@ const Profile = () => {
   };
 
   const handleProfileImageUpdate = async (imageUrl: string) => {
-    setProfileImageUrl(imageUrl);
+    // Add cache-busting timestamp
+    const cacheBustedUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    setProfileImageUrl(cacheBustedUrl);
     
     // Invalidate all profile-related queries to ensure updates everywhere
     await queryClient.invalidateQueries({ queryKey: ["artistProfile", user?.id] });
@@ -100,10 +106,10 @@ const Profile = () => {
       .slice(0, 2);
   };
 
-  // Scroll spy functionality
+  // Scroll spy functionality - Updated section order
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['overview', 'projects', 'education', 'skills', 'awards', 'media'];
+      const sections = ['overview', 'media', 'projects', 'education', 'skills', 'awards'];
       const scrollPosition = window.scrollY + 200;
 
       for (const section of sections) {
@@ -309,7 +315,7 @@ const Profile = () => {
       {/* Profile Strength Tracker */}
       <ProfileStats artist={profileData} />
 
-      {/* Fixed Navigation Tabs */}
+      {/* Fixed Navigation Tabs - Updated order */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -321,6 +327,14 @@ const Profile = () => {
               >
                 <User size={16} />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="media" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-media')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <FileText size={16} />
+                <span className="hidden sm:inline">Media</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="projects" 
@@ -354,20 +368,12 @@ const Profile = () => {
                 <Award size={16} />
                 <span className="hidden sm:inline">Awards</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="media" 
-                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
-                onClick={() => document.getElementById('section-media')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                <FileText size={16} />
-                <span className="hidden sm:inline">Media</span>
-              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </div>
 
-      {/* Profile Content - Single scrollable container */}
+      {/* Profile Content - Reordered sections */}
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
         {/* Overview Section */}
         <div id="section-overview" className="scroll-mt-24">
@@ -503,7 +509,16 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Projects Section */}
+        {/* Media Section - Moved up before Projects */}
+        <div id="section-media" className="scroll-mt-24">
+          <MediaSection
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id}
+          />
+        </div>
+
+        {/* Projects Section - Now after Media */}
         <div id="section-projects" className="scroll-mt-24">
           <ProjectsSection
             profileData={profileData}
@@ -533,15 +548,6 @@ const Profile = () => {
         {/* Awards Section */}
         <div id="section-awards" className="scroll-mt-24">
           <AwardsSection
-            profileData={profileData}
-            onUpdate={handleProfileUpdate}
-            userId={user?.id}
-          />
-        </div>
-
-        {/* Media Section */}
-        <div id="section-media" className="scroll-mt-24">
-          <MediaSection
             profileData={profileData}
             onUpdate={handleProfileUpdate}
             userId={user?.id}
