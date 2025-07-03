@@ -2,6 +2,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, CustomLink } from "@/types/artist";
 
+// Helper function to safely convert Json to CustomLink[]
+const parseCustomLinks = (customLinksData: any): CustomLink[] => {
+  if (!customLinksData) return [];
+  
+  try {
+    if (Array.isArray(customLinksData)) {
+      return customLinksData.filter((link: any) => 
+        link && 
+        typeof link === 'object' && 
+        typeof link.id === 'string' && 
+        typeof link.label === 'string' && 
+        typeof link.url === 'string'
+      ) as CustomLink[];
+    }
+  } catch (e) {
+    console.error('Error parsing custom_links:', e);
+  }
+  
+  return [];
+};
+
 // Create a type that matches Supabase's expected update format
 type ArtistUpdateData = {
   association_membership?: string;
@@ -215,18 +236,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       tools_software: Array.isArray(artist.tools_software) ? artist.tools_software.length : 0
     });
 
-    // Convert custom_links from JSON to CustomLink[] type
-    let customLinksArray: CustomLink[] = [];
-    if (artist.custom_links) {
-      try {
-        if (Array.isArray(artist.custom_links)) {
-          customLinksArray = artist.custom_links as CustomLink[];
-        }
-      } catch (e) {
-        console.error('Error parsing custom_links:', e);
-        customLinksArray = [];
-      }
-    }
+    // Convert custom_links from JSON to CustomLink[] type with proper validation
+    const customLinksArray = parseCustomLinks(artist.custom_links);
 
     // Re-structure and provide safe defaults for all sections
     return {
@@ -268,18 +279,8 @@ export const updateArtistProfile = async (artistId: string, profileData: Partial
 
     console.log('Artist profile updated successfully');
 
-    // Convert custom_links from JSON to CustomLink[] type for return value
-    let customLinksArray: CustomLink[] = [];
-    if (data.custom_links) {
-      try {
-        if (Array.isArray(data.custom_links)) {
-          customLinksArray = data.custom_links as CustomLink[];
-        }
-      } catch (e) {
-        console.error('Error parsing custom_links:', e);
-        customLinksArray = [];
-      }
-    }
+    // Convert custom_links from JSON to CustomLink[] type for return value with proper validation
+    const customLinksArray = parseCustomLinks(data.custom_links);
 
     return {
       ...data,

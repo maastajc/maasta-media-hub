@@ -2,23 +2,34 @@
 import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset, Award, CustomLink } from "@/types/artist";
 import { FeaturedArtistRow, ArtistByIdRow } from "./types";
 
+// Helper function to safely convert Json to CustomLink[]
+const parseCustomLinks = (customLinksData: any): CustomLink[] => {
+  if (!customLinksData) return [];
+  
+  try {
+    if (Array.isArray(customLinksData)) {
+      return customLinksData.filter((link: any) => 
+        link && 
+        typeof link === 'object' && 
+        typeof link.id === 'string' && 
+        typeof link.label === 'string' && 
+        typeof link.url === 'string'
+      ) as CustomLink[];
+    }
+  } catch (e) {
+    console.error('Error parsing custom_links:', e);
+  }
+  
+  return [];
+};
+
 export const mapFeaturedArtistToArtist = (artist: any): Artist => {
   const skillsArray = Array.isArray(artist.special_skills) 
     ? artist.special_skills.map((s: any) => s.skill as string) 
     : [];
 
-  // Convert custom_links from JSON to CustomLink[] type
-  let customLinksArray: CustomLink[] = [];
-  if (artist.custom_links) {
-    try {
-      if (Array.isArray(artist.custom_links)) {
-        customLinksArray = artist.custom_links as CustomLink[];
-      }
-    } catch (e) {
-      console.error('Error parsing custom_links:', e);
-      customLinksArray = [];
-    }
-  }
+  // Convert custom_links from JSON to CustomLink[] type with proper validation
+  const customLinksArray = parseCustomLinks(artist.custom_links);
 
   return {
     ...artist,
@@ -61,18 +72,8 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
 };
 
 export const mapFallbackArtistToArtist = (artist: any): Artist => {
-  // Convert custom_links from JSON to CustomLink[] type
-  let customLinksArray: CustomLink[] = [];
-  if (artist.custom_links) {
-    try {
-      if (Array.isArray(artist.custom_links)) {
-        customLinksArray = artist.custom_links as CustomLink[];
-      }
-    } catch (e) {
-      console.error('Error parsing custom_links:', e);
-      customLinksArray = [];
-    }
-  }
+  // Convert custom_links from JSON to CustomLink[] type with proper validation
+  const customLinksArray = parseCustomLinks(artist.custom_links);
 
   return {
     ...artist,
@@ -192,18 +193,8 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     }))
     : [];
 
-  // Convert custom_links from JSON to CustomLink[] type
-  let customLinksArray: CustomLink[] = [];
-  if (artistData.custom_links) {
-    try {
-      if (Array.isArray(artistData.custom_links)) {
-        customLinksArray = artistData.custom_links as CustomLink[];
-      }
-    } catch (e) {
-      console.error('Error parsing custom_links:', e);
-      customLinksArray = [];
-    }
-  }
+  // Convert custom_links from JSON to CustomLink[] type with proper validation
+  const customLinksArray = parseCustomLinks(artistData.custom_links);
 
   return {
     ...artistData,

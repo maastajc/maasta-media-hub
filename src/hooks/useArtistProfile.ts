@@ -4,6 +4,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 import { cacheManager } from "@/utils/cacheManager";
 
+// Helper function to safely convert Json to CustomLink[]
+const parseCustomLinks = (customLinksData: any): CustomLink[] => {
+  if (!customLinksData) return [];
+  
+  try {
+    if (Array.isArray(customLinksData)) {
+      return customLinksData.filter((link: any) => 
+        link && 
+        typeof link === 'object' && 
+        typeof link.id === 'string' && 
+        typeof link.label === 'string' && 
+        typeof link.url === 'string'
+      ) as CustomLink[];
+    }
+  } catch (e) {
+    console.error('Error parsing custom_links:', e);
+  }
+  
+  return [];
+};
+
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
   return useQuery({
     queryKey: ['artist-profile', artistId],
@@ -65,18 +86,8 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
         // Map skills to the skills array format expected by the frontend
         const skillsArray = skills?.map(skill => skill.skill) || [];
 
-        // Convert custom_links from JSON to CustomLink[] type
-        let customLinksArray: CustomLink[] = [];
-        if (profile.custom_links) {
-          try {
-            if (Array.isArray(profile.custom_links)) {
-              customLinksArray = profile.custom_links as CustomLink[];
-            }
-          } catch (e) {
-            console.error('Error parsing custom_links:', e);
-            customLinksArray = [];
-          }
-        }
+        // Convert custom_links from JSON to CustomLink[] type with proper validation
+        const customLinksArray = parseCustomLinks(profile.custom_links);
 
         const artistData: Artist = {
           ...profile,
