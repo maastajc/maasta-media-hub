@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,6 +52,12 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+interface CustomLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
 interface ProfileEditFormProps {
   profileData: Artist;
   onClose: () => void;
@@ -64,6 +71,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
   const [coverImageUrl, setCoverImageUrl] = useState(profileData.cover_image_url);
   const [showOtherCategory, setShowOtherCategory] = useState(false);
   const [otherCategoryValue, setOtherCategoryValue] = useState('');
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>([]);
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -92,6 +100,14 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
 
   const selectedDate = watch("date_of_birth");
 
+  // Initialize custom links from profile data
+  useEffect(() => {
+    const savedCustomLinks = profileData.custom_links || [];
+    if (Array.isArray(savedCustomLinks)) {
+      setCustomLinks(savedCustomLinks);
+    }
+  }, [profileData]);
+
   const calculateAge = (birthDate: Date): number => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -102,6 +118,25 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
     }
     
     return age;
+  };
+
+  const addCustomLink = () => {
+    const newLink: CustomLink = {
+      id: Date.now().toString(),
+      label: '',
+      url: ''
+    };
+    setCustomLinks([...customLinks, newLink]);
+  };
+
+  const removeCustomLink = (id: string) => {
+    setCustomLinks(customLinks.filter(link => link.id !== id));
+  };
+
+  const updateCustomLink = (id: string, field: 'label' | 'url', value: string) => {
+    setCustomLinks(customLinks.map(link => 
+      link.id === id ? { ...link, [field]: value } : link
+    ));
   };
 
   const onSubmit = async (data: ProfileFormData) => {
@@ -128,12 +163,16 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Calculate age from date of birth
       const age = calculateAge(data.date_of_birth);
 
+      // Filter out empty custom links
+      const validCustomLinks = customLinks.filter(link => link.label.trim() && link.url.trim());
+
       // Prepare update data with other category handling
       const updateData = {
         ...data,
         date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
         profile_picture_url: profileImageUrl,
         cover_image_url: coverImageUrl,
+        custom_links: validCustomLinks,
         updated_at: new Date().toISOString()
       };
 
@@ -169,7 +208,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Cover Image Section - MOVED TO TOP */}
+          {/* Cover Image Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -199,6 +238,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 currentImageUrl={profileImageUrl}
                 onImageUpdate={setProfileImageUrl}
                 userId={userId || ""}
+                fullName={profileData.full_name}
               />
             </CardContent>
           </Card>
@@ -558,6 +598,57 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   />
                 </div>
               </div>
+
+              {/* Custom Links Section */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium">Custom Links</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCustomLink}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    Add Custom Link
+                  </Button>
+                </div>
+                
+                {customLinks.map((link) => (
+                  <div key={link.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 p-3 border rounded-lg">
+                    <div>
+                      <Label className="text-sm">Platform/Label</Label>
+                      <Input
+                        value={link.label}
+                        onChange={(e) => updateCustomLink(link.id, 'label', e.target.value)}
+                        placeholder="e.g., My Portfolio, Art Station"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Label className="text-sm">URL</Label>
+                        <Input
+                          value={link.url}
+                          onChange={(e) => updateCustomLink(link.id, 'url', e.target.value)}
+                          placeholder="https://..."
+                          className="mt-1"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeCustomLink(link.id)}
+                        className="mt-6 px-2"
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -575,54 +666,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                 onUpdate={onUpdate}
                 userId={userId}
               />
-            </CardContent>
-          </Card>
-
-          {/* Projects & Portfolio */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Projects & Portfolio</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Projects section will be implemented here</p>
-                <p className="text-sm">This will include filmography, theater work, and other projects</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Education & Training */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Education & Training</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Education & Training section will be implemented here</p>
-                <p className="text-sm">This will include formal education, workshops, and training programs</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Skills & Expertise */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Skills & Expertise</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Skills & Expertise section will be implemented here</p>
-                <p className="text-sm">This will include technical skills, languages, special abilities, and tools</p>
-              </div>
             </CardContent>
           </Card>
 
