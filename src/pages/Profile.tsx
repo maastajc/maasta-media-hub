@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -562,7 +563,7 @@ const Profile = () => {
         {/* Education Section */}
         <div id="section-education" className="scroll-mt-24">
           <EducationSection 
-            educationData={profileData.education_training || []}
+            education={profileData.education_training || []}
             onUpdate={handleProfileUpdate}
             userId={user?.id || ""}
           />
@@ -571,7 +572,7 @@ const Profile = () => {
         {/* Skills Section */}
         <div id="section-skills" className="scroll-mt-24">
           <SkillsSection 
-            skillsData={profileData.special_skills || []}
+            skills={profileData.special_skills || []}
             onUpdate={handleProfileUpdate}
             userId={user?.id || ""}
           />
@@ -580,7 +581,7 @@ const Profile = () => {
         {/* Awards Section */}
         <div id="section-awards" className="scroll-mt-24">
           <AwardsSection 
-            awardsData={profileData.awards || []}
+            awards={profileData.awards || []}
             onUpdate={handleProfileUpdate}
             userId={user?.id || ""}
           />

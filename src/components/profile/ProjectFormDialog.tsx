@@ -35,12 +35,20 @@ const ProjectFormDialog = ({ open, onClose, onSuccess, project, userId }: Projec
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Map project type to form schema type
+  const mapProjectType = (type?: string): "feature_film" | "short_film" | "web_series" | "tv_show" | "commercial" | "music_video" | "documentary" | "theater" | "ad" | "other" => {
+    if (type && ["feature_film", "short_film", "web_series", "tv_show", "commercial", "music_video", "documentary", "theater", "ad", "other"].includes(type)) {
+      return type as "feature_film" | "short_film" | "web_series" | "tv_show" | "commercial" | "music_video" | "documentary" | "theater" | "ad" | "other";
+    }
+    return "feature_film";
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       project_name: project?.project_name || "",
       role_in_project: project?.role_in_project || "",
-      project_type: project?.project_type || "feature_film",
+      project_type: mapProjectType(project?.project_type),
       year_of_release: project?.year_of_release || undefined,
       director_producer: project?.director_producer || "",
       streaming_platform: project?.streaming_platform || "",

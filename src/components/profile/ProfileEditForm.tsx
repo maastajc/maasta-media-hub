@@ -41,6 +41,31 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Map database experience levels to form schema levels
+  const mapExperienceLevel = (level?: string): "beginner" | "intermediate" | "advanced" | "professional" => {
+    switch (level) {
+      case "fresher":
+        return "beginner";
+      case "expert":
+      case "veteran":
+        return "professional";
+      case "intermediate":
+        return "intermediate";
+      case "advanced":
+        return "advanced";
+      default:
+        return "beginner";
+    }
+  };
+
+  // Map database work preference to form schema
+  const mapWorkPreference = (preference?: string): "full_time" | "part_time" | "freelance" | "contract" | "any" => {
+    if (preference && ["full_time", "part_time", "freelance", "contract", "any"].includes(preference)) {
+      return preference as "full_time" | "part_time" | "freelance" | "contract" | "any";
+    }
+    return "any";
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,9 +77,9 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       country: profileData.country || "",
       date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
       category: profileData.category || "actor",
-      experience_level: profileData.experience_level || "beginner",
+      experience_level: mapExperienceLevel(profileData.experience_level),
       years_of_experience: profileData.years_of_experience || 0,
-      work_preference: profileData.work_preference || "any",
+      work_preference: mapWorkPreference(profileData.work_preference),
       preferred_domains: profileData.preferred_domains || "",
       username: profileData.username || "",
     },
