@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Artist } from "@/types/artist";
+import { Plus, Trash2 } from "lucide-react";
 
 const formSchema = z.object({
-  personal_website: z.string().url().optional().or(z.literal("")),
-  instagram: z.string().url().optional().or(z.literal("")),
-  linkedin: z.string().url().optional().or(z.literal("")),
-  youtube_vimeo: z.string().url().optional().or(z.literal("")),
-  imdb_profile: z.string().url().optional().or(z.literal("")),
-  behance: z.string().url().optional().or(z.literal("")),
+  custom_links: z.array(z.object({
+    title: z.string().min(1, "Link title is required"),
+    url: z.string().url("Please enter a valid URL")
+  })).default([])
 });
 
 interface PortfolioLinksEditFormProps {
@@ -31,16 +30,49 @@ const PortfolioLinksEditForm = ({ open, onClose, onSuccess, profileData }: Portf
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Convert existing predefined links to custom format
+  const getInitialLinks = () => {
+    const links = [];
+    if (profileData.personal_website) {
+      links.push({ title: "Personal Website", url: profileData.personal_website });
+    }
+    if (profileData.instagram) {
+      links.push({ title: "Instagram", url: profileData.instagram });
+    }
+    if (profileData.linkedin) {
+      links.push({ title: "LinkedIn", url: profileData.linkedin });
+    }
+    if (profileData.youtube_vimeo) {
+      links.push({ title: "YouTube/Vimeo", url: profileData.youtube_vimeo });
+    }
+    if (profileData.imdb_profile) {
+      links.push({ title: "IMDb Profile", url: profileData.imdb_profile });
+    }
+    if (profileData.behance) {
+      links.push({ title: "Behance", url: profileData.behance });
+    }
+    
+    // Add any existing custom links
+    if (profileData.custom_links) {
+      const customLinks = Array.isArray(profileData.custom_links) 
+        ? profileData.custom_links 
+        : JSON.parse(profileData.custom_links as string);
+      links.push(...customLinks);
+    }
+    
+    return links.length > 0 ? links : [{ title: "", url: "" }];
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      personal_website: profileData.personal_website || "",
-      instagram: profileData.instagram || "",
-      linkedin: profileData.linkedin || "",
-      youtube_vimeo: profileData.youtube_vimeo || "",
-      imdb_profile: profileData.imdb_profile || "",
-      behance: profileData.behance || "",
+      custom_links: getInitialLinks()
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "custom_links"
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -48,12 +80,15 @@ const PortfolioLinksEditForm = ({ open, onClose, onSuccess, profileData }: Portf
 
     try {
       const updateData = {
-        personal_website: values.personal_website || null,
-        instagram: values.instagram || null,
-        linkedin: values.linkedin || null,
-        youtube_vimeo: values.youtube_vimeo || null,
-        imdb_profile: values.imdb_profile || null,
-        behance: values.behance || null,
+        // Clear old predefined links
+        personal_website: null,
+        instagram: null,
+        linkedin: null,
+        youtube_vimeo: null,
+        imdb_profile: null,
+        behance: null,
+        // Store new custom links
+        custom_links: JSON.stringify(values.custom_links.filter(link => link.title && link.url)),
         updated_at: new Date().toISOString(),
       };
 
@@ -83,98 +118,86 @@ const PortfolioLinksEditForm = ({ open, onClose, onSuccess, profileData }: Portf
     }
   };
 
+  const addNewLink = () => {
+    append({ title: "", url: "" });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Portfolio Links</DialogTitle>
+          <p className="text-sm text-gray-600">
+            Add your custom portfolio links with personalized titles
+          </p>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="personal_website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Personal Website</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://yourwebsite.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <div key={field.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Link {index + 1}</h4>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name={`custom_links.${index}.title`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link Title</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., My Portfolio Website, Acting Reel on YouTube" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name="instagram"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instagram</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://instagram.com/yourusername" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`custom_links.${index}.url`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link URL</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://yourlink.com" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
 
-            <FormField
-              control={form.control}
-              name="linkedin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>LinkedIn</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://linkedin.com/in/yourusername" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="youtube_vimeo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>YouTube/Vimeo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://youtube.com/yourusername" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="imdb_profile"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>IMDb Profile</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://imdb.com/name/..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="behance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Behance</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://behance.net/yourusername" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addNewLink}
+              className="w-full flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Add Another Link
+            </Button>
 
             <div className="flex gap-3 pt-4">
               <Button

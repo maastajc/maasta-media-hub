@@ -85,6 +85,11 @@ const Profile = () => {
       // Open public profile in new tab with username
       const publicProfileUrl = `/artists/${profileData.username}`;
       window.open(publicProfileUrl, '_blank');
+    } else if (profileData?.full_name && user?.id) {
+      // Generate custom URL if no username
+      const customUrl = generateCustomUrl(profileData.full_name, user.id);
+      const publicProfileUrl = `/artists/${customUrl}`;
+      window.open(publicProfileUrl, '_blank');
     } else if (profileData?.id) {
       // Fallback to ID if username is not available
       const publicProfileUrl = `/artists/${profileData.id}`;
@@ -104,6 +109,22 @@ const Profile = () => {
     
     // Force refetch to get updated data
     await refetch();
+  };
+
+  const generateCustomUrl = (fullName: string, userId: string) => {
+    // Try to create URL from full name first
+    const sanitizedName = fullName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 20);
+    
+    if (sanitizedName.length >= 3) {
+      return sanitizedName;
+    }
+    
+    // Fallback to guest with user ID suffix
+    return `guest-${userId.substring(0, 8)}`;
   };
 
   const getInitials = (name: string) => {
@@ -482,7 +503,7 @@ const Profile = () => {
 
               {/* Portfolio Links with Edit Icon */}
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-6 max-h-80 overflow-y-auto">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Portfolio Links</h3>
                     <Button
@@ -495,48 +516,77 @@ const Profile = () => {
                     </Button>
                   </div>
                   <div className="space-y-3">
-                    {profileData.personal_website && (
-                      <div className="flex items-center gap-2">
-                        <Globe size={16} className="text-gray-500" />
-                        <a 
-                          href={profileData.personal_website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-maasta-orange hover:underline text-sm"
-                        >
-                          Website
-                        </a>
-                      </div>
-                    )}
-                    {profileData.instagram && (
-                      <div className="flex items-center gap-2">
-                        <Instagram size={16} className="text-gray-500" />
-                        <a 
-                          href={profileData.instagram} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-maasta-orange hover:underline text-sm"
-                        >
-                          Instagram
-                        </a>
-                      </div>
-                    )}
-                    {profileData.linkedin && (
-                      <div className="flex items-center gap-2">
-                        <Linkedin size={16} className="text-gray-500" />
-                        <a 
-                          href={profileData.linkedin} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-maasta-orange hover:underline text-sm"
-                        >
-                          LinkedIn
-                        </a>
-                      </div>
-                    )}
-                    {!profileData.personal_website && !profileData.instagram && !profileData.linkedin && (
-                      <p className="text-sm text-gray-500 italic">No portfolio links added yet</p>
-                    )}
+                    {(() => {
+                      const hasLegacyLinks = profileData.personal_website || profileData.instagram || profileData.linkedin;
+                      const customLinks = profileData.custom_links ? 
+                        (Array.isArray(profileData.custom_links) ? 
+                          profileData.custom_links : 
+                          JSON.parse(profileData.custom_links as string)) : [];
+                      
+                      if (!hasLegacyLinks && customLinks.length === 0) {
+                        return <p className="text-sm text-gray-500 italic">No portfolio links added yet</p>;
+                      }
+                      
+                      return (
+                        <>
+                          {/* Legacy links */}
+                          {profileData.personal_website && (
+                            <div className="flex items-center gap-2">
+                              <Globe size={16} className="text-gray-500" />
+                              <a 
+                                href={profileData.personal_website} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-maasta-orange hover:underline text-sm"
+                              >
+                                Website
+                              </a>
+                            </div>
+                          )}
+                          {profileData.instagram && (
+                            <div className="flex items-center gap-2">
+                              <Instagram size={16} className="text-gray-500" />
+                              <a 
+                                href={profileData.instagram} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-maasta-orange hover:underline text-sm"
+                              >
+                                Instagram
+                              </a>
+                            </div>
+                          )}
+                          {profileData.linkedin && (
+                            <div className="flex items-center gap-2">
+                              <Linkedin size={16} className="text-gray-500" />
+                              <a 
+                                href={profileData.linkedin} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-maasta-orange hover:underline text-sm"
+                              >
+                                LinkedIn
+                              </a>
+                            </div>
+                          )}
+                          
+                          {/* Custom links */}
+                          {customLinks.map((link: any, index: number) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <ExternalLink size={16} className="text-gray-500" />
+                              <a 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-maasta-orange hover:underline text-sm"
+                              >
+                                {link.title}
+                              </a>
+                            </div>
+                          ))}
+                        </>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -555,12 +605,14 @@ const Profile = () => {
 
         {/* Projects Section - Now after Media with correct props */}
         <div id="section-projects" className="scroll-mt-24">
-          <ProjectsSection
-            projects={profileData.projects || []}
-            onUpdate={handleProfileUpdate}
-            canEdit={true}
-            userId={user?.id}
-          />
+          <div className="max-h-96 overflow-y-auto">
+            <ProjectsSection
+              projects={profileData.projects || []}
+              onUpdate={handleProfileUpdate}
+              canEdit={true}
+              userId={user?.id}
+            />
+          </div>
         </div>
 
         {/* Education Section */}
