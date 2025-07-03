@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { Artist, ArtistCategory, ExperienceLevel } from '@/types/artist';
+import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from '@/types/artist';
 
 interface SafeProfileData {
   id: string;
@@ -14,6 +14,7 @@ interface SafeProfileData {
   state: string | null;
   country: string | null;
   profile_picture_url: string | null;
+  custom_links: CustomLink[];
   projects: any[];
   education_training: any[];
   special_skills: any[];
@@ -54,6 +55,7 @@ export const useSafeProfile = (profileData: Artist | null | undefined, userId?: 
       state: profileData?.state || null,
       country: profileData?.country || null,
       profile_picture_url: profileData?.profile_picture_url || null,
+      custom_links: Array.isArray(profileData?.custom_links) ? profileData.custom_links : [],
       projects: Array.isArray(profileData?.projects) ? profileData.projects : [],
       education_training: Array.isArray(profileData?.education_training) ? profileData.education_training : [],
       special_skills: Array.isArray(profileData?.special_skills) ? profileData.special_skills : [],

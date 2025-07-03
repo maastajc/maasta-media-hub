@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -159,13 +160,13 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Filter out empty custom links
       const validCustomLinks = customLinks.filter(link => link.label.trim() && link.url.trim());
 
-      // Prepare update data with other category handling
+      // Prepare update data with other category handling - convert CustomLink[] to JSON
       const updateData = {
         ...data,
         date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
         profile_picture_url: profileImageUrl,
         cover_image_url: coverImageUrl,
-        custom_links: validCustomLinks,
+        custom_links: validCustomLinks as any, // Convert to JSON for database storage
         updated_at: new Date().toISOString()
       };
 

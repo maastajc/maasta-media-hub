@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 import { cacheManager } from "@/utils/cacheManager";
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
@@ -65,11 +65,25 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
         // Map skills to the skills array format expected by the frontend
         const skillsArray = skills?.map(skill => skill.skill) || [];
 
+        // Convert custom_links from JSON to CustomLink[] type
+        let customLinksArray: CustomLink[] = [];
+        if (profile.custom_links) {
+          try {
+            if (Array.isArray(profile.custom_links)) {
+              customLinksArray = profile.custom_links as CustomLink[];
+            }
+          } catch (e) {
+            console.error('Error parsing custom_links:', e);
+            customLinksArray = [];
+          }
+        }
+
         const artistData: Artist = {
           ...profile,
           category: profile.category as ArtistCategory,
           experience_level: profile.experience_level as ExperienceLevel,
           skills: skillsArray,
+          custom_links: customLinksArray,
           projects: projects || [],
           education_training: education || [],
           special_skills: skills || [],

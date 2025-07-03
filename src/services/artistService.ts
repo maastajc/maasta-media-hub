@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Artist } from "@/types/artist";
+import { Artist, CustomLink } from "@/types/artist";
 
 // Create a type that matches Supabase's expected update format
 type ArtistUpdateData = {
@@ -28,6 +28,7 @@ type ArtistUpdateData = {
   work_preference?: string;
   years_of_experience?: number;
   youtube_vimeo?: string;
+  custom_links?: any; // Allow any type for JSON conversion
 };
 
 // Helper function to convert Artist data to database update format
@@ -41,7 +42,7 @@ const convertToUpdateData = (profileData: Partial<Artist>) => {
     'gender', 'imdb_profile', 'instagram', 'linkedin', 
     'personal_website', 'phone_number', 'profile_picture_url', 
     'role', 'state', 'status', 'verified', 'willing_to_relocate', 
-    'work_preference', 'years_of_experience', 'youtube_vimeo'
+    'work_preference', 'years_of_experience', 'youtube_vimeo', 'custom_links'
   ];
   
   allowedFields.forEach(field => {
@@ -214,9 +215,23 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       tools_software: Array.isArray(artist.tools_software) ? artist.tools_software.length : 0
     });
 
+    // Convert custom_links from JSON to CustomLink[] type
+    let customLinksArray: CustomLink[] = [];
+    if (artist.custom_links) {
+      try {
+        if (Array.isArray(artist.custom_links)) {
+          customLinksArray = artist.custom_links as CustomLink[];
+        }
+      } catch (e) {
+        console.error('Error parsing custom_links:', e);
+        customLinksArray = [];
+      }
+    }
+
     // Re-structure and provide safe defaults for all sections
     return {
       ...artist,
+      custom_links: customLinksArray,
       special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
       projects: Array.isArray(artist.projects) ? artist.projects : [],
       education_training: Array.isArray(artist.education_training) ? artist.education_training : [],
@@ -226,7 +241,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       skills: Array.isArray(artist.special_skills) 
         ? artist.special_skills.map((s: any) => s.skill) 
         : []
-    };
+    } as Artist;
   } catch (error: any) {
     console.error('Error in fetchArtistById:', error);
     throw error;
@@ -252,7 +267,24 @@ export const updateArtistProfile = async (artistId: string, profileData: Partial
     }
 
     console.log('Artist profile updated successfully');
-    return data as Artist;
+
+    // Convert custom_links from JSON to CustomLink[] type for return value
+    let customLinksArray: CustomLink[] = [];
+    if (data.custom_links) {
+      try {
+        if (Array.isArray(data.custom_links)) {
+          customLinksArray = data.custom_links as CustomLink[];
+        }
+      } catch (e) {
+        console.error('Error parsing custom_links:', e);
+        customLinksArray = [];
+      }
+    }
+
+    return {
+      ...data,
+      custom_links: customLinksArray
+    } as Artist;
   } catch (error: any) {
     console.error('Error in updateArtistProfile:', error);
     throw error;

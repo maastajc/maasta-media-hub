@@ -1,11 +1,24 @@
 
-import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset, Award } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel, Project, Education, Skill, LanguageSkill, Tool, MediaAsset, Award, CustomLink } from "@/types/artist";
 import { FeaturedArtistRow, ArtistByIdRow } from "./types";
 
 export const mapFeaturedArtistToArtist = (artist: any): Artist => {
   const skillsArray = Array.isArray(artist.special_skills) 
     ? artist.special_skills.map((s: any) => s.skill as string) 
     : [];
+
+  // Convert custom_links from JSON to CustomLink[] type
+  let customLinksArray: CustomLink[] = [];
+  if (artist.custom_links) {
+    try {
+      if (Array.isArray(artist.custom_links)) {
+        customLinksArray = artist.custom_links as CustomLink[];
+      }
+    } catch (e) {
+      console.error('Error parsing custom_links:', e);
+      customLinksArray = [];
+    }
+  }
 
   return {
     ...artist,
@@ -35,6 +48,7 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
     status: artist.status || 'active',
     created_at: artist.created_at || new Date().toISOString(),
     updated_at: artist.updated_at || new Date().toISOString(),
+    custom_links: customLinksArray,
     projects: [], 
     education_training: [],
     media_assets: [],
@@ -47,6 +61,19 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
 };
 
 export const mapFallbackArtistToArtist = (artist: any): Artist => {
+  // Convert custom_links from JSON to CustomLink[] type
+  let customLinksArray: CustomLink[] = [];
+  if (artist.custom_links) {
+    try {
+      if (Array.isArray(artist.custom_links)) {
+        customLinksArray = artist.custom_links as CustomLink[];
+      }
+    } catch (e) {
+      console.error('Error parsing custom_links:', e);
+      customLinksArray = [];
+    }
+  }
+
   return {
     ...artist,
     id: artist.id,
@@ -75,6 +102,7 @@ export const mapFallbackArtistToArtist = (artist: any): Artist => {
     status: artist.status || 'active',
     created_at: artist.created_at || new Date().toISOString(),
     updated_at: artist.updated_at || new Date().toISOString(),
+    custom_links: customLinksArray,
     projects: [], 
     education_training: [],
     media_assets: [],
@@ -164,6 +192,19 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     }))
     : [];
 
+  // Convert custom_links from JSON to CustomLink[] type
+  let customLinksArray: CustomLink[] = [];
+  if (artistData.custom_links) {
+    try {
+      if (Array.isArray(artistData.custom_links)) {
+        customLinksArray = artistData.custom_links as CustomLink[];
+      }
+    } catch (e) {
+      console.error('Error parsing custom_links:', e);
+      customLinksArray = [];
+    }
+  }
+
   return {
     ...artistData,
     id: artistData.id,
@@ -192,6 +233,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     status: artistData.status || 'active',
     created_at: artistData.created_at || new Date().toISOString(),
     updated_at: artistData.updated_at || new Date().toISOString(),
+    custom_links: customLinksArray,
     
     special_skills: mappedSpecialSkills,
     language_skills: mappedLanguageSkills,
