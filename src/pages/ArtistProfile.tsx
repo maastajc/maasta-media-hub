@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
@@ -11,7 +12,6 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 
 // Import our components
 import ProfileHero from "@/components/profile/ProfileHero";
@@ -21,27 +21,6 @@ const ArtistProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Helper function to safely convert Json to CustomLink[]
-  const parseCustomLinks = (customLinksData: any): CustomLink[] => {
-    if (!customLinksData) return [];
-    
-    try {
-      if (Array.isArray(customLinksData)) {
-        return customLinksData.filter((link: any) => 
-          link && 
-          typeof link === 'object' && 
-          typeof link.id === 'string' && 
-          typeof link.label === 'string' && 
-          typeof link.url === 'string'
-        ) as CustomLink[];
-      }
-    } catch (e) {
-      console.error('Error parsing custom_links:', e);
-    }
-    
-    return [];
-  };
 
   // Fetch artist by username
   const { 
@@ -141,13 +120,32 @@ const ArtistProfile = () => {
 
       console.log('Successfully fetched artist by username:', artist.full_name);
       
+      // Parse custom_links from JSON
+      let customLinksArray = [];
+      if (artist.custom_links) {
+        try {
+          const parsedLinks = typeof artist.custom_links === 'string' 
+            ? JSON.parse(artist.custom_links) 
+            : artist.custom_links;
+          
+          if (Array.isArray(parsedLinks)) {
+            customLinksArray = parsedLinks.map((link: any, index: number) => ({
+              id: link.id || `custom-${index}`,
+              title: link.title || '',
+              url: link.url || ''
+            }));
+          }
+        } catch (e) {
+          console.error('Error parsing custom_links:', e);
+        }
+      }
+      
       return {
         ...artist,
-        category: artist.category as ArtistCategory,
-        experience_level: artist.experience_level as ExperienceLevel,
-        custom_links: parseCustomLinks(artist.custom_links),
+        custom_links: customLinksArray,
         special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
         projects: Array.isArray(artist.projects) ? artist.projects : [],
+        education: Array.isArray(artist.education_training) ? artist.education_training : [],
         education_training: Array.isArray(artist.education_training) ? artist.education_training : [],
         media_assets: Array.isArray(artist.media_assets) ? artist.media_assets : [],
         language_skills: Array.isArray(artist.language_skills) ? artist.language_skills : [],

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     if (artist) {
       console.log("Skills:", artist.special_skills);
       console.log("Projects:", artist.projects);
-      console.log("Education:", artist.education_training);
+      console.log("Education:", artist.education || artist.education_training);
       console.log("Media:", artist.media_assets);
       console.log("Languages:", artist.language_skills);
       console.log("Tools:", artist.tools_software);
@@ -145,6 +146,13 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
   };
 
   const renderPortfolioLinks = () => {
+    const customLinks = artist.custom_links || [];
+    const allLinks = [...socialLinks, ...customLinks.map(link => ({
+      icon: ExternalLink,
+      url: link.url,
+      label: link.title
+    }))];
+
     return (
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -166,11 +174,11 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
           )}
         </CardHeader>
         <CardContent>
-          {socialLinks.length === 0 ? (
+          {allLinks.length === 0 ? (
             <div className="italic text-gray-400">No portfolio links provided.</div>
           ) : (
             <div className="flex flex-wrap gap-4">
-              {socialLinks.map((link, index) => {
+              {allLinks.map((link, index) => {
                 const Icon = link.icon;
                 return (
                   <a
@@ -301,7 +309,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
   };
 
   const renderEducation = () => {
-    const education = artist.education_training || [];
+    const education = artist.education || artist.education_training || [];
     return (
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">

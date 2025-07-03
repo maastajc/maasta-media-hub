@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Artist } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
 
 const formSchema = z.object({
   category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]).optional(),
@@ -36,8 +36,8 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      category: profileData.category,
-      experience_level: profileData.experience_level,
+      category: profileData.category as ArtistCategory,
+      experience_level: profileData.experience_level as ExperienceLevel,
       years_of_experience: profileData.years_of_experience || 0,
       work_preference: profileData.work_preference || "",
       preferred_domains: profileData.preferred_domains || "",

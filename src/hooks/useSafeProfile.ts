@@ -1,21 +1,22 @@
 
 import { useMemo } from 'react';
-import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from '@/types/artist';
+import { Artist } from '@/types/artist';
 
 interface SafeProfileData {
   id: string;
   full_name: string;
   email: string;
   bio: string | null;
-  category: ArtistCategory;
-  experience_level: ExperienceLevel;
+  category: string;
+  experience_level: string;
   years_of_experience: number;
   city: string | null;
   state: string | null;
   country: string | null;
   profile_picture_url: string | null;
-  custom_links: CustomLink[];
+  custom_links: any[];
   projects: any[];
+  education: any[];
   education_training: any[];
   special_skills: any[];
   media_assets: any[];
@@ -48,8 +49,8 @@ export const useSafeProfile = (profileData: Artist | null | undefined, userId?: 
       full_name: profileData?.full_name || 'New User',
       email: profileData?.email || '',
       bio: profileData?.bio || null,
-      category: (profileData?.category as ArtistCategory) || 'actor',
-      experience_level: (profileData?.experience_level as ExperienceLevel) || 'beginner',
+      category: profileData?.category || 'actor',
+      experience_level: profileData?.experience_level || 'beginner',
       years_of_experience: profileData?.years_of_experience || 0,
       city: profileData?.city || null,
       state: profileData?.state || null,
@@ -57,6 +58,7 @@ export const useSafeProfile = (profileData: Artist | null | undefined, userId?: 
       profile_picture_url: profileData?.profile_picture_url || null,
       custom_links: Array.isArray(profileData?.custom_links) ? profileData.custom_links : [],
       projects: Array.isArray(profileData?.projects) ? profileData.projects : [],
+      education: Array.isArray(profileData?.education) ? profileData.education : [],
       education_training: Array.isArray(profileData?.education_training) ? profileData.education_training : [],
       special_skills: Array.isArray(profileData?.special_skills) ? profileData.special_skills : [],
       media_assets: Array.isArray(profileData?.media_assets) ? profileData.media_assets : [],

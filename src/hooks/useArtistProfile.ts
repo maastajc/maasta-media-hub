@@ -1,29 +1,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
+import { Artist } from "@/types/artist";
 import { cacheManager } from "@/utils/cacheManager";
-
-// Helper function to safely convert Json to CustomLink[]
-const parseCustomLinks = (customLinksData: any): CustomLink[] => {
-  if (!customLinksData) return [];
-  
-  try {
-    if (Array.isArray(customLinksData)) {
-      return customLinksData.filter((link: any) => 
-        link && 
-        typeof link === 'object' && 
-        typeof link.id === 'string' && 
-        typeof link.label === 'string' && 
-        typeof link.url === 'string'
-      ) as CustomLink[];
-    }
-  } catch (e) {
-    console.error('Error parsing custom_links:', e);
-  }
-  
-  return [];
-};
 
 export const useArtistProfile = (artistId: string | undefined, options = {}) => {
   return useQuery({
@@ -83,19 +62,31 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           supabase.from('awards').select('*').eq('artist_id', artistId)
         ]);
 
-        // Map skills to the skills array format expected by the frontend
-        const skillsArray = skills?.map(skill => skill.skill) || [];
-
-        // Convert custom_links from JSON to CustomLink[] type with proper validation
-        const customLinksArray = parseCustomLinks(profile.custom_links);
+        // Parse custom_links from JSON
+        let customLinksArray = [];
+        if (profile.custom_links) {
+          try {
+            const parsedLinks = typeof profile.custom_links === 'string' 
+              ? JSON.parse(profile.custom_links) 
+              : profile.custom_links;
+            
+            if (Array.isArray(parsedLinks)) {
+              customLinksArray = parsedLinks.map((link: any, index: number) => ({
+                id: link.id || `custom-${index}`,
+                title: link.title || '',
+                url: link.url || ''
+              }));
+            }
+          } catch (e) {
+            console.error('Error parsing custom_links:', e);
+          }
+        }
 
         const artistData: Artist = {
           ...profile,
-          category: profile.category as ArtistCategory,
-          experience_level: profile.experience_level as ExperienceLevel,
-          skills: skillsArray,
           custom_links: customLinksArray,
           projects: projects || [],
+          education: education || [],
           education_training: education || [],
           special_skills: skills || [],
           language_skills: languages || [],
