@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +27,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
+import WorkPreferencesEditForm from "@/components/profile/WorkPreferencesEditForm";
+import PortfolioLinksEditForm from "@/components/profile/PortfolioLinksEditForm";
 import ProjectsSection from "@/components/profile/ProjectsSection";
 import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
@@ -45,6 +45,8 @@ const Profile = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isWorkPreferencesEditOpen, setIsWorkPreferencesEditOpen] = useState(false);
+  const [isPortfolioLinksEditOpen, setIsPortfolioLinksEditOpen] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
 
   const {
@@ -449,7 +451,7 @@ const Profile = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setIsEditFormOpen(true)}
+                      onClick={() => setIsWorkPreferencesEditOpen(true)}
                       className="h-8 w-8 p-0 hover:bg-gray-100"
                     >
                       <Edit size={16} className="text-gray-500" />
@@ -486,7 +488,7 @@ const Profile = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setIsEditFormOpen(true)}
+                      onClick={() => setIsPortfolioLinksEditOpen(true)}
                       className="h-8 w-8 p-0 hover:bg-gray-100"
                     >
                       <Edit size={16} className="text-gray-500" />
@@ -589,11 +591,29 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile Edit Form */}
+      {/* Profile Edit Forms */}
       {isEditFormOpen && (
         <ProfileEditForm
           open={isEditFormOpen}
           onClose={() => setIsEditFormOpen(false)}
+          onSuccess={handleProfileUpdate}
+          profileData={profileData}
+        />
+      )}
+
+      {isWorkPreferencesEditOpen && (
+        <WorkPreferencesEditForm
+          open={isWorkPreferencesEditOpen}
+          onClose={() => setIsWorkPreferencesEditOpen(false)}
+          onSuccess={handleProfileUpdate}
+          profileData={profileData}
+        />
+      )}
+
+      {isPortfolioLinksEditOpen && (
+        <PortfolioLinksEditForm
+          open={isPortfolioLinksEditOpen}
+          onClose={() => setIsPortfolioLinksEditOpen(false)}
           onSuccess={handleProfileUpdate}
           profileData={profileData}
         />
@@ -603,4 +623,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

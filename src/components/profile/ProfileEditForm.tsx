@@ -8,6 +8,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,13 +20,21 @@ import { Artist } from "@/types/artist";
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
-  bio: z.string().optional(),
-  phone_number: z.string().optional(),
+  bio: z.string().min(1, "Bio is required").max(250, "Bio must be less than 250 characters"),
+  phone_number: z.string()
+    .regex(/^\d{10}$/, "Phone number must be exactly 10 digits")
+    .min(1, "Phone number is required"),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  date_of_birth: z.date().optional(),
-  username: z.string().optional(),
+  date_of_birth: z.date({
+    required_error: "Date of birth is required"
+  }).refine((date) => date < new Date(), "Date of birth must be in the past"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be less than 20 characters")
+    .regex(/^[a-z0-9_]+$/, "Username must be lowercase, numbers, and underscores only")
+    .min(1, "Username is required"),
 });
 
 interface ProfileEditFormProps {
@@ -38,6 +47,9 @@ interface ProfileEditFormProps {
 const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calendarDate, setCalendarDate] = useState<Date | undefined>(
+    profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,19 +65,40 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
     },
   });
 
+  const checkUsernameUnique = async (username: string) => {
+    if (username === profileData.username) return true;
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .neq("id", profileData.id);
+
+    if (error) throw error;
+    return data.length === 0;
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
 
     try {
+      // Check username uniqueness
+      const isUsernameUnique = await checkUsernameUnique(values.username);
+      if (!isUsernameUnique) {
+        form.setError("username", { message: "Username is already taken" });
+        setIsSubmitting(false);
+        return;
+      }
+
       const updateData = {
         full_name: values.full_name,
-        bio: values.bio || null,
-        phone_number: values.phone_number || null,
+        bio: values.bio,
+        phone_number: values.phone_number,
         city: values.city || null,
         state: values.state || null,
         country: values.country || null,
         date_of_birth: values.date_of_birth ? values.date_of_birth.toISOString().split('T')[0] : null,
-        username: values.username || null,
+        username: values.username,
         updated_at: new Date().toISOString(),
       };
 
@@ -93,6 +126,17 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Generate years for dropdown (from 1920 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1920 + 1 }, (_, i) => currentYear - i);
+
+  const handleYearSelect = (year: string) => {
+    const currentDate = calendarDate || new Date();
+    const newDate = new Date(parseInt(year), currentDate.getMonth(), currentDate.getDate());
+    setCalendarDate(newDate);
+    form.setValue("date_of_birth", newDate);
   };
 
   return (
@@ -128,9 +172,13 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>Username *</FormLabel>
                       <FormControl>
-                        <Input placeholder="your_username" {...field} />
+                        <Input 
+                          placeholder="your_username" 
+                          {...field} 
+                          onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -143,14 +191,18 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>Bio *</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us about yourself..."
                         className="min-h-[100px]"
+                        maxLength={250}
                         {...field} 
                       />
                     </FormControl>
+                    <div className="text-sm text-gray-500 text-right">
+                      {field.value?.length || 0}/250
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -162,9 +214,18 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                   name="phone_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>Phone Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                        <Input 
+                          placeholder="1234567890" 
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            if (value.length <= 10) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -176,39 +237,57 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                   name="date_of_birth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormLabel>Date of Birth *</FormLabel>
+                      <div className="flex gap-2">
+                        <Select onValueChange={handleYearSelect} value={calendarDate?.getFullYear()?.toString() || ""}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-40">
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "flex-1 pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "dd-MM-yyyy")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setCalendarDate(date);
+                              }}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                              defaultMonth={calendarDate}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
