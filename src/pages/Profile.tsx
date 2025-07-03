@@ -384,10 +384,20 @@ const Profile = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Basic Information */}
+              {/* Basic Information with Edit Icon */}
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Basic Information</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditFormOpen(true)}
+                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                    >
+                      <Edit size={16} className="text-gray-500" />
+                    </Button>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <span className="text-sm font-medium text-gray-600">Full Name:</span>
@@ -429,9 +439,20 @@ const Profile = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Work Preferences with Edit Icon */}
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Work Preferences</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Work Preferences</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditFormOpen(true)}
+                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                    >
+                      <Edit size={16} className="text-gray-500" />
+                    </Button>
+                  </div>
                   <div className="space-y-3">
                     {profileData.work_preference && (
                       <div>
@@ -448,77 +469,83 @@ const Profile = () => {
                     {profileData.years_of_experience !== undefined && (
                       <div>
                         <span className="text-sm font-medium text-gray-600">Years:</span>
-                        <p className="text-gray-900">{profileData.years_of_experience}</p>
+                        <p className="text-gray-900">{profileData.years_of_experience} years</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Portfolio Links */}
-              {(profileData.personal_website || profileData.imdb_profile || profileData.behance || profileData.youtube_vimeo) && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Portfolio Links</h3>
-                    <div className="space-y-2">
-                      {profileData.personal_website && (
+              {/* Portfolio Links with Edit Icon */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Portfolio Links</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditFormOpen(true)}
+                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                    >
+                      <Edit size={16} className="text-gray-500" />
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {profileData.personal_website && (
+                      <div className="flex items-center gap-2">
+                        <Globe size={16} className="text-gray-500" />
                         <a 
                           href={profileData.personal_website} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          className="text-maasta-orange hover:underline text-sm"
                         >
-                          <Globe size={16} />
-                          <span>Personal Website</span>
+                          Website
                         </a>
-                      )}
-                      {profileData.imdb_profile && (
+                      </div>
+                    )}
+                    {profileData.instagram && (
+                      <div className="flex items-center gap-2">
+                        <Instagram size={16} className="text-gray-500" />
                         <a 
-                          href={profileData.imdb_profile} 
+                          href={profileData.instagram} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          className="text-maasta-orange hover:underline text-sm"
                         >
-                          <FileText size={16} />
-                          <span>IMDb Profile</span>
+                          Instagram
                         </a>
-                      )}
-                      {profileData.behance && (
+                      </div>
+                    )}
+                    {profileData.linkedin && (
+                      <div className="flex items-center gap-2">
+                        <Linkedin size={16} className="text-gray-500" />
                         <a 
-                          href={profileData.behance} 
+                          href={profileData.linkedin} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-maasta-orange hover:underline"
+                          className="text-maasta-orange hover:underline text-sm"
                         >
-                          <Youtube size={16} />
-                          <span>Behance</span>
+                          LinkedIn
                         </a>
-                      )}
-                      {profileData.youtube_vimeo && (
-                        <a 
-                          href={profileData.youtube_vimeo} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-maasta-orange hover:underline"
-                        >
-                          <Youtube size={16} />
-                          <span>YouTube/Vimeo</span>
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                      </div>
+                    )}
+                    {!profileData.personal_website && !profileData.instagram && !profileData.linkedin && (
+                      <p className="text-sm text-gray-500 italic">No portfolio links added yet</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
 
-        {/* Media Section - Moved up before Projects */}
+        {/* Media Section */}
         <div id="section-media" className="scroll-mt-24">
-          <MediaSection
-            profileData={profileData}
+          <MediaSection 
+            profileData={profileData} 
             onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            userId={user?.id || ""}
           />
         </div>
 
@@ -534,28 +561,28 @@ const Profile = () => {
 
         {/* Education Section */}
         <div id="section-education" className="scroll-mt-24">
-          <EducationSection
-            profileData={profileData}
+          <EducationSection 
+            educationData={profileData.education_training || []}
             onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            userId={user?.id || ""}
           />
         </div>
 
         {/* Skills Section */}
         <div id="section-skills" className="scroll-mt-24">
-          <SkillsSection
-            profileData={profileData}
+          <SkillsSection 
+            skillsData={profileData.special_skills || []}
             onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            userId={user?.id || ""}
           />
         </div>
 
         {/* Awards Section */}
         <div id="section-awards" className="scroll-mt-24">
-          <AwardsSection
-            profileData={profileData}
+          <AwardsSection 
+            awardsData={profileData.awards || []}
             onUpdate={handleProfileUpdate}
-            userId={user?.id}
+            userId={user?.id || ""}
           />
         </div>
       </div>
@@ -563,10 +590,10 @@ const Profile = () => {
       {/* Profile Edit Form */}
       {isEditFormOpen && (
         <ProfileEditForm
-          profileData={profileData}
+          open={isEditFormOpen}
           onClose={() => setIsEditFormOpen(false)}
-          onUpdate={handleProfileUpdate}
-          userId={user?.id}
+          onSuccess={handleProfileUpdate}
+          profileData={profileData}
         />
       )}
     </div>

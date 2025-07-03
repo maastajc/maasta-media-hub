@@ -1,691 +1,391 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, X } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DateOfBirthPicker } from "@/components/ui/date-of-birth-picker";
 import { supabase } from "@/integrations/supabase/client";
-import { Artist, CustomLink } from "@/types/artist";
-import ProfilePictureUpload from "./ProfilePictureUpload";
-import CoverImageUpload from "./CoverImageUpload";
-import MediaUploadSection from "./MediaUploadSection";
+import { useToast } from "@/hooks/use-toast";
+import { Artist } from "@/types/artist";
 
-const profileSchema = z.object({
-  full_name: z.string().min(2, "Name must be at least 2 characters"),
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be at most 30 characters")
-    .regex(/^[a-z0-9_]+$/, "Username must be lowercase and can only contain letters, numbers, and underscores"),
-  bio: z.string().min(10, "Bio must be at least 10 characters long"),
-  about: z.string().max(2000, "About section must be at most 2000 characters").optional(),
-  date_of_birth: z.date({
-    required_error: "Date of birth is required",
-  }),
-  category: z.string().min(1, "Category is required"),
-  experience_level: z.string().min(1, "Experience level is required"),
-  years_of_experience: z.number().min(0).optional(),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State/Province is required"),
-  country: z.string().min(1, "Country is required"),
-  phone_number: z.string().regex(/^\+91\d{10}$/, "Phone number must be in format +91XXXXXXXXXX"),
-  personal_website: z.string().optional(),
-  instagram: z.string().optional(),
-  linkedin: z.string().optional(),
-  youtube_vimeo: z.string().optional(),
-  imdb_profile: z.string().optional(),
-  behance: z.string().optional(),
-  work_preference: z.string().optional(),
+const formSchema = z.object({
+  full_name: z.string().min(1, "Full name is required"),
+  bio: z.string().optional(),
+  phone_number: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  date_of_birth: z.date().optional(),
+  category: z.enum(["actor", "director", "cinematographer", "musician", "editor", "art_director", "stunt_coordinator", "producer", "writer", "other"]),
+  experience_level: z.enum(["beginner", "intermediate", "advanced", "professional"]),
+  years_of_experience: z.number().min(0).max(100),
+  work_preference: z.enum(["full_time", "part_time", "freelance", "contract", "any"]),
   preferred_domains: z.string().optional(),
+  username: z.string().optional(),
 });
 
-type ProfileFormData = z.infer<typeof profileSchema>;
-
 interface ProfileEditFormProps {
-  profileData: Artist;
+  open: boolean;
   onClose: () => void;
-  onUpdate: () => void;
-  userId?: string;
+  onSuccess: () => void;
+  profileData: Artist;
 }
 
-const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEditFormProps) => {
+const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditFormProps) => {
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profileImageUrl, setProfileImageUrl] = useState(profileData.profile_picture_url);
-  const [coverImageUrl, setCoverImageUrl] = useState(profileData.cover_image_url);
-  const [showOtherCategory, setShowOtherCategory] = useState(false);
-  const [otherCategoryValue, setOtherCategoryValue] = useState('');
-  const [customLinks, setCustomLinks] = useState<CustomLink[]>([]);
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       full_name: profileData.full_name || "",
-      username: profileData.username || "",
       bio: profileData.bio || "",
-      about: profileData.about || "",
-      date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
-      category: profileData.category || "",
-      experience_level: profileData.experience_level || "",
-      years_of_experience: profileData.years_of_experience || 0,
+      phone_number: profileData.phone_number || "",
       city: profileData.city || "",
       state: profileData.state || "",
       country: profileData.country || "",
-      phone_number: profileData.phone_number || "",
-      personal_website: profileData.personal_website || "",
-      instagram: profileData.instagram || "",
-      linkedin: profileData.linkedin || "",
-      youtube_vimeo: profileData.youtube_vimeo || "",
-      imdb_profile: profileData.imdb_profile || "",
-      behance: profileData.behance || "",
-      work_preference: profileData.work_preference || "",
+      date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
+      category: profileData.category || "actor",
+      experience_level: profileData.experience_level || "beginner",
+      years_of_experience: profileData.years_of_experience || 0,
+      work_preference: profileData.work_preference || "any",
       preferred_domains: profileData.preferred_domains || "",
-    }
+      username: profileData.username || "",
+    },
   });
 
-  const selectedDate = watch("date_of_birth");
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
 
-  // Initialize custom links from profile data
-  useEffect(() => {
-    const savedCustomLinks = profileData.custom_links || [];
-    if (Array.isArray(savedCustomLinks)) {
-      setCustomLinks(savedCustomLinks);
-    }
-  }, [profileData]);
-
-  const calculateAge = (birthDate: Date): number => {
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  const addCustomLink = () => {
-    const newLink: CustomLink = {
-      id: Date.now().toString(),
-      label: '',
-      url: ''
-    };
-    setCustomLinks([...customLinks, newLink]);
-  };
-
-  const removeCustomLink = (id: string) => {
-    setCustomLinks(customLinks.filter(link => link.id !== id));
-  };
-
-  const updateCustomLink = (id: string, field: 'label' | 'url', value: string) => {
-    setCustomLinks(customLinks.map(link => 
-      link.id === id ? { ...link, [field]: value } : link
-    ));
-  };
-
-  const onSubmit = async (data: ProfileFormData) => {
-    if (!userId) return;
-    
     try {
-      setIsSubmitting(true);
-      
-      // Check if username is already taken by another user
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', data.username)
-        .neq('id', userId)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-      
-      if (existingUser) {
-        toast.error("Username is already taken. Please choose a different one.");
-        return;
-      }
-
-      // Calculate age from date of birth
-      const age = calculateAge(data.date_of_birth);
-
-      // Filter out empty custom links
-      const validCustomLinks = customLinks.filter(link => link.label.trim() && link.url.trim());
-
-      // Prepare update data with other category handling - convert CustomLink[] to JSON
       const updateData = {
-        ...data,
-        about: data.about || null,
-        date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
-        profile_picture_url: profileImageUrl,
-        cover_image_url: coverImageUrl,
-        custom_links: validCustomLinks as any, // Convert to JSON for database storage
-        updated_at: new Date().toISOString()
+        full_name: values.full_name,
+        bio: values.bio || null,
+        phone_number: values.phone_number || null,
+        city: values.city || null,
+        state: values.state || null,
+        country: values.country || null,
+        date_of_birth: values.date_of_birth ? values.date_of_birth.toISOString().split('T')[0] : null,
+        category: values.category,
+        experience_level: values.experience_level,
+        years_of_experience: values.years_of_experience,
+        work_preference: values.work_preference,
+        preferred_domains: values.preferred_domains || null,
+        username: values.username || null,
+        updated_at: new Date().toISOString(),
       };
 
-      // If "other" category selected, store the custom category suggestion
-      if (data.category === "other" && otherCategoryValue.trim()) {
-        updateData.category = otherCategoryValue.trim();
-        // TODO: In future, we could also store this in a separate suggestions table for admin review
-      }
-
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updateData)
-        .eq('id', userId);
+        .eq("id", profileData.id);
 
       if (error) throw error;
 
-      toast.success("Profile updated successfully!");
-      onUpdate();
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+
+      onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile. Please try again.");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Cover Image Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span className="text-lg">📸</span>
-                Upload Cover Photo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CoverImageUpload
-                currentImageUrl={coverImageUrl}
-                onImageUpdate={setCoverImageUrl}
-                userId={userId || ""}
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                Recommended: 1200x675px (16:9 ratio) • Max 5MB • JPG, PNG formats
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Profile Picture Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfilePictureUpload
-                currentImageUrl={profileImageUrl}
-                onImageUpdate={setProfileImageUrl}
-                userId={userId || ""}
-                fullName={profileData.full_name}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Basic Information */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="full_name">Full Name *</Label>
-                  <Input
-                    id="full_name"
-                    {...register("full_name")}
-                    className="mt-1"
-                  />
-                  {errors.full_name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.full_name.message}</p>
+                <FormField
+                  control={form.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                <div>
-                  <Label htmlFor="username">Username *</Label>
-                  <Input
-                    id="username"
-                    {...register("username")}
-                    className="mt-1"
-                    placeholder="lowercase_username_only"
-                    onChange={(e) => {
-                      setValue("username", e.target.value.toLowerCase());
-                    }}
-                  />
-                  {errors.username && (
-                    <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your_username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    This will be your public profile URL: /artists/{watch("username")}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="phone_number">Phone Number *</Label>
-                <div className="flex mt-1">
-                  <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md">
-                    <span className="text-sm text-gray-600">+91</span>
-                  </div>
-                  <Input
-                    id="phone_number"
-                    {...register("phone_number")}
-                    className="rounded-l-none"
-                    placeholder="Enter 10-digit phone number"
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value.startsWith('+91')) {
-                        setValue("phone_number", value);
-                      } else {
-                        const digits = value.replace(/\D/g, '');
-                        if (digits.length <= 10) {
-                          setValue("phone_number", `+91${digits}`);
-                        }
-                      }
-                    }}
-                  />
-                </div>
-                {errors.phone_number && (
-                  <p className="text-sm text-red-600 mt-1">{errors.phone_number.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal mt-1",
-                        !selectedDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => setValue("date_of_birth", date!)}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                {errors.date_of_birth && (
-                  <p className="text-sm text-red-600 mt-1">{errors.date_of_birth.message}</p>
-                )}
-                {selectedDate && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Age: {calculateAge(selectedDate)} years
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="bio">Short Bio *</Label>
-                <Textarea
-                  id="bio"
-                  {...register("bio")}
-                  className="mt-1"
-                  rows={3}
-                  placeholder="A brief description about yourself... (minimum 10 characters)"
                 />
-                {errors.bio && (
-                  <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
-                )}
               </div>
 
-              <div>
-                <Label htmlFor="about">About Your Work History</Label>
-                <Textarea
-                  id="about"
-                  {...register("about")}
-                  className="mt-1"
-                  rows={6}
-                  placeholder="Tell us about your work history, career journey, achievements, and professional experience... (up to 2000 characters)"
-                />
-                {errors.about && (
-                  <p className="text-sm text-red-600 mt-1">{errors.about.message}</p>
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Tell us about yourself..."
+                        className="min-h-[100px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  {watch("about")?.length || 0}/2000 characters
-                </p>
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <DateOfBirthPicker
+                          date={field.value}
+                          onDateChange={field.onChange}
+                          placeholder="Select your date of birth"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    {...register("city")}
-                    className="mt-1"
-                  />
-                  {errors.city && (
-                    <p className="text-sm text-red-600 mt-1">{errors.city.message}</p>
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="New York" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                <div>
-                  <Label htmlFor="state">State/Province *</Label>
-                  <Input
-                    id="state"
-                    {...register("state")}
-                    className="mt-1"
-                  />
-                  {errors.state && (
-                    <p className="text-sm text-red-600 mt-1">{errors.state.message}</p>
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State/Province</FormLabel>
+                      <FormControl>
+                        <Input placeholder="NY" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                <div>
-                  <Label htmlFor="country">Country *</Label>
-                  <Input
-                    id="country"
-                    {...register("country")}
-                    className="mt-1"
-                  />
-                  {errors.country && (
-                    <p className="text-sm text-red-600 mt-1">{errors.country.message}</p>
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="United States" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Work Preferences */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Work Preferences</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Category *</Label>
-                  <Select 
-                    value={watch("category")} 
-                    onValueChange={(value) => {
-                      setValue("category", value);
-                      setShowOtherCategory(value === "other");
-                      if (value !== "other") {
-                        setOtherCategoryValue('');
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="actor">Actor</SelectItem>
-                      <SelectItem value="director">Director</SelectItem>
-                      <SelectItem value="cinematographer">Cinematographer</SelectItem>
-                      <SelectItem value="musician">Musician</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="art_director">Art Director</SelectItem>
-                      <SelectItem value="stunt_coordinator">Stunt Coordinator</SelectItem>
-                      <SelectItem value="producer">Producer</SelectItem>
-                      <SelectItem value="writer">Writer</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.category && (
-                    <p className="text-sm text-red-600 mt-1">{errors.category.message}</p>
-                  )}
-                  
-                  {/* Other Category Input */}
-                  {showOtherCategory && (
-                    <div className="mt-3">
-                      <Label htmlFor="other_category">Suggest a new category</Label>
-                      <Input
-                        id="other_category"
-                        value={otherCategoryValue}
-                        onChange={(e) => setOtherCategoryValue(e.target.value)}
-                        placeholder="Enter your category suggestion"
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        This will be reviewed for inclusion in future category options
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="experience_level">Experience Level *</Label>
-                  <Select value={watch("experience_level")} onValueChange={(value) => setValue("experience_level", value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select experience level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="fresher">Fresher</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="expert">Expert</SelectItem>
-                      <SelectItem value="veteran">Veteran</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.experience_level && (
-                    <p className="text-sm text-red-600 mt-1">{errors.experience_level.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="years_of_experience">Years of Experience</Label>
-                  <Input
-                    id="years_of_experience"
-                    type="number"
-                    min="0"
-                    {...register("years_of_experience", { valueAsNumber: true })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="work_preference">Work Preference</Label>
-                  <Select value={watch("work_preference")} onValueChange={(value) => setValue("work_preference", value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select work preference" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="freelance">Freelance</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
-                      <SelectItem value="full_time">Full Time</SelectItem>
-                      <SelectItem value="any">Any</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="preferred_domains">What can we reach out to you for?</Label>
-                <Textarea
-                  id="preferred_domains"
-                  {...register("preferred_domains")}
-                  className="mt-1"
-                  rows={2}
-                  placeholder="E.g., Acting opportunities, directing projects, collaborations..."
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Portfolio Links */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Portfolio Links</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            {/* Professional Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Professional Information</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="personal_website">Personal Website</Label>
-                  <Input
-                    id="personal_website"
-                    {...register("personal_website")}
-                    className="mt-1"
-                    placeholder="https://your-website.com"
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="actor">Actor</SelectItem>
+                          <SelectItem value="director">Director</SelectItem>
+                          <SelectItem value="cinematographer">Cinematographer</SelectItem>
+                          <SelectItem value="musician">Musician</SelectItem>
+                          <SelectItem value="editor">Editor</SelectItem>
+                          <SelectItem value="art_director">Art Director</SelectItem>
+                          <SelectItem value="stunt_coordinator">Stunt Coordinator</SelectItem>
+                          <SelectItem value="producer">Producer</SelectItem>
+                          <SelectItem value="writer">Writer</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div>
-                  <Label htmlFor="imdb_profile">IMDb Profile</Label>
-                  <Input
-                    id="imdb_profile"
-                    {...register("imdb_profile")}
-                    className="mt-1"
-                    placeholder="https://imdb.com/name/..."
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="experience_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Experience Level *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select experience level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="instagram">Instagram</Label>
-                  <Input
-                    id="instagram"
-                    {...register("instagram")}
-                    className="mt-1"
-                    placeholder="https://instagram.com/username"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="linkedin">LinkedIn</Label>
-                  <Input
-                    id="linkedin"
-                    {...register("linkedin")}
-                    className="mt-1"
-                    placeholder="https://linkedin.com/in/username"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="youtube_vimeo">YouTube/Vimeo</Label>
-                  <Input
-                    id="youtube_vimeo"
-                    {...register("youtube_vimeo")}
-                    className="mt-1"
-                    placeholder="https://youtube.com/channel/..."
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="behance">Behance</Label>
-                  <Input
-                    id="behance"
-                    {...register("behance")}
-                    className="mt-1"
-                    placeholder="https://behance.net/username"
-                  />
-                </div>
-              </div>
-
-              {/* Custom Links Section */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <Label className="text-sm font-medium">Custom Links</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addCustomLink}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus size={16} />
-                    Add Custom Link
-                  </Button>
-                </div>
-                
-                {customLinks.map((link) => (
-                  <div key={link.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 p-3 border rounded-lg">
-                    <div>
-                      <Label className="text-sm">Platform/Label</Label>
-                      <Input
-                        value={link.label}
-                        onChange={(e) => updateCustomLink(link.id, 'label', e.target.value)}
-                        placeholder="e.g., My Portfolio, Art Station"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label className="text-sm">URL</Label>
-                        <Input
-                          value={link.url}
-                          onChange={(e) => updateCustomLink(link.id, 'url', e.target.value)}
-                          placeholder="https://..."
-                          className="mt-1"
+                <FormField
+                  control={form.control}
+                  name="years_of_experience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Years of Experience</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeCustomLink(link.id)}
-                        className="mt-6 px-2"
-                      >
-                        <X size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="work_preference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Work Preference</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select work preference" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="full_time">Full Time</SelectItem>
+                          <SelectItem value="part_time">Part Time</SelectItem>
+                          <SelectItem value="freelance">Freelance</SelectItem>
+                          <SelectItem value="contract">Contract</SelectItem>
+                          <SelectItem value="any">Any</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Media Portfolio Section */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Media Portfolio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MediaUploadSection 
-                profileData={profileData} 
-                onUpdate={onUpdate}
-                userId={userId}
+              <FormField
+                control={form.control}
+                name="preferred_domains"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Available For</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe what types of projects you're available for..."
+                        className="min-h-[80px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </CardContent>
-          </Card>
+            </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="bg-maasta-orange hover:bg-maasta-orange/90"
-            >
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-maasta-orange hover:bg-maasta-orange/90"
+              >
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
