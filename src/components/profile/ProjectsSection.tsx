@@ -234,18 +234,6 @@ const ProjectsSection = ({ projects, onUpdate, canEdit = false, userId }: Projec
           userId={userId}
         />
       )}
-      
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
     </Card>
   );
 };
