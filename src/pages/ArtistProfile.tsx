@@ -139,23 +139,67 @@ const ArtistProfile = () => {
           console.error('Error parsing custom_links:', e);
         }
       }
+
+      // Map database data to match Artist type
+      const mappedProjects = Array.isArray(artist.projects) 
+        ? artist.projects.map(p => ({ ...p, user_id: p.artist_id }))
+        : [];
+
+      const mappedSkills = Array.isArray(artist.special_skills) 
+        ? artist.special_skills.map(s => ({ 
+            ...s, 
+            skill_name: s.skill,
+            user_id: s.artist_id 
+          }))
+        : [];
+
+      const mappedLanguages = Array.isArray(artist.language_skills)
+        ? artist.language_skills.map(l => ({
+            ...l,
+            language_name: l.language,
+            user_id: l.artist_id
+          }))
+        : [];
+
+      const mappedEducation = Array.isArray(artist.education_training)
+        ? artist.education_training.map(e => ({ ...e, user_id: e.artist_id }))
+        : [];
+
+      const mappedMediaAssets = Array.isArray(artist.media_assets)
+        ? artist.media_assets.map(m => ({
+            ...m,
+            asset_type: m.file_type,
+            asset_url: m.url
+          }))
+        : [];
+
+      const mappedTools = Array.isArray(artist.tools_software)
+        ? artist.tools_software.map(t => ({ ...t, user_id: t.artist_id }))
+        : [];
+
+      const mappedAwards = Array.isArray(artist.awards)
+        ? artist.awards.map(a => ({
+            ...a,
+            award_name: a.title,
+            awarding_organization: a.organization,
+            user_id: a.artist_id
+          }))
+        : [];
       
       return {
         ...artist,
         category: (artist.category as ArtistCategory) || 'actor',
         experience_level: (artist.experience_level as ExperienceLevel) || 'beginner',
         custom_links: customLinksArray,
-        special_skills: Array.isArray(artist.special_skills) ? artist.special_skills : [],
-        projects: Array.isArray(artist.projects) ? artist.projects : [],
-        education: Array.isArray(artist.education_training) ? artist.education_training : [],
-        education_training: Array.isArray(artist.education_training) ? artist.education_training : [],
-        media_assets: Array.isArray(artist.media_assets) ? artist.media_assets : [],
-        language_skills: Array.isArray(artist.language_skills) ? artist.language_skills : [],
-        tools_software: Array.isArray(artist.tools_software) ? artist.tools_software : [],
-        awards: Array.isArray(artist.awards) ? artist.awards : [],
-        skills: Array.isArray(artist.special_skills) 
-          ? artist.special_skills.map((s: any) => s.skill) 
-          : []
+        special_skills: mappedSkills,
+        projects: mappedProjects,
+        education: mappedEducation,
+        education_training: mappedEducation,
+        media_assets: mappedMediaAssets,
+        language_skills: mappedLanguages,
+        tools_software: mappedTools,
+        awards: mappedAwards,
+        skills: mappedSkills.map(s => s.skill_name)
       };
     },
     enabled: !!username,

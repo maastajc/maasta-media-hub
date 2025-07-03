@@ -96,7 +96,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                         {video.is_embed ? (
                           <div className="aspect-video">
                             <iframe
-                              src={video.url}
+                              src={video.asset_url}
                               className="w-full h-full rounded-lg"
                               allowFullScreen
                               title={video.description || video.file_name}
@@ -104,7 +104,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                           </div>
                         ) : (
                           <video
-                            src={video.url}
+                            src={video.asset_url}
                             controls
                             className="w-full aspect-video rounded-lg object-cover"
                             title={video.description || video.file_name}
@@ -126,7 +126,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                     {images.map((image) => (
                       <div key={image.id} className="group">
                         <img
-                          src={image.url}
+                          src={image.asset_url}
                           alt={image.description || image.file_name}
                           className="w-full aspect-square object-cover rounded-lg group-hover:opacity-80 transition-opacity"
                         />
@@ -298,7 +298,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <Badge key={skill.id} variant="secondary" className="px-3 py-1">
-                  {skill.skill}
+                  {skill.skill_name}
                 </Badge>
               ))}
             </div>
@@ -395,7 +395,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {languages.map((lang) => (
                 <div key={lang.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{lang.language}</span>
+                  <span className="font-medium">{lang.language_name}</span>
                   <Badge variant="outline" className="capitalize">
                     {lang.proficiency}
                   </Badge>
@@ -478,9 +478,9 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                 <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{award.title}</h4>
-                      {award.organization && (
-                        <p className="text-maasta-orange font-medium">{award.organization}</p>
+                      <h4 className="font-semibold text-lg">{award.award_name}</h4>
+                      {award.awarding_organization && (
+                        <p className="text-maasta-orange font-medium">{award.awarding_organization}</p>
                       )}
                       {award.description && (
                         <p className="text-gray-600 mt-1">{award.description}</p>

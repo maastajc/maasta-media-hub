@@ -106,7 +106,7 @@ const ProfileAbout = ({ artist }: ProfileAboutProps) => {
                           variant="outline" 
                           className="px-3 py-1 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
                         >
-                          {skill.skill}
+                          {skill.skill_name}
                         </Badge>
                       ))}
                     </div>
@@ -123,7 +123,7 @@ const ProfileAbout = ({ artist }: ProfileAboutProps) => {
                     <div className="space-y-2">
                       {languages.map((lang) => (
                         <div key={lang.id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3">
-                          <span className="font-medium">{lang.language}</span>
+                          <span className="font-medium">{lang.language_name}</span>
                           <Badge className="capitalize text-xs bg-orange-100 text-orange-700">
                             {lang.proficiency}
                           </Badge>

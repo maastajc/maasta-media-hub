@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Artist, ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
@@ -81,23 +82,72 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           }
         }
 
+        // Map database data to Artist type format
+        const mappedProjects = (projects || []).map(p => ({
+          ...p,
+          user_id: p.artist_id
+        }));
+
+        const mappedEducation = (education || []).map(e => ({
+          ...e,
+          user_id: e.artist_id
+        }));
+
+        const mappedSkills = (skills || []).map(s => ({
+          ...s,
+          skill_name: s.skill,
+          user_id: s.artist_id
+        }));
+
+        const mappedLanguages = (languages || []).map(l => ({
+          ...l,
+          language_name: l.language,
+          user_id: l.artist_id
+        }));
+
+        const mappedTools = (tools || []).map(t => ({
+          ...t,
+          user_id: t.artist_id
+        }));
+
+        const mappedReferences = (references || []).map(r => ({
+          ...r,
+          reference_name: r.name,
+          reference_title: r.role,
+          reference_company: '',
+          user_id: r.artist_id
+        }));
+
+        const mappedMediaAssets = (mediaAssets || []).map(m => ({
+          ...m,
+          asset_type: m.file_type,
+          asset_url: m.url
+        }));
+
+        const mappedAwards = (awards || []).map(a => ({
+          ...a,
+          award_name: a.title,
+          awarding_organization: a.organization,
+          user_id: a.artist_id
+        }));
+
         // Create skills array for backward compatibility
-        const skillsArray = skills ? skills.map((s: any) => s.skill) : [];
+        const skillsArray = mappedSkills.map(s => s.skill_name);
 
         const artistData: Artist = {
           ...profile,
           category: (profile.category as ArtistCategory) || 'actor',
           experience_level: (profile.experience_level as ExperienceLevel) || 'beginner',
           custom_links: customLinksArray,
-          projects: projects || [],
-          education: education || [],
-          education_training: education || [],
-          special_skills: skills || [],
-          language_skills: languages || [],
-          tools_software: tools || [],
-          professional_references: references || [],
-          media_assets: mediaAssets || [],
-          awards: awards || [],
+          projects: mappedProjects,
+          education: mappedEducation,
+          education_training: mappedEducation,
+          special_skills: mappedSkills,
+          language_skills: mappedLanguages,
+          tools_software: mappedTools,
+          professional_references: mappedReferences,
+          media_assets: mappedMediaAssets,
+          awards: mappedAwards,
           skills: skillsArray
         };
 

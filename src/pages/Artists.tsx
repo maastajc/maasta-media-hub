@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -37,12 +38,12 @@ const Artists = () => {
     console.log('Artists page mounted, artists count:', artists?.length || 0);
   }, [artists]);
 
-  // Extract unique tags from artists data - use special_skills instead of skills
+  // Extract unique tags from artists data - use special_skills with skill_name
   const uniqueTags = Array.from(
     new Set(
       artists
         .flatMap(artist => 
-          artist.special_skills?.map(skill => skill.skill) || 
+          artist.special_skills?.map(skill => skill.skill_name) || 
           artist.skills || 
           []
         )
@@ -61,7 +62,7 @@ const Artists = () => {
       // Additional tag filtering - check both special_skills and skills for compatibility
       if (selectedTags.length === 0) return true;
       const artistSkills = [
-        ...(artist.special_skills?.map(skill => skill.skill) || []),
+        ...(artist.special_skills?.map(skill => skill.skill_name) || []),
         ...(artist.skills || [])
       ];
       return selectedTags.some(tag => artistSkills.includes(tag));
