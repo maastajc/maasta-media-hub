@@ -1,104 +1,102 @@
 
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, CheckCircle2 } from "lucide-react";
 import { Artist } from "@/types/artist";
 
 interface ArtistCardProps {
   artist: Artist;
-  onViewProfile?: (artistId: string) => void;
 }
 
-const ArtistCard = ({ artist, onViewProfile }: ArtistCardProps) => {
-  const navigate = useNavigate();
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
-      .slice(0, 2);
-  };
-
-  const handleViewProfile = () => {
-    navigate(`/artists/${artist.id}`);
-  };
-
-  const truncateBio = (bio: string, maxLength: number = 120) => {
-    if (bio.length <= maxLength) return bio;
-    return bio.slice(0, maxLength).trim() + '...';
-  };
+const ArtistCard = ({ artist }: ArtistCardProps) => {
+  const profileUrl = artist.username ? `/artists/${artist.username}` : `/artists/${artist.id}`;
+  const displayLocation = [artist.city, artist.state, artist.country].filter(Boolean).join(", ");
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md hover:shadow-xl hover:-translate-y-1">
-      <CardHeader className="pb-4">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-16 w-16 border-2 border-white shadow-md">
-            <AvatarImage 
-              src={artist.profile_picture_url} 
-              alt={artist.full_name}
-              className="object-cover"
-            />
-            <AvatarFallback className="bg-maasta-orange text-white font-semibold text-lg">
-              {getInitials(artist.full_name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg text-gray-900 truncate group-hover:text-maasta-purple transition-colors">
-              {artist.full_name}
-            </h3>
-            {artist.category && (
-              <Badge variant="secondary" className="text-xs bg-maasta-orange/10 text-maasta-orange border-maasta-orange/20 mt-1">
-                {artist.category.charAt(0).toUpperCase() + artist.category.slice(1)}
-              </Badge>
+    <Link to={profileUrl} className="block group">
+      <Card className="h-full hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-gray-200">
+        <CardContent className="p-0">
+          {/* Profile Image */}
+          <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
+            {artist.profile_picture_url ? (
+              <img
+                src={artist.profile_picture_url}
+                alt={artist.full_name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-maasta-orange/20 to-maasta-orange/40">
+                <span className="text-4xl font-bold text-maasta-orange">
+                  {artist.full_name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            {artist.verified && (
+              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                <CheckCircle2 className="w-5 h-5 text-blue-500" />
+              </div>
             )}
           </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pt-0">
-        <div className="space-y-4">
-          {/* Bio - Always Display */}
-          <div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {artist.bio ? truncateBio(artist.bio) : 'No bio available'}
-            </p>
-          </div>
 
-          {/* Location - Always Display */}
-          <div className="flex items-center text-sm text-gray-600">
-            <MapPin className="h-4 w-4 mr-2 flex-shrink-0 text-maasta-orange" />
-            <span className="truncate">
-              {[artist.city, artist.state, artist.country].filter(Boolean).join(', ') || 'Location not specified'}
-            </span>
-          </div>
-
-          {/* Headline if available */}
-          {artist.headline && (
+          {/* Artist Info */}
+          <div className="p-4 space-y-3">
             <div>
-              <p className="text-sm text-gray-600 font-medium italic">
-                "{artist.headline}"
-              </p>
+              <h3 className="font-semibold text-lg text-gray-900 group-hover:text-maasta-orange transition-colors line-clamp-1">
+                {artist.full_name}
+              </h3>
+              {artist.username && (
+                <p className="text-sm text-gray-500">@{artist.username}</p>
+              )}
             </div>
-          )}
 
-          {/* View Profile Button */}
-          <div className="pt-2">
-            <Button 
-              onClick={handleViewProfile}
-              className="w-full bg-maasta-orange hover:bg-maasta-orange/90 text-white"
-              size="sm"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Profile
-            </Button>
+            {/* Category and Experience */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="capitalize text-xs">
+                {artist.category?.replace('_', ' ')}
+              </Badge>
+              {artist.experience_level && (
+                <Badge variant="secondary" className="capitalize text-xs">
+                  {artist.experience_level.replace('_', ' ')}
+                </Badge>
+              )}
+            </div>
+
+            {/* Location */}
+            {displayLocation && (
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span className="line-clamp-1">{displayLocation}</span>
+              </div>
+            )}
+
+            {/* Bio Preview */}
+            {artist.bio && (
+              <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">
+                {artist.bio}
+              </p>
+            )}
+
+            {/* Skills Preview */}
+            {artist.skills && artist.skills.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {artist.skills.slice(0, 3).map((skill, index) => (
+                  <Badge key={index} variant="outline" className="text-xs bg-gray-50">
+                    {skill}
+                  </Badge>
+                ))}
+                {artist.skills.length > 3 && (
+                  <Badge variant="outline" className="text-xs bg-gray-50">
+                    +{artist.skills.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 

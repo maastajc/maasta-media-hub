@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +29,7 @@ const profileSchema = z.object({
     .max(30, "Username must be at most 30 characters")
     .regex(/^[a-z0-9_]+$/, "Username must be lowercase and can only contain letters, numbers, and underscores"),
   bio: z.string().min(10, "Bio must be at least 10 characters long"),
+  about: z.string().max(2000, "About section must be at most 2000 characters").optional(),
   date_of_birth: z.date({
     required_error: "Date of birth is required",
   }),
@@ -73,6 +73,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       full_name: profileData.full_name || "",
       username: profileData.username || "",
       bio: profileData.bio || "",
+      about: profileData.about || "",
       date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
       category: profileData.category || "",
       experience_level: profileData.experience_level || "",
@@ -163,6 +164,7 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
       // Prepare update data with other category handling - convert CustomLink[] to JSON
       const updateData = {
         ...data,
+        about: data.about || null,
         date_of_birth: data.date_of_birth.toISOString().split('T')[0], // Store as date string
         profile_picture_url: profileImageUrl,
         cover_image_url: coverImageUrl,
@@ -241,9 +243,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Basic Information</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,6 +272,9 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
                   {errors.username && (
                     <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    This will be your public profile URL: /artists/{watch("username")}
+                  </p>
                 </div>
               </div>
 
@@ -344,17 +346,34 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
               </div>
 
               <div>
-                <Label htmlFor="bio">Bio *</Label>
+                <Label htmlFor="bio">Short Bio *</Label>
                 <Textarea
                   id="bio"
                   {...register("bio")}
                   className="mt-1"
-                  rows={4}
-                  placeholder="Tell us about yourself... (minimum 10 characters)"
+                  rows={3}
+                  placeholder="A brief description about yourself... (minimum 10 characters)"
                 />
                 {errors.bio && (
                   <p className="text-sm text-red-600 mt-1">{errors.bio.message}</p>
                 )}
+              </div>
+
+              <div>
+                <Label htmlFor="about">About Your Work History</Label>
+                <Textarea
+                  id="about"
+                  {...register("about")}
+                  className="mt-1"
+                  rows={6}
+                  placeholder="Tell us about your work history, career journey, achievements, and professional experience... (up to 2000 characters)"
+                />
+                {errors.about && (
+                  <p className="text-sm text-red-600 mt-1">{errors.about.message}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  {watch("about")?.length || 0}/2000 characters
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -401,9 +420,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Work Preferences</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,9 +538,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Portfolio Links</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -650,9 +663,6 @@ const ProfileEditForm = ({ profileData, onClose, onUpdate, userId }: ProfileEdit
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Media Portfolio</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <span className="text-sm">✏️</span>
-              </Button>
             </CardHeader>
             <CardContent>
               <MediaUploadSection 
