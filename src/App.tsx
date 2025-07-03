@@ -57,8 +57,8 @@ function App() {
               <Route path="/networking" element={<Networking />} />
               
               {/* Auth routes - only accessible when not authenticated */}
-              <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
-              <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
+              <Route path="/sign-in" element={<PublicRoute><SignIn /></PublicRoute>} />
+              <Route path="/sign-up" element={<PublicRoute><SignUp /></PublicRoute>} />
               <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               
