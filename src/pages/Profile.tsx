@@ -41,7 +41,7 @@ import { toast } from "sonner";
 import CoverImageUpload from "@/components/profile/CoverImageUpload";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
@@ -59,10 +59,25 @@ const Profile = () => {
   } = useQuery({
     queryKey: ["artistProfile", user?.id],
     queryFn: () => fetchArtistById(user?.id || ""),
-    enabled: !!user?.id,
-    staleTime: 1 * 60 * 1000, // Reduced stale time for more frequent updates
-    refetchOnWindowFocus: true, // Enable refetch on window focus
+    enabled: !!user?.id && !authLoading,
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: (failureCount, error: any) => {
+      // Don't retry if it's a "not found" error
+      if (error?.message?.includes('not found')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // Redirect to basic information if profile is not found
+  useEffect(() => {
+    if (error && error.message?.includes('not found') && user && !authLoading) {
+      console.log('Profile not found, redirecting to basic information');
+      navigate('/basic-information');
+    }
+  }, [error, user, authLoading, navigate]);
 
   useEffect(() => {
     if (profileData) {
@@ -181,13 +196,14 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    if (error) {
+    if (error && !error.message?.includes('not found')) {
       console.error("Error loading profile:", error);
       toast.error("Failed to load profile. Please try again.");
     }
   }, [error]);
 
-  if (isLoading) {
+  // Show loading while auth is loading or profile is loading
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -201,7 +217,8 @@ const Profile = () => {
     );
   }
 
-  if (error) {
+  // Show error if not a "not found" error (those are handled by redirect)
+  if (error && !error.message?.includes('not found')) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -216,6 +233,7 @@ const Profile = () => {
     );
   }
 
+  // If no profile data and no error, show empty state
   if (!profileData) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -223,7 +241,13 @@ const Profile = () => {
         <div className="flex items-center justify-center py-20">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
-              <p className="text-gray-600">No profile data found.</p>
+              <p className="text-gray-600">Setting up your profile...</p>
+              <Button 
+                onClick={() => navigate('/basic-information')} 
+                className="mt-4"
+              >
+                Complete Profile Setup
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -355,7 +379,7 @@ const Profile = () => {
                       </Button>
                       <Button 
                         onClick={() => setIsEditFormOpen(true)}
-                        className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                        className="bg-[#ff8200] hover:bg-[#ff8200]/90 text-white"
                       >
                         <Edit size={16} className="mr-2" />
                         Edit Profile

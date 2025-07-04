@@ -5,7 +5,7 @@ import { mapArtistByIdToArtist, mapFallbackArtistToArtist } from "./mappers";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_RETRIES = 1;
-const TIMEOUT_MS = 15000; // Increased timeout to 15 seconds
+const TIMEOUT_MS = 15000;
 const RETRY_DELAY = 500;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -91,7 +91,7 @@ const fetchArtistByIdQuery = (id: string) => {
       )
     `)
     .eq('id', id)
-    .single();
+    .maybeSingle();
 };
 
 const fetchArtistByIdFallbackQuery = (id: string) => {
@@ -100,7 +100,7 @@ const fetchArtistByIdFallbackQuery = (id: string) => {
     .from('profiles')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 };
 
 export const fetchArtistById = async (id: string): Promise<Artist | null> => {
@@ -120,14 +120,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
     }
     
     try {
-      // Try main query first with increased timeout
-      const timeoutPromise = createTimeoutPromise('Profile loading is taking longer than expected. Please try again.', 12000);
-      const fetchPromise = fetchArtistByIdQuery(id);
-
-      const result = await Promise.race([
-        fetchPromise,
-        timeoutPromise
-      ]) as { data: ArtistByIdRow | null; error: any };
+      // Try main query first
+      const result = await fetchArtistByIdQuery(id);
 
       if (result.error) {
         console.error('Database error fetching artist:', result.error);
@@ -135,14 +129,8 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
         if (result.error.code === 'PGRST116') { 
           console.log('Artist not found in main query, trying fallback...');
           
-          // Try fallback query with longer timeout
-          const fallbackTimeoutPromise = createTimeoutPromise('Profile loading timeout. Please check your connection and try again.', 8000);
-          const fallbackFetchPromise = fetchArtistByIdFallbackQuery(id);
-          
-          const fallbackResult = await Promise.race([
-            fallbackFetchPromise,
-            fallbackTimeoutPromise
-          ]) as { data: any; error: any };
+          // Try fallback query
+          const fallbackResult = await fetchArtistByIdFallbackQuery(id);
 
           if (fallbackResult.error) {
             console.error('Fallback query also failed:', fallbackResult.error);
@@ -172,31 +160,7 @@ export const fetchArtistById = async (id: string): Promise<Artist | null> => {
       return mapArtistByIdToArtist(artistFromDb);
       
     } catch (error: any) {
-      if (error.message?.includes('timeout')) {
-        console.error('Profile fetch timeout, trying simplified approach...');
-        
-        // Final fallback with minimal data and longer timeout
-        try {
-          const { data, error: simpleError } = await Promise.race([
-            supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', id)
-              .single(),
-            new Promise<never>((_, reject) => 
-              setTimeout(() => reject(new Error('Final timeout')), 10000)
-            )
-          ]) as { data: any; error: any };
-            
-          if (simpleError || !data) {
-            throw new Error('Profile not found or connection issue');
-          }
-          
-          return mapFallbackArtistToArtist(data);
-        } catch (finalError) {
-          throw new Error('Connection timeout - please check your internet connection and try again');
-        }
-      }
+      console.error('Error in fetchArtistById:', error);
       throw error;
     }
   });

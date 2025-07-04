@@ -20,12 +20,10 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
       }
 
       try {
-        // First, get the basic profile
+        // First, try to get the basic profile with a simpler query
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select(`
-            *
-          `)
+          .select('*')
           .eq('id', artistId)
           .maybeSingle();
 
@@ -36,22 +34,22 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
 
         if (!profile) {
           console.log('No profile found for ID:', artistId);
-          throw new Error('Artist not found');
+          throw new Error('Artist profile not found');
         }
 
         console.log('Profile fetched successfully:', profile);
 
-        // Then fetch related data in parallel
+        // Then fetch related data in parallel with error handling
         const [
-          { data: projects },
-          { data: education },
-          { data: skills },
-          { data: languages },
-          { data: tools },
-          { data: references },
-          { data: mediaAssets },
-          { data: awards }
-        ] = await Promise.all([
+          projectsResult,
+          educationResult,
+          skillsResult,
+          languagesResult,
+          toolsResult,
+          referencesResult,
+          mediaAssetsResult,
+          awardsResult
+        ] = await Promise.allSettled([
           supabase.from('projects').select('*').eq('artist_id', artistId),
           supabase.from('education_training').select('*').eq('artist_id', artistId),
           supabase.from('special_skills').select('*').eq('artist_id', artistId),
@@ -61,6 +59,16 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           supabase.from('media_assets').select('*').eq('artist_id', artistId),
           supabase.from('awards').select('*').eq('artist_id', artistId)
         ]);
+
+        // Safely extract data from results
+        const projects = projectsResult.status === 'fulfilled' ? projectsResult.value.data || [] : [];
+        const education = educationResult.status === 'fulfilled' ? educationResult.value.data || [] : [];
+        const skills = skillsResult.status === 'fulfilled' ? skillsResult.value.data || [] : [];
+        const languages = languagesResult.status === 'fulfilled' ? languagesResult.value.data || [] : [];
+        const tools = toolsResult.status === 'fulfilled' ? toolsResult.value.data || [] : [];
+        const references = referencesResult.status === 'fulfilled' ? referencesResult.value.data || [] : [];
+        const mediaAssets = mediaAssetsResult.status === 'fulfilled' ? mediaAssetsResult.value.data || [] : [];
+        const awards = awardsResult.status === 'fulfilled' ? awardsResult.value.data || [] : [];
 
         // Parse custom_links from JSON
         let customLinksArray = [];
@@ -83,34 +91,34 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
         }
 
         // Map database data to Artist type format
-        const mappedProjects = (projects || []).map(p => ({
+        const mappedProjects = projects.map(p => ({
           ...p,
           user_id: p.artist_id
         }));
 
-        const mappedEducation = (education || []).map(e => ({
+        const mappedEducation = education.map(e => ({
           ...e,
           user_id: e.artist_id
         }));
 
-        const mappedSkills = (skills || []).map(s => ({
+        const mappedSkills = skills.map(s => ({
           ...s,
           skill_name: s.skill,
           user_id: s.artist_id
         }));
 
-        const mappedLanguages = (languages || []).map(l => ({
+        const mappedLanguages = languages.map(l => ({
           ...l,
           language_name: l.language,
           user_id: l.artist_id
         }));
 
-        const mappedTools = (tools || []).map(t => ({
+        const mappedTools = tools.map(t => ({
           ...t,
           user_id: t.artist_id
         }));
 
-        const mappedReferences = (references || []).map(r => ({
+        const mappedReferences = references.map(r => ({
           ...r,
           reference_name: r.name,
           reference_title: r.role,
@@ -118,13 +126,13 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
           user_id: r.artist_id
         }));
 
-        const mappedMediaAssets = (mediaAssets || []).map(m => ({
+        const mappedMediaAssets = mediaAssets.map(m => ({
           ...m,
           asset_type: m.file_type,
           asset_url: m.url
         }));
 
-        const mappedAwards = (awards || []).map(a => ({
+        const mappedAwards = awards.map(a => ({
           ...a,
           award_name: a.title,
           awarding_organization: a.organization,
@@ -160,12 +168,12 @@ export const useArtistProfile = (artistId: string | undefined, options = {}) => 
       }
     },
     enabled: !!artistId,
-    staleTime: 1 * 60 * 1000, // Reduced to 1 minute for more frequent updates
+    staleTime: 1 * 60 * 1000, // 1 minute
     refetchOnMount: false,
-    refetchOnWindowFocus: true, // Enable refetch on window focus to catch updates
+    refetchOnWindowFocus: false,
     retry: (failureCount, error: any) => {
       // Don't retry if it's a "not found" error
-      if (error?.message?.includes('not found') || error?.message?.includes('Artist not found')) {
+      if (error?.message?.includes('not found') || error?.message?.includes('Artist profile not found')) {
         return false;
       }
       return failureCount < 2;
