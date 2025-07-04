@@ -1,9 +1,10 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import ArtistCard from "./ArtistCard";
+import { ArtistCard } from "./ArtistCard";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Artist } from "@/types/artist";
 

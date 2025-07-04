@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from "@/components/ui/carousel";
-import ArtistCard from "../artists/ArtistCard";
+import { ArtistCard } from "../artists/ArtistCard";
 import ArtistCardSkeleton from "../artists/ArtistCardSkeleton";
 import { useArtists } from "@/hooks/useArtists";
 import Autoplay from "embla-carousel-autoplay";
