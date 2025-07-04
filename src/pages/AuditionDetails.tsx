@@ -319,9 +319,14 @@ const AuditionDetails = () => {
 
       {/* Application Dialog */}
       <AuditionApplicationDialog
-        audition={audition}
-        open={showApplicationDialog}
+        isOpen={showApplicationDialog}
         onClose={() => setShowApplicationDialog(false)}
+        auditionId={audition.id}
+        auditionTitle={audition.title}
+        onSuccess={() => {
+          setShowApplicationDialog(false);
+          toast.success("Application submitted successfully!");
+        }}
       />
     </div>
   );
