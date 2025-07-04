@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -124,7 +123,6 @@ const ArtistsGrid = ({
               >
                 <ArtistCard
                   artist={artist}
-                  onViewProfile={onViewProfile}
                 />
               </ErrorBoundary>
             );

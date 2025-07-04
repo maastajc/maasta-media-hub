@@ -54,8 +54,7 @@ const FeaturedArtists = () => {
                 {featuredArtists.map((artist) => (
                   <CarouselItem key={artist.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                     <ArtistCard 
-                      artist={artist} 
-                      onViewProfile={() => {}} 
+                      artist={artist}
                     />
                   </CarouselItem>
                 ))}
