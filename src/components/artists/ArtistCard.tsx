@@ -51,16 +51,16 @@ export const ArtistCard = ({ artist }: ArtistCardProps) => {
     <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-maasta-orange/30 h-full overflow-visible">
       <CardContent className="p-0 h-full flex flex-col">
         {/* Cover Image */}
-        <div className="relative h-32 bg-gradient-to-br from-maasta-orange/10 to-orange-100 rounded-t-lg overflow-hidden">
+        <div className="relative h-32 bg-gradient-to-br from-maasta-orange/10 to-orange-100 rounded-t-lg">
           {artist.cover_image_url && (
             <img
               src={artist.cover_image_url}
               alt="Cover"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-t-lg"
             />
           )}
           {/* Profile Picture Overlay */}
-          <div className="absolute -bottom-8 left-4">
+          <div className="absolute -bottom-8 left-4 z-10">
             <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
               <AvatarImage 
                 src={artist.profile_picture_url || undefined} 
