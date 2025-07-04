@@ -37,6 +37,7 @@ function App() {
               <Route path="/artists" element={<Artists />} />
               <Route path="/artist/:id" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
+              <Route path="/auditions/create" element={<CreateAudition />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
               <Route path="/create-audition" element={<CreateAudition />} />
               <Route path="/dashboard" element={<Dashboard />} />
