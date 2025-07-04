@@ -236,21 +236,11 @@ const Profile = () => {
       <Navbar />
       
       {/* Cover Image Section */}
-      <div className="relative w-full h-64 bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
-        {coverImageUrl ? (
-          <img
-            src={coverImageUrl}
-            alt="Cover"
-            className="w-full h-full object-cover"
-            key={coverImageUrl}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-maasta-orange/10 to-orange-50/30" />
-        )}
-        
-        {/* Overlay gradient for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-      </div>
+      <CoverImageUpload
+        currentImageUrl={profileData?.cover_image_url}
+        onImageUpdate={handleCoverImageUpdate}
+        userId={user?.id || ""}
+      />
       
       {/* Profile Header */}
       <div className="bg-white border-b relative -mt-20 z-10">
@@ -373,16 +363,6 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Cover Image Upload Section */}
-              <div className="mt-6 pt-6 border-t">
-                <h3 className="text-lg font-semibold mb-4">Cover Image</h3>
-                <CoverImageUpload
-                  currentImageUrl={profileData?.cover_image_url}
-                  onImageUpdate={handleCoverImageUpdate}
-                  userId={user?.id || ""}
-                />
               </div>
             </CardContent>
           </Card>

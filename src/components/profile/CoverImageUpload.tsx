@@ -1,7 +1,7 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Upload, Edit } from "lucide-react";
+import { Camera, X, Upload, Edit, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import CoverImageCropper from "./CoverImageCropper";
@@ -27,7 +27,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       const fileName = `${userId}/cover-${timestamp}.jpg`;
       
       const { data, error: uploadError } = await supabase.storage
-        .from('profile-images')
+        .from('profile-pictures')
         .upload(fileName, croppedBlob, { 
           upsert: true,
           contentType: 'image/jpeg'
@@ -37,7 +37,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
 
       // Get the public URL with cache busting
       const { data: { publicUrl } } = supabase.storage
-        .from('profile-images')
+        .from('profile-pictures')
         .getPublicUrl(fileName);
       
       const cachebustedUrl = `${publicUrl}?t=${timestamp}`;
@@ -130,66 +130,58 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
     currentImageUrl;
 
   return (
-    <div className="space-y-4">
+    <div className="relative w-full h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden group">
       {/* Cover Image Display */}
-      <div className="relative w-full h-48 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden">
-        {displayImageUrl ? (
-          <img
-            src={displayImageUrl}
-            alt="Cover"
-            className="w-full h-full object-cover"
-            key={displayImageUrl} // Force re-render on URL change
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
-            <div className="text-center text-gray-500">
-              <Camera size={32} className="mx-auto mb-2" />
-              <p className="text-sm">No cover image uploaded</p>
-            </div>
+      {displayImageUrl ? (
+        <img
+          src={displayImageUrl}
+          alt="Cover"
+          className="w-full h-full object-cover"
+          key={displayImageUrl} // Force re-render on URL change
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
+          <div className="text-center text-gray-500">
+            <Camera size={32} className="mx-auto mb-2" />
+            <p className="text-sm">No cover image uploaded</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Upload Controls */}
-      <div className="flex gap-2">
+      {/* Overlay gradient for better button visibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+
+      {/* Upload/Edit Button Overlay */}
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="flex items-center gap-2"
+          className="bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg border-0 h-10 w-10 p-0 rounded-full"
         >
           {isUploading ? (
-            <>
-              <Upload size={16} className="animate-spin" />
-              Uploading...
-            </>
-          ) : currentImageUrl ? (
-            <>
-              <Edit size={16} />
-              Change Cover
-            </>
+            <Upload size={16} className="animate-spin text-gray-700" />
           ) : (
-            <>
-              <Camera size={16} />
-              Upload Cover Photo
-            </>
+            <Plus size={16} className="text-gray-700" />
           )}
         </Button>
-        
-        {currentImageUrl && (
+      </div>
+
+      {/* Remove Button (only show if image exists) */}
+      {currentImageUrl && (
+        <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleRemoveImage}
             disabled={isUploading}
-            className="flex items-center gap-2"
+            className="bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg border-0 h-10 w-10 p-0 rounded-full"
           >
-            <X size={16} />
-            Remove
+            <X size={16} className="text-gray-700" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       
       <input
         ref={fileInputRef}
