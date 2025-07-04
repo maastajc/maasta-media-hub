@@ -341,8 +341,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile Strength Tracker */}
-      <ProfileStats artist={profileData} />
 
       {/* Fixed Navigation Tabs - Updated order */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
@@ -501,11 +499,38 @@ const Profile = () => {
                 </CardContent>
               </Card>
 
-              {/* Portfolio Links with Edit Icon */}
+            </div>
+          </div>
+        </div>
+
+        {/* Media Section */}
+        <div id="section-media" className="scroll-mt-24">
+          <MediaSection 
+            profileData={profileData} 
+            onUpdate={handleProfileUpdate}
+            userId={user?.id || ""}
+          />
+        </div>
+
+        {/* Projects Section - Now after Media with correct props */}
+        <div id="section-projects" className="scroll-mt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Projects */}
+            <div className="lg:col-span-2">
+              <ProjectsSection
+                profileData={profileData}
+                onUpdate={handleProfileUpdate}
+                userId={user?.id}
+                isOwnProfile={true}
+              />
+            </div>
+            
+            {/* Social Links */}
+            <div>
               <Card>
-                <CardContent className="p-6 max-h-80 overflow-y-auto">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Portfolio Links</h3>
+                    <h3 className="text-lg font-semibold">Social Links</h3>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -524,7 +549,7 @@ const Profile = () => {
                           JSON.parse(profileData.custom_links as string)) : [];
                       
                       if (!hasLegacyLinks && customLinks.length === 0) {
-                        return <p className="text-sm text-gray-500 italic">No portfolio links added yet</p>;
+                        return <p className="text-sm text-gray-500 italic">No social links added yet</p>;
                       }
                       
                       return (
@@ -591,27 +616,6 @@ const Profile = () => {
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </div>
-
-        {/* Media Section */}
-        <div id="section-media" className="scroll-mt-24">
-          <MediaSection 
-            profileData={profileData} 
-            onUpdate={handleProfileUpdate}
-            userId={user?.id || ""}
-          />
-        </div>
-
-        {/* Projects Section - Now after Media with correct props */}
-        <div id="section-projects" className="scroll-mt-24">
-          <div className="max-h-96 overflow-y-auto">
-            <ProjectsSection
-              profileData={profileData}
-              onUpdate={handleProfileUpdate}
-              userId={user?.id}
-              isOwnProfile={true}
-            />
           </div>
         </div>
 

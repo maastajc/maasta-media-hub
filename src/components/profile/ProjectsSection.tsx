@@ -65,7 +65,7 @@ const ProjectsSection = ({ profileData, onUpdate, userId, isOwnProfile = false }
     <Card className="min-h-[500px]">
       <CardHeader className="pb-6">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-2xl">Projects ({projects.length})</CardTitle>
+          <CardTitle className="text-2xl font-bold">Projects ({projects.length})</CardTitle>
           {isOwnProfile && (
             <Button onClick={handleAddNew} size="sm" className="flex items-center gap-2">
               <Plus size={16} />

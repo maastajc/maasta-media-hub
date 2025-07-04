@@ -16,6 +16,8 @@ interface MediaUploadSectionProps {
 const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectionProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [photoFileInput, setPhotoFileInput] = useState<HTMLInputElement | null>(null);
+  const [videoFileInput, setVideoFileInput] = useState<HTMLInputElement | null>(null);
 
   const mediaAssets = profileData?.media_assets || [];
   const photos = mediaAssets.filter((asset: any) => !asset.is_video);
@@ -129,29 +131,38 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         {/* Photo Upload */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Camera className="mr-2 text-maasta-orange" size={20} />
-              Photos ({photos.length}/4)
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center">
+                <Camera className="mr-2 text-maasta-orange" size={20} />
+                Photos ({photos.length}/4)
+              </div>
+              {photos.length < 4 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                  onClick={() => photoFileInput?.click()}
+                >
+                  <Plus size={16} className="text-gray-500" />
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {photos.length < 4 ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <div className="p-2 bg-gray-100 rounded-full">
-                    <Plus className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <FileUpload
-                    onFileUpload={(file) => uploadFile(file, false)}
-                    acceptedTypes="image/*"
-                    maxSizeMB={5}
-                    isLoading={isUploading}
-                    buttonText="Upload Photos"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            ) : (
+            <input
+              type="file"
+              ref={setPhotoFileInput}
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  uploadFile(file, false);
+                  e.target.value = '';
+                }
+              }}
+              className="hidden"
+            />
+            {photos.length >= 4 && (
               <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                 <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Photo limit reached (4/4)</p>
@@ -164,29 +175,38 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         {/* Video Upload */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Video className="mr-2 text-maasta-purple" size={20} />
-              Videos ({videos.length}/4)
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center">
+                <Video className="mr-2 text-maasta-purple" size={20} />
+                Videos ({videos.length}/4)
+              </div>
+              {videos.length < 4 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                  onClick={() => videoFileInput?.click()}
+                >
+                  <Plus size={16} className="text-gray-500" />
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {videos.length < 4 ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <div className="p-2 bg-gray-100 rounded-full">
-                    <Plus className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <FileUpload
-                    onFileUpload={(file) => uploadFile(file, true)}
-                    acceptedTypes="video/*"
-                    maxSizeMB={50}
-                    isLoading={isUploading}
-                    buttonText="Upload Videos"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            ) : (
+            <input
+              type="file"
+              ref={setVideoFileInput}
+              accept="video/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  uploadFile(file, true);
+                  e.target.value = '';
+                }
+              }}
+              className="hidden"
+            />
+            {videos.length >= 4 && (
               <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                 <Video className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Video limit reached (4/4)</p>
