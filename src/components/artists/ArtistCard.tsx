@@ -48,7 +48,7 @@ export const ArtistCard = ({ artist }: ArtistCardProps) => {
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-maasta-orange/30 h-full">
+    <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-maasta-orange/30 h-full overflow-visible">
       <CardContent className="p-0 h-full flex flex-col">
         {/* Cover Image */}
         <div className="relative h-32 bg-gradient-to-br from-maasta-orange/10 to-orange-100 rounded-t-lg overflow-hidden">
