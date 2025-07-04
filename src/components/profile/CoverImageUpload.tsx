@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Upload, Edit } from "lucide-react";
@@ -102,6 +103,12 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
         return;
       }
       
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please select a valid image file (.jpg, .jpeg, .png, .webp)");
+        return;
+      }
+      
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast.error("Image size should be less than 5MB");
         return;
@@ -187,7 +194,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/jpg"
+        accept="image/jpeg,image/png,image/jpg,image/webp"
         onChange={handleFileSelect}
         className="hidden"
         disabled={isUploading}

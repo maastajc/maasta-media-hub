@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +38,7 @@ import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import ProfileStats from "@/components/profile/ProfileStats";
 import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
+import CoverImageUpload from "@/components/profile/CoverImageUpload";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -49,6 +49,7 @@ const Profile = () => {
   const [isWorkPreferencesEditOpen, setIsWorkPreferencesEditOpen] = useState(false);
   const [isPortfolioLinksEditOpen, setIsPortfolioLinksEditOpen] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
+  const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>();
 
   const {
     data: profileData,
@@ -65,11 +66,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (profileData) {
-      // Force cache-busted URL for profile image
+      // Force cache-busted URLs for both profile and cover images
       const imageUrl = profileData.profile_picture_url ? 
         `${profileData.profile_picture_url}${profileData.profile_picture_url.includes('?') ? '&' : '?'}t=${Date.now()}` : 
         undefined;
       setProfileImageUrl(imageUrl);
+      
+      const coverUrl = profileData.cover_image_url ? 
+        `${profileData.cover_image_url}${profileData.cover_image_url.includes('?') ? '&' : '?'}t=${Date.now()}` : 
+        undefined;
+      setCoverImageUrl(coverUrl);
     }
   }, [profileData]);
 
@@ -102,6 +108,20 @@ const Profile = () => {
     // Add cache-busting timestamp
     const cacheBustedUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
     setProfileImageUrl(cacheBustedUrl);
+    
+    // Invalidate all profile-related queries to ensure updates everywhere
+    await queryClient.invalidateQueries({ queryKey: ["artistProfile", user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['artist-profile', user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['featured-artists'] });
+    
+    // Force refetch to get updated data
+    await refetch();
+  };
+
+  const handleCoverImageUpdate = async (imageUrl: string | null) => {
+    // Add cache-busting timestamp
+    const cacheBustedUrl = imageUrl ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
+    setCoverImageUrl(cacheBustedUrl || undefined);
     
     // Invalidate all profile-related queries to ensure updates everywhere
     await queryClient.invalidateQueries({ queryKey: ["artistProfile", user?.id] });
@@ -215,10 +235,27 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
+      {/* Cover Image Section */}
+      <div className="relative w-full h-64 bg-gradient-to-r from-maasta-orange/10 to-orange-50/30">
+        {coverImageUrl ? (
+          <img
+            src={coverImageUrl}
+            alt="Cover"
+            className="w-full h-full object-cover"
+            key={coverImageUrl}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-maasta-orange/10 to-orange-50/30" />
+        )}
+        
+        {/* Overlay gradient for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+      </div>
+      
       {/* Profile Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b relative -mt-20 z-10">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
             <CardContent className="p-8">
               <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Profile Image */}
@@ -336,6 +373,16 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+              
+              {/* Cover Image Upload Section */}
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Cover Image</h3>
+                <CoverImageUpload
+                  currentImageUrl={profileData?.cover_image_url}
+                  onImageUpdate={handleCoverImageUpdate}
+                  userId={user?.id || ""}
+                />
               </div>
             </CardContent>
           </Card>

@@ -1,339 +1,304 @@
 
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Upload, 
+  Video, 
+  Image as ImageIcon, 
+  X, 
+  Edit,
+  Play,
+  Trash2,
+  Plus
+} from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Video, Trash2, Eye, Plus } from "lucide-react";
+import { Artist, MediaAsset } from "@/types/artist";
 
 interface MediaUploadSectionProps {
-  profileData: any;
+  profileData: Artist;
   onUpdate: () => void;
-  userId?: string;
+  userId: string;
 }
 
 const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectionProps) => {
-  const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const mediaAssets = profileData?.media_assets || [];
-  const photos = mediaAssets.filter((asset: any) => !asset.is_video);
-  const videos = mediaAssets.filter((asset: any) => asset.is_video);
+  const mediaAssets = profileData.media_assets || [];
+  const videos = mediaAssets.filter(asset => asset.is_video);
+  const images = mediaAssets.filter(asset => !asset.is_video);
 
-  const uploadFile = async (file: File, isVideo: boolean = false) => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "User not authenticated",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleFileUpload = async (files: FileList) => {
+    if (!files || files.length === 0) return;
 
-    // Check limits before upload
-    const currentCount = isVideo ? videos.length : photos.length;
-    if (currentCount >= 4) {
-      toast({
-        title: "Upload limit reached",
-        description: `You can only upload up to 4 ${isVideo ? 'videos' : 'photos'}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setIsUploading(true);
+    
     try {
-      setIsUploading(true);
+      for (const file of Array.from(files)) {
+        // Validate file type
+        const isVideo = file.type.startsWith('video/');
+        const isImage = file.type.startsWith('image/');
+        
+        if (!isVideo && !isImage) {
+          toast.error(`${file.name} is not a valid image or video file`);
+          continue;
+        }
 
-      // Upload file to Supabase Storage using correct bucket names
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
-      const bucketName = isVideo ? 'videos' : 'photos';
+        // Check limits
+        if (isVideo && videos.length >= 4) {
+          toast.error("Maximum 4 videos allowed");
+          continue;
+        }
+        
+        if (isImage && images.length >= 4) {
+          toast.error("Maximum 4 images allowed");
+          continue;
+        }
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, file);
+        // Validate file size (50MB for videos, 10MB for images)
+        const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          toast.error(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
+          continue;
+        }
 
-      if (uploadError) throw uploadError;
+        // Upload to storage
+        const fileName = `${userId}/${Date.now()}-${file.name}`;
+        const { data, error: uploadError } = await supabase.storage
+          .from('media-assets')
+          .upload(fileName, file);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
 
-      // Save to database with both user_id and artist_id
-      const mediaData = {
-        url: publicUrl,
-        file_name: file.name,
-        file_type: file.type,
-        file_size: file.size,
-        is_video: isVideo,
-        is_embed: false,
-        user_id: userId,
-        artist_id: userId, // Use userId as artist_id since they match
-      };
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('media-assets')
+          .getPublicUrl(data.path);
 
-      const { error: dbError } = await supabase
-        .from("media_assets")
-        .insert(mediaData);
+        // Save to database
+        const { error: dbError } = await supabase
+          .from('media_assets')
+          .insert({
+            user_id: userId,
+            artist_id: userId,
+            file_name: file.name,
+            file_type: file.type,
+            file_size: file.size,
+            url: publicUrl,
+            asset_url: publicUrl,
+            asset_type: file.type,
+            is_video: isVideo,
+            is_embed: false
+          });
 
-      if (dbError) throw dbError;
+        if (dbError) {
+          console.error('Database error:', dbError);
+          toast.error(`Failed to save ${file.name} information`);
+          continue;
+        }
 
-      toast({
-        title: "Upload successful",
-        description: `${isVideo ? 'Video' : 'Photo'} uploaded successfully`,
-      });
+        toast.success(`${file.name} uploaded successfully`);
+      }
 
       onUpdate();
-    } catch (error: any) {
-      console.error("Upload error:", error.message);
-      toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload file",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload media files');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleDelete = async (mediaId: string, fileName: string, isVideo: boolean) => {
+  const handleDeleteMedia = async (mediaId: string, fileName: string) => {
     try {
-      // Delete from storage using correct bucket name
-      const bucketName = isVideo ? 'videos' : 'photos';
-      await supabase.storage
-        .from(bucketName)
-        .remove([fileName]);
-
       // Delete from database
-      const { error } = await supabase
-        .from("media_assets")
+      const { error: dbError } = await supabase
+        .from('media_assets')
         .delete()
-        .eq("id", mediaId);
+        .eq('id', mediaId)
+        .eq('user_id', userId);
 
-      if (error) throw error;
+      if (dbError) {
+        console.error('Database delete error:', dbError);
+        toast.error('Failed to delete media');
+        return;
+      }
 
-      toast({
-        title: "Media deleted",
-        description: "Media file deleted successfully",
-      });
-
+      toast.success(`${fileName} deleted successfully`);
       onUpdate();
-    } catch (error: any) {
-      console.error("Delete error:", error.message);
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete media file",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete media');
     }
   };
 
-  const handleFileSelect = (isVideo: boolean) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = isVideo ? 'video/*' : 'image/*';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        uploadFile(file, isVideo);
-      }
-    };
-    input.click();
-  };
+  const canUploadVideo = videos.length < 4;
+  const canUploadImage = images.length < 4;
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Media Portfolio ({mediaAssets.length})</h2>
-      </div>
+    <Card className="mb-8">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Upload className="w-5 h-5 text-maasta-purple" />
+          Media Portfolio
+          <Badge variant="outline" className="ml-2">
+            {videos.length}/4 Videos • {images.length}/4 Images
+          </Badge>
+        </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading || (!canUploadVideo && !canUploadImage)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Media
+        </Button>
+      </CardHeader>
+      
+      <CardContent>
+        {/* Upload Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/*"
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+          className="hidden"
+          disabled={isUploading}
+        />
 
-      {/* Upload Areas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Photo Upload */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center">
-                <Camera className="mr-2 text-maasta-orange" size={20} />
-                Photos ({photos.length}/4)
-              </div>
-              {photos.length < 4 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-gray-100"
-                  onClick={() => handleFileSelect(false)}
-                  disabled={isUploading}
-                >
-                  <Plus size={16} className="text-gray-500" />
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {photos.length >= 4 && (
-              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
-                <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Photo limit reached (4/4)</p>
-                <p className="text-xs">Delete a photo to upload a new one</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Video Upload */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center">
-                <Video className="mr-2 text-maasta-purple" size={20} />
-                Videos ({videos.length}/4)
-              </div>
-              {videos.length < 4 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-gray-100"
-                  onClick={() => handleFileSelect(true)}
-                  disabled={isUploading}
-                >
-                  <Plus size={16} className="text-gray-500" />
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {videos.length >= 4 && (
-              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
-                <Video className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Video limit reached (4/4)</p>
-                <p className="text-xs">Delete a video to upload a new one</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Media Gallery */}
-      {mediaAssets.length > 0 && (
-        <div className="space-y-6">
-          {/* Photos Grid */}
-          {photos.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <Camera className="mr-2" size={20} />
-                Photos ({photos.length})
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {photos.map((photo: any) => (
-                  <Card key={photo.id} className="group relative overflow-hidden">
-                    <div className="aspect-square relative">
-                      <img
-                        src={photo.url}
-                        alt={photo.description || photo.file_name}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        onError={(e) => {
-                          console.error('Image failed to load:', photo.url);
-                          (e.target as HTMLImageElement).src = '/placeholder-image.png';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 flex gap-2">
-                          <a
-                            href={photo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 bg-white/20 rounded-full text-white hover:bg-white/30"
-                          >
-                            <Eye size={16} />
-                          </a>
-                          <button
-                            onClick={() => handleDelete(photo.id, photo.file_name, false)}
-                            className="p-2 bg-red-500/80 rounded-full text-white hover:bg-red-500"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs text-gray-600 truncate">{photo.file_name}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Videos Horizontal Scroll */}
-          {videos.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <Video className="mr-2" size={20} />
-                Videos ({videos.length})
-              </h3>
-              <div className="flex overflow-x-auto gap-4 pb-4">
-                {videos.map((video: any) => (
-                  <Card key={video.id} className="group relative overflow-hidden flex-shrink-0 w-80">
-                    <div className="aspect-video relative">
-                      <video
-                        src={video.url}
-                        className="w-full h-full object-cover"
-                        controls
-                        preload="metadata"
-                        onError={(e) => {
-                          console.error('Video failed to load:', video.url);
-                        }}
-                      />
-                      <button
-                        onClick={() => handleDelete(video.id, video.file_name, true)}
-                        className="absolute top-2 right-2 p-2 bg-red-500/80 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs text-gray-600 truncate">{video.file_name}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Upload Guidelines */}
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-medium text-blue-900 mb-2">Upload Guidelines</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Images: Max 10MB each, up to 4 files (JPG, PNG, WebP)</li>
+            <li>• Videos: Max 50MB each, up to 4 files (MP4, MOV, AVI)</li>
+            <li>• Recommended: High-quality portfolio pieces showcasing your work</li>
+          </ul>
         </div>
-      )}
 
-      {mediaAssets.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <div className="flex justify-center gap-4 mb-4">
-              <Camera className="w-16 h-16 text-gray-400" />
-              <Video className="w-16 h-16 text-gray-400" />
+        {/* Videos Section */}
+        {videos.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Video className="w-5 h-5 text-maasta-purple" />
+              <h3 className="text-lg font-semibold">Videos ({videos.length}/4)</h3>
             </div>
-            <h3 className="text-lg font-medium mb-2">No media assets yet</h3>
-            <p className="text-gray-600 mb-4">Start building your portfolio by uploading photos and videos</p>
-            <div className="flex justify-center gap-4">
-              <Button
-                onClick={() => handleFileSelect(false)}
-                className="bg-maasta-orange hover:bg-maasta-orange/90"
-                disabled={isUploading}
-              >
-                <Camera className="mr-2" size={16} />
-                Upload Photos
-              </Button>
-              <Button
-                onClick={() => handleFileSelect(true)}
-                className="bg-maasta-purple hover:bg-maasta-purple/90"
-                disabled={isUploading}
-              >
-                <Video className="mr-2" size={16} />
-                Upload Videos
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {videos.map((video) => (
+                <div key={video.id} className="relative group">
+                  <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <video
+                      src={video.asset_url}
+                      controls
+                      className="w-full h-full object-cover"
+                      preload="metadata"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-black/70 text-white">
+                        <Video className="w-3 h-3 mr-1" />
+                        Video
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDeleteMedia(video.id, video.file_name)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {video.description && (
+                    <p className="text-sm text-gray-600 mt-2">{video.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">{video.file_name}</p>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </div>
+        )}
+
+        {/* Images Section */}
+        {images.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <ImageIcon className="w-5 h-5 text-maasta-purple" />
+              <h3 className="text-lg font-semibold">Images ({images.length}/4)</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {images.map((image) => (
+                <div key={image.id} className="relative group">
+                  <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                    <img
+                      src={image.asset_url}
+                      alt={image.description || image.file_name}
+                      className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-black/70 text-white">
+                        <ImageIcon className="w-3 h-3 mr-1" />
+                        Image
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDeleteMedia(image.id, image.file_name)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {image.description && (
+                    <p className="text-xs text-gray-600 mt-1 truncate">{image.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 truncate">{image.file_name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {mediaAssets.length === 0 && (
+          <div className="text-center py-12">
+            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No media uploaded</h3>
+            <p className="text-gray-600 mb-4">
+              Showcase your work by uploading images and videos to your portfolio
+            </p>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Upload Your First Media
+            </Button>
+          </div>
+        )}
+
+        {/* Upload Status */}
+        {isUploading && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Upload className="w-4 h-4 text-blue-600 animate-spin" />
+              <span className="text-blue-800">Uploading media files...</span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

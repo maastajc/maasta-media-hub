@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -270,63 +269,6 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     );
   };
 
-  const renderAwards = () => {
-    const awards = artist.awards || [];
-    return (
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-maasta-purple" />
-            Awards & Achievements
-            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
-          </CardTitle>
-          {isOwnProfile && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditClick('awards')}
-              className="flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {awards.length === 0 ? (
-            <div className="italic text-gray-400">No awards or achievements listed.</div>
-          ) : (
-            <div className="space-y-4">
-              {awards.map((award: any) => (
-                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{award.title}</h4>
-                      {award.organization && (
-                        <p className="text-maasta-orange font-medium">{award.organization}</p>
-                      )}
-                      {award.description && (
-                        <p className="text-gray-600 mt-1">{award.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {award.year && (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {award.year}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
   const renderSkills = () => {
     const skills = artist.special_skills || [];
     return (
@@ -358,6 +300,102 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                 <Badge key={skill.id} variant="secondary" className="px-3 py-1">
                   {skill.skill_name}
                 </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderTools = () => {
+    const tools = artist.tools_software || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-maasta-purple" />
+            Tools & Software
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('tools')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {tools.length === 0 ? (
+            <div className="italic text-gray-400">No tools or software listed.</div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tools.map((tool) => (
+                <Badge key={tool.id} variant="outline" className="px-3 py-1">
+                  {tool.tool_name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderAwards = () => {
+    const awards = artist.awards || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-maasta-purple" />
+            Awards & Achievements
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('awards')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {awards.length === 0 ? (
+            <div className="italic text-gray-400">No awards or achievements listed.</div>
+          ) : (
+            <div className="space-y-4">
+              {awards.map((award: any) => (
+                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{award.title || award.award_name}</h4>
+                      {(award.organization || award.awarding_organization) && (
+                        <p className="text-maasta-orange font-medium">{award.organization || award.awarding_organization}</p>
+                      )}
+                      {award.description && (
+                        <p className="text-gray-600 mt-1">{award.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {award.year && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {award.year}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -458,45 +496,6 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                     {lang.proficiency}
                   </Badge>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderTools = () => {
-    const tools = artist.tools_software || [];
-    return (
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-maasta-purple" />
-            Tools & Software
-            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
-          </CardTitle>
-          {isOwnProfile && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditClick('tools')}
-              className="flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {tools.length === 0 ? (
-            <div className="italic text-gray-400">No tools or software listed.</div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {tools.map((tool) => (
-                <Badge key={tool.id} variant="outline" className="px-3 py-1">
-                  {tool.tool_name}
-                </Badge>
               ))}
             </div>
           )}
