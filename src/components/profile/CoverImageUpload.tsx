@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Upload, Edit } from "lucide-react";
@@ -42,11 +41,11 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       
       const cachebustedUrl = `${publicUrl}?t=${timestamp}`;
       
-      // Update the profile with the new cover image URL
+      // Update the profile with the new cover image URL using cachebusted URL
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          cover_image_url: publicUrl,
+          cover_image_url: cachebustedUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -118,8 +117,9 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
     event.target.value = '';
   };
 
-  const displayImageUrl = currentImageUrl ? 
-    `${currentImageUrl}${currentImageUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : 
+  // Force cache busting for current image display
+  const displayImageUrl = currentImageUrl && !currentImageUrl.includes('?t=') ? 
+    `${currentImageUrl}?t=${Date.now()}` : 
     currentImageUrl;
 
   return (

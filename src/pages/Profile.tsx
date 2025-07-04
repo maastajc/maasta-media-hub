@@ -223,7 +223,7 @@ const Profile = () => {
                 {/* Profile Image */}
                 <div className="relative flex-shrink-0">
                   <ProfilePictureUpload
-                    currentImageUrl={profileImageUrl}
+                    currentImageUrl={profileData?.profile_picture_url}
                     onImageUpdate={handleProfileImageUpdate}
                     userId={user?.id || ""}
                     fullName={profileData.full_name}

@@ -64,10 +64,10 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
                     <AvatarImage 
-                      src={artist.profile_picture_url} 
+                      src={artist.profile_picture_url ? `${artist.profile_picture_url}?t=${Date.now()}` : undefined} 
                       alt={artist.full_name}
                       className="object-cover"
-                      key={`${artist.profile_picture_url}-${Date.now()}`}
+                      key={`avatar-${artist.profile_picture_url || 'default'}-${Date.now()}`}
                     />
                     <AvatarFallback className="bg-maasta-orange text-white text-2xl font-bold">
                       {getInitials(artist.full_name)}
