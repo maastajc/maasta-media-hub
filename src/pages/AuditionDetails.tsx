@@ -19,6 +19,13 @@ const AuditionDetails = () => {
   const navigate = useNavigate();
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
 
+  // Handle special routes like "create"
+  if (id === 'create') {
+    // Redirect to create audition page or handle appropriately
+    navigate('/auditions/create');
+    return null;
+  }
+
   const { data: audition, isLoading, isError, error } = useQuery({
     queryKey: ['audition-details', id],
     queryFn: async () => {
@@ -26,7 +33,7 @@ const AuditionDetails = () => {
         throw new Error('Audition ID is required');
       }
 
-      // Validate UUID format to prevent invalid queries
+      // Validate UUID format only for non-special routes
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(id)) {
         throw new Error('Invalid audition ID format');
@@ -60,7 +67,7 @@ const AuditionDetails = () => {
 
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && id !== 'create',
     retry: (failureCount, error: any) => {
       // Don't retry if it's a validation error or not found
       if (error?.message?.includes('Invalid') || error?.message?.includes('not found')) {
@@ -70,7 +77,8 @@ const AuditionDetails = () => {
     }
   });
 
-  if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+  // Show error for invalid IDs (but not for special routes)
+  if (id && id !== 'create' && (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i))) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
