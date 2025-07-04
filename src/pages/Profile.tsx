@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ import PortfolioLinksEditForm from "@/components/profile/PortfolioLinksEditForm"
 import ProjectsSection from "@/components/profile/ProjectsSection";
 import EducationSection from "@/components/profile/EducationSection";
 import SkillsSection from "@/components/profile/SkillsSection";
-import MediaSection from "@/components/profile/MediaSection";
+import MediaUploadSection from "@/components/profile/MediaUploadSection";
 import AwardsSection from "@/components/profile/AwardsSection";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -637,7 +638,6 @@ const Profile = () => {
 
         {/* Awards Section - Fixed to render properly */}
         <div id="section-awards" className="scroll-mt-24">
-          {console.log('Awards data in Profile:', profileData?.awards)}
           <AwardsSection 
             profileData={profileData}
             onUpdate={handleProfileUpdate}
