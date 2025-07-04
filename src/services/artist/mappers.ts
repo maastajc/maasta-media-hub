@@ -193,8 +193,12 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
   const mappedAwards: Award[] = Array.isArray(awards)
     ? awards.map(a => ({
         id: a.id || crypto.randomUUID(),
+        title: a.title || "",
         award_name: a.title || "",
+        organization: a.organization,
         awarding_organization: a.organization,
+        year: a.year,
+        description: a.description,
         artist_id: artistFromDb.id,
         user_id: artistFromDb.id
     }))
