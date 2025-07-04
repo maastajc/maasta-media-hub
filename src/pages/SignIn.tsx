@@ -16,11 +16,11 @@ const SignIn = () => {
   }, [user, navigate]);
 
   return (
-    <div className="container max-w-screen-xl mx-auto py-12">
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Welcome to Maasta</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold mb-2 text-gray-800">Welcome to Maasta</h1>
+          <p className="text-gray-600">
             The super app for the media and entertainment industry
           </p>
         </div>

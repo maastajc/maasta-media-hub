@@ -31,7 +31,7 @@ export const SignInForm = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [resetEmailError, setResetEmailError] = useState('');
-  const [authError, setAuthError] = useState(''); // Add auth error state
+  const [authError, setAuthError] = useState('');
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -77,14 +77,12 @@ export const SignInForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clear any previous auth errors
     setAuthError('');
     
     if (!validateSignInForm()) {
       return;
     }
 
-    // Check rate limiting
     if (!signInRateLimiter.canProceed(email.trim())) {
       setAuthError('Too many sign-in attempts. Please wait a few minutes before trying again.');
       return;
@@ -95,21 +93,18 @@ export const SignInForm = () => {
     try {
       const result = await signIn(email.trim(), password);
       if (result.error) {
-        // Handle authentication error without redirecting
         if (result.error.message.includes('Invalid login credentials') || 
             result.error.message.includes('invalid_credentials')) {
           setAuthError('Incorrect email or password. Please try again.');
         } else {
           setAuthError(sanitizeErrorMessage(result.error.message));
         }
-        return; // Don't navigate on error
+        return;
       }
       
-      // Navigate to profile page instead of home
-      signInRateLimiter.reset(email.trim()); // Reset on successful login
+      signInRateLimiter.reset(email.trim());
       navigate('/profile');
     } catch (error: any) {
-      // Handle any unexpected errors
       if (error.message.includes('Invalid login credentials') || 
           error.message.includes('invalid_credentials')) {
         setAuthError('Incorrect email or password. Please try again.');
@@ -124,7 +119,7 @@ export const SignInForm = () => {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      setAuthError(''); // Clear any previous errors
+      setAuthError('');
       
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
@@ -182,22 +177,21 @@ export const SignInForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>Enter your email and password to sign in to your account</CardDescription>
+    <Card className="w-full max-w-md mx-auto shadow-lg bg-white/80 backdrop-blur-sm">
+      <CardHeader className="text-center pb-6">
+        <CardTitle className="text-2xl font-semibold text-gray-800">Sign In</CardTitle>
+        <CardDescription className="text-gray-600">Enter your email and password to sign in to your account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          {/* Display authentication error */}
+        <CardContent className="space-y-5">
           {authError && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="rounded-lg">
               <AlertDescription>{authError}</AlertDescription>
             </Alert>
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -206,16 +200,16 @@ export const SignInForm = () => {
               onChange={(e) => {
                 setEmail(e.target.value);
                 if (emailError) setEmailError('');
-                if (authError) setAuthError(''); // Clear auth error when user starts typing
+                if (authError) setAuthError('');
               }}
               required
-              className={emailError ? 'border-red-500' : ''}
+              className={`h-12 rounded-lg border-gray-300 ${emailError ? 'border-red-500' : ''}`}
               maxLength={254}
             />
             {emailError && <p className="text-sm text-red-500">{emailError}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
             <Input
               id="password"
               type="password"
@@ -224,34 +218,38 @@ export const SignInForm = () => {
               onChange={(e) => {
                 setPassword(e.target.value);
                 if (passwordError) setPasswordError('');
-                if (authError) setAuthError(''); // Clear auth error when user starts typing
+                if (authError) setAuthError('');
               }}
               required
-              className={passwordError ? 'border-red-500' : ''}
+              className={`h-12 rounded-lg border-gray-300 ${passwordError ? 'border-red-500' : ''}`}
               maxLength={128}
             />
             {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+        <CardFooter className="flex flex-col space-y-4 pt-2">
+          <Button 
+            type="submit" 
+            className="w-full h-12 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium shadow-md" 
+            disabled={isLoading}
+          >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
           
           <div className="w-full">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
               </div>
             </div>
             
             <Button
               type="button"
               variant="outline"
-              className="w-full mt-4"
+              className="w-full mt-4 h-12 rounded-lg border-gray-300 hover:bg-gray-50"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
             >
@@ -268,11 +266,11 @@ export const SignInForm = () => {
           <div className="text-sm text-center space-y-2">
             <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
               <DialogTrigger asChild>
-                <Button variant="link" className="p-0 text-sm">
+                <Button variant="link" className="p-0 text-sm text-orange-500 hover:text-orange-600">
                   Forgot your password?
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="rounded-lg">
                 <DialogHeader>
                   <DialogTitle>Reset Password</DialogTitle>
                   <DialogDescription>
@@ -308,7 +306,7 @@ export const SignInForm = () => {
               Don't have an account?{' '}
               <Button 
                 variant="link" 
-                className="p-0" 
+                className="p-0 text-orange-500 hover:text-orange-600" 
                 onClick={() => navigate('/sign-up')}
               >
                 Sign up

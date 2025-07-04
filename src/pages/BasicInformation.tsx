@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -208,11 +209,11 @@ const BasicInformation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-purple-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-semibold text-gray-800">Complete Your Profile</CardTitle>
+          <CardDescription className="text-gray-600">
             Please provide your basic information to get started
           </CardDescription>
         </CardHeader>
@@ -220,36 +221,38 @@ const BasicInformation = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name *</Label>
+                <Label htmlFor="full_name" className="text-gray-700 font-medium">Full Name *</Label>
                 <Input
                   id="full_name"
                   value={formData.full_name}
                   onChange={(e) => handleInputChange('full_name', e.target.value)}
                   placeholder="Enter your full name"
+                  className="rounded-lg border-gray-300 h-12"
                 />
                 {errors.full_name && <p className="text-sm text-red-500">{errors.full_name}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username *</Label>
+                <Label htmlFor="username" className="text-gray-700 font-medium">Username *</Label>
                 <Input
                   id="username"
                   value={formData.username}
                   onChange={(e) => handleInputChange('username', e.target.value)}
                   placeholder="choose_a_username"
+                  className="rounded-lg border-gray-300 h-12"
                 />
                 {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio *</Label>
+              <Label htmlFor="bio" className="text-gray-700 font-medium">Bio *</Label>
               <Textarea
                 id="bio"
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about yourself... (max 250 characters)"
-                className="min-h-[100px]"
+                className="min-h-[100px] rounded-lg border-gray-300"
               />
               <div className="flex justify-between text-sm text-gray-500">
                 <span>{formData.bio.length}/250 characters</span>
@@ -258,9 +261,9 @@ const BasicInformation = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone_number">Phone Number *</Label>
+              <Label htmlFor="phone_number" className="text-gray-700 font-medium">Phone Number *</Label>
               <div className="flex">
-                <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md">
+                <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-lg">
                   <span className="text-sm text-gray-600">+91</span>
                 </div>
                 <Input
@@ -273,25 +276,25 @@ const BasicInformation = () => {
                     }
                   }}
                   placeholder="Enter 10-digit phone number"
-                  className="rounded-l-none"
+                  className="rounded-l-none rounded-r-lg h-12"
                 />
               </div>
               {errors.phone_number && <p className="text-sm text-red-500">{errors.phone_number}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label>Date of Birth (Optional)</Label>
+              <Label className="text-gray-700 font-medium">Date of Birth (Optional)</Label>
               <DateOfBirthPicker
                 date={dateOfBirth}
                 onDateChange={setDateOfBirth}
                 placeholder="Select your date of birth"
-                className="w-full"
+                className="w-full rounded-lg h-12"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
+                <Label htmlFor="password" className="text-gray-700 font-medium">Password *</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -299,7 +302,7 @@ const BasicInformation = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     placeholder="Enter password"
-                    className="pr-10"
+                    className="pr-10 rounded-lg h-12"
                   />
                   <Button
                     type="button"
@@ -319,7 +322,7 @@ const BasicInformation = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm_password">Confirm Password *</Label>
+                <Label htmlFor="confirm_password" className="text-gray-700 font-medium">Confirm Password *</Label>
                 <div className="relative">
                   <Input
                     id="confirm_password"
@@ -327,7 +330,7 @@ const BasicInformation = () => {
                     value={formData.confirm_password}
                     onChange={(e) => handleInputChange('confirm_password', e.target.value)}
                     placeholder="Confirm password"
-                    className="pr-10"
+                    className="pr-10 rounded-lg h-12"
                   />
                   <Button
                     type="button"
@@ -347,7 +350,7 @@ const BasicInformation = () => {
               </div>
             </div>
 
-            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
               <p className="font-medium mb-1">Password requirements:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>At least 8 characters long</li>
@@ -357,7 +360,11 @@ const BasicInformation = () => {
               </ul>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full h-12 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium" 
+              disabled={isLoading}
+            >
               {isLoading ? 'Saving...' : 'Save Basic Information'}
             </Button>
           </form>
