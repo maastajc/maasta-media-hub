@@ -637,6 +637,7 @@ export type Database = {
         Row: {
           artist_id: string | null
           created_at: string | null
+          description: string | null
           director_producer: string | null
           id: string
           link: string | null
@@ -650,6 +651,7 @@ export type Database = {
         Insert: {
           artist_id?: string | null
           created_at?: string | null
+          description?: string | null
           director_producer?: string | null
           id?: string
           link?: string | null
@@ -663,6 +665,7 @@ export type Database = {
         Update: {
           artist_id?: string | null
           created_at?: string | null
+          description?: string | null
           director_producer?: string | null
           id?: string
           link?: string | null

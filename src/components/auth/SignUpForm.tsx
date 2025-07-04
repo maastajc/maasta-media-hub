@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ export const SignUpForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('artist');
-const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [usernameError, setUsernameError] = useState('');
@@ -290,6 +289,28 @@ const [phoneNumber, setPhoneNumber] = useState('');
             />
             {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
           </div>
+
+          <div className="text-sm text-gray-600 text-center leading-relaxed">
+            By signing up, you agree to our{' '}
+            <a 
+              href="/terms" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-maasta-purple hover:text-maasta-purple/80 underline"
+            >
+              Terms & Conditions
+            </a>
+            {' '}and{' '}
+            <a 
+              href="/privacy" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-maasta-purple hover:text-maasta-purple/80 underline"
+            >
+              Privacy Policy
+            </a>
+            .
+          </div>
         </CardContent>
         
         <CardFooter className="flex flex-col space-y-4">
@@ -322,6 +343,28 @@ const [phoneNumber, setPhoneNumber] = useState('');
               </svg>
               Continue with Google
             </Button>
+
+            <div className="text-xs text-gray-500 text-center mt-3 leading-relaxed">
+              By continuing with Google, you agree to our{' '}
+              <a 
+                href="/terms" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-maasta-purple hover:text-maasta-purple/80 underline"
+              >
+                Terms & Conditions
+              </a>
+              {' '}and{' '}
+              <a 
+                href="/privacy" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-maasta-purple hover:text-maasta-purple/80 underline"
+              >
+                Privacy Policy
+              </a>
+              .
+            </div>
           </div>
           
           <div className="text-sm text-center mt-2">
