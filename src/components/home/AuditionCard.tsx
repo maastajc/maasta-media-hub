@@ -1,145 +1,175 @@
 
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, MapPinIcon, ClockIcon, DollarSignIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  MapPin, 
+  Calendar, 
+  Clock, 
+  DollarSign, 
+  Users, 
+  ExternalLink,
+  Send
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
 interface AuditionCardProps {
   audition: {
     id: string;
-    audition_number?: number;
     title: string;
-    category: string;
-    location: string;
-    deadline?: string;
-    audition_date?: string;
-    compensation?: string;
     description?: string;
-    created_at: string;
-    profiles?: {
-      full_name: string;
-      profile_picture_url?: string;
-      verified?: boolean;
-    };
+    category?: string;
+    location?: string;
+    audition_date?: string;
+    deadline?: string;
+    compensation?: string;
+    experience_level?: string;
+    age_range?: string;
+    gender?: string;
+    created_at?: string;
+    creator_id?: string;
+    status?: string;
   };
 }
 
-const AuditionCard = ({ audition }: AuditionCardProps) => {
-  const auditionUrl = audition.audition_number 
-    ? `/auditions/${audition.audition_number}` 
-    : `/auditions/${audition.id}`;
+export const AuditionCard = ({ audition }: AuditionCardProps) => {
+  const navigate = useNavigate();
 
-  const formatDate = (dateString: string) => {
-    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+  const handleViewDetails = () => {
+    navigate(`/auditions/${audition.id}`);
   };
 
-  const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+  const isDeadlineSoon = () => {
+    if (!audition.deadline) return false;
+    const deadline = new Date(audition.deadline);
+    const now = new Date();
+    const diffInDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return diffInDays <= 3 && diffInDays >= 0;
+  };
+
+  const isExpired = () => {
+    if (!audition.deadline) return false;
+    const deadline = new Date(audition.deadline);
+    const now = new Date();
+    return deadline < now;
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-gray-200">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              {audition.audition_number && (
-                <Badge variant="secondary" className="text-xs">
-                  #{audition.audition_number}
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-xs">
-                {audition.category}
-              </Badge>
-            </div>
-            <h3 className="font-semibold text-lg leading-tight text-gray-900 line-clamp-2">
-              {audition.title}
-            </h3>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0 space-y-4">
-        {/* Location and Dates */}
-        <div className="space-y-2 text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="w-4 h-4 flex-shrink-0" />
-            <span className="line-clamp-1">{audition.location}</span>
-          </div>
-          
-          {audition.audition_date && (
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-              <span>Audition: {new Date(audition.audition_date).toLocaleDateString()}</span>
-            </div>
-          )}
-          
-          {audition.deadline && (
-            <div className="flex items-center gap-2">
-              <ClockIcon className="w-4 h-4 flex-shrink-0" />
-              <span>Deadline: {new Date(audition.deadline).toLocaleDateString()}</span>
-            </div>
-          )}
-          
-          {audition.compensation && (
-            <div className="flex items-center gap-2">
-              <DollarSignIcon className="w-4 h-4 flex-shrink-0 text-green-600" />
-              <span className="text-green-700 font-medium">{audition.compensation}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Description Preview */}
-        {audition.description && (
-          <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-            {truncateText(audition.description, 120)}
-          </p>
-        )}
-
-        {/* Posted By */}
-        {audition.profiles && (
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                {audition.profiles.profile_picture_url ? (
-                  <img 
-                    src={audition.profiles.profile_picture_url} 
-                    alt={audition.profiles.full_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs text-gray-600 font-medium">
-                    {audition.profiles.full_name.charAt(0)}
-                  </span>
+    <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-maasta-orange/30 h-full">
+      <CardContent className="p-0 h-full flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-100 flex-1">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0 pr-3">
+              <h3 className="font-semibold text-lg text-gray-900 line-clamp-2 mb-2">
+                {audition.title}
+              </h3>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                {audition.category && (
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-maasta-orange/10 text-maasta-orange border-maasta-orange/20"
+                  >
+                    {audition.category.charAt(0).toUpperCase() + audition.category.slice(1)}
+                  </Badge>
+                )}
+                
+                {audition.experience_level && (
+                  <Badge variant="outline" className="text-xs">
+                    {audition.experience_level.charAt(0).toUpperCase() + audition.experience_level.slice(1)}
+                  </Badge>
+                )}
+                
+                {isDeadlineSoon() && (
+                  <Badge variant="destructive" className="text-xs bg-red-500">
+                    Deadline Soon
+                  </Badge>
+                )}
+                
+                {isExpired() && (
+                  <Badge variant="secondary" className="text-xs bg-gray-400 text-white">
+                    Expired
+                  </Badge>
                 )}
               </div>
-              <div>
-                <p className="text-xs text-gray-600 flex items-center gap-1">
-                  by {audition.profiles.full_name}
-                  {audition.profiles.verified && (
-                    <span className="text-blue-500">✓</span>
-                  )}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {formatDate(audition.created_at)}
-                </p>
-              </div>
             </div>
           </div>
-        )}
 
-        {/* Action Button */}
-        <Link to={auditionUrl} className="block">
-          <Button className="w-full bg-maasta-orange hover:bg-maasta-orange/90 text-white">
-            View Details
-          </Button>
-        </Link>
+          {/* Description */}
+          {audition.description && (
+            <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+              {audition.description}
+            </p>
+          )}
+
+          {/* Details */}
+          <div className="space-y-2 mb-4">
+            {audition.location && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <MapPin className="h-4 w-4 text-maasta-orange flex-shrink-0" />
+                <span className="truncate">{audition.location}</span>
+              </div>
+            )}
+
+            {audition.audition_date && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar className="h-4 w-4 text-maasta-orange flex-shrink-0" />
+                <span>{new Date(audition.audition_date).toLocaleDateString()}</span>
+              </div>
+            )}
+
+            {audition.deadline && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4 text-maasta-orange flex-shrink-0" />
+                <span>
+                  Apply by {formatDistanceToNow(new Date(audition.deadline), { addSuffix: true })}
+                </span>
+              </div>
+            )}
+
+            {audition.compensation && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <DollarSign className="h-4 w-4 text-maasta-orange flex-shrink-0" />
+                <span className="truncate">{audition.compensation}</span>
+              </div>
+            )}
+
+            {(audition.age_range || audition.gender) && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users className="h-4 w-4 text-maasta-orange flex-shrink-0" />
+                <span className="truncate">
+                  {[audition.age_range, audition.gender].filter(Boolean).join(', ')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons - Always at bottom */}
+        <div className="p-4 pt-0 mt-auto">
+          <div className="flex gap-2">
+            <Button
+              onClick={handleViewDetails}
+              variant="outline"
+              className="flex-1 border-maasta-orange text-maasta-orange hover:bg-maasta-orange hover:text-white transition-colors"
+              disabled={isExpired()}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Details
+            </Button>
+            <Button
+              onClick={handleViewDetails}
+              className="flex-1 bg-maasta-orange hover:bg-maasta-orange/90 text-white transition-colors"
+              disabled={isExpired()}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Apply
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
 };
-
-export default AuditionCard;

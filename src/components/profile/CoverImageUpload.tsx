@@ -149,7 +149,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
       )}
 
       {/* Overlay gradient for better button visibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 to-transparent" />
 
       {/* Upload/Edit Button Overlay */}
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -161,9 +161,9 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
           className="bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg border-0 h-10 w-10 p-0 rounded-full"
         >
           {isUploading ? (
-            <Upload size={16} className="animate-spin text-gray-700" />
+            <Upload size={16} className="animate-spin text-maasta-orange" />
           ) : (
-            <Plus size={16} className="text-gray-700" />
+            <Plus size={16} className="text-maasta-orange" />
           )}
         </Button>
       </div>
@@ -178,7 +178,7 @@ const CoverImageUpload = ({ currentImageUrl, onImageUpdate, userId }: CoverImage
             disabled={isUploading}
             className="bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg border-0 h-10 w-10 p-0 rounded-full"
           >
-            <X size={16} className="text-gray-700" />
+            <X size={16} className="text-red-500" />
           </Button>
         </div>
       )}
