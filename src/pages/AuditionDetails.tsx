@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,17 +11,23 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AlertCircle, ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import AuditionApplicationDialog from "@/components/auditions/AuditionApplicationDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AuditionDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
 
-  // Handle special routes like "create"
+  // Handle special routes like "create" - redirect immediately
+  useEffect(() => {
+    if (id === 'create') {
+      navigate('/create-audition', { replace: true });
+      return;
+    }
+  }, [id, navigate]);
+
+  // Don't render anything if this is the create route
   if (id === 'create') {
-    // Redirect to create audition page or handle appropriately
-    navigate('/auditions/create');
     return null;
   }
 

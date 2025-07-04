@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUpload } from "@/components/ui/file-upload";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Camera, Video, Trash2, Eye } from "lucide-react";
+import { Upload, Camera, Video, Trash2, Eye, Plus } from "lucide-react";
 
 interface MediaUploadSectionProps {
   profileData: any;
@@ -127,26 +128,34 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Photo Upload */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Camera className="mr-2 text-maasta-orange" size={24} />
-              Photos ({photos.length}/3)
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Camera className="mr-2 text-maasta-orange" size={20} />
+              Photos ({photos.length}/4)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {photos.length < 3 ? (
-              <FileUpload
-                onFileUpload={(file) => uploadFile(file, false)}
-                acceptedTypes="image/*"
-                maxSizeMB={5}
-                isLoading={isUploading}
-                buttonText="Upload Photo"
-              />
+          <CardContent className="pt-0">
+            {photos.length < 4 ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <div className="p-2 bg-gray-100 rounded-full">
+                    <Plus className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <FileUpload
+                    onFileUpload={(file) => uploadFile(file, false)}
+                    acceptedTypes="image/*"
+                    maxSizeMB={5}
+                    isLoading={isUploading}
+                    buttonText="Upload Photos"
+                    className="w-full"
+                  />
+                </div>
+              </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Photo limit reached (3/3)</p>
-                <p className="text-sm">Delete a photo to upload a new one</p>
+              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Photo limit reached (4/4)</p>
+                <p className="text-xs">Delete a photo to upload a new one</p>
               </div>
             )}
           </CardContent>
@@ -154,26 +163,34 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
         {/* Video Upload */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Video className="mr-2 text-maasta-purple" size={24} />
-              Videos ({videos.length}/3)
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Video className="mr-2 text-maasta-purple" size={20} />
+              Videos ({videos.length}/4)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {videos.length < 3 ? (
-              <FileUpload
-                onFileUpload={(file) => uploadFile(file, true)}
-                acceptedTypes="video/*"
-                maxSizeMB={50}
-                isLoading={isUploading}
-                buttonText="Upload Video"
-              />
+          <CardContent className="pt-0">
+            {videos.length < 4 ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <div className="p-2 bg-gray-100 rounded-full">
+                    <Plus className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <FileUpload
+                    onFileUpload={(file) => uploadFile(file, true)}
+                    acceptedTypes="video/*"
+                    maxSizeMB={50}
+                    isLoading={isUploading}
+                    buttonText="Upload Videos"
+                    className="w-full"
+                  />
+                </div>
+              </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Video limit reached (3/3)</p>
-                <p className="text-sm">Delete a video to upload a new one</p>
+              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                <Video className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Video limit reached (4/4)</p>
+                <p className="text-xs">Delete a video to upload a new one</p>
               </div>
             )}
           </CardContent>
@@ -190,7 +207,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                 <Camera className="mr-2" size={20} />
                 Photos ({photos.length})
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {photos.map((photo: any) => (
                   <Card key={photo.id} className="group relative overflow-hidden">
                     <div className="aspect-square relative">
@@ -224,16 +241,16 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             </div>
           )}
 
-          {/* Videos Grid */}
+          {/* Videos Horizontal Scroll */}
           {videos.length > 0 && (
             <div>
               <h3 className="text-xl font-semibold mb-4 flex items-center">
                 <Video className="mr-2" size={20} />
                 Videos ({videos.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex overflow-x-auto gap-4 pb-4">
                 {videos.map((video: any) => (
-                  <Card key={video.id} className="group relative overflow-hidden">
+                  <Card key={video.id} className="group relative overflow-hidden flex-shrink-0 w-80">
                     <div className="aspect-video relative">
                       <video
                         src={video.url}

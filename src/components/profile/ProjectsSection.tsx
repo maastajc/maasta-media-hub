@@ -1,239 +1,194 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Edit, Plus, ExternalLink, Calendar, User } from "lucide-react";
+import { useProfileSections } from "@/hooks/useProfileSections";
 import { Project } from "@/types/artist";
 import ProjectFormDialog from "./ProjectFormDialog";
+import { toast } from "sonner";
 
 interface ProjectsSectionProps {
-  projects: Project[];
+  profileData: any;
   onUpdate: () => void;
-  canEdit?: boolean;
   userId?: string;
+  isOwnProfile?: boolean;
 }
 
-const ProjectsSection = ({ projects, onUpdate, canEdit = false, userId }: ProjectsSectionProps) => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
+const ProjectsSection = ({ profileData, onUpdate, userId, isOwnProfile = false }: ProjectsSectionProps) => {
+  const [showFormDialog, setShowFormDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const { deleteProject, isDeleting } = useProfileSections(userId);
+
+  const projects = profileData?.projects || [];
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project);
+    setShowFormDialog(true);
+  };
+
+  const handleDelete = async (projectId: string) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    
+    try {
+      await deleteProject(projectId);
+      onUpdate();
+      toast.success('Project deleted successfully');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
+    }
+  };
+
+  const handleAddNew = () => {
+    setEditingProject(null);
+    setShowFormDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setShowFormDialog(false);
+    setEditingProject(null);
+  };
+
+  const handleSuccess = () => {
+    onUpdate();
+    handleCloseDialog();
+    toast.success(editingProject ? 'Project updated successfully' : 'Project added successfully');
+  };
 
   const formatProjectType = (type: string) => {
     return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const handleEditProject = (project: Project) => {
-    setEditingProject(project);
-  };
-
-  const handleCloseDialog = () => {
-    setShowAddDialog(false);
-    setEditingProject(null);
-  };
-
-  const handleSuccess = () => {
-    handleCloseDialog();
-    onUpdate();
-  };
-
-  const scrollLeft = () => {
-    const container = document.getElementById('projects-scroll-container');
-    if (container) {
-      container.scrollBy({ left: -320, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    const container = document.getElementById('projects-scroll-container');
-    if (container) {
-      container.scrollBy({ left: 320, behavior: 'smooth' });
-    }
-  };
-
-  if (!projects || projects.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-lg">🎬</span>
-            Projects
-          </CardTitle>
-          {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddDialog(true)}
-              className="h-8 px-2"
-            >
-              <Plus size={16} />
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <p>No projects added yet.</p>
-            {canEdit && (
-              <Button
-                variant="outline"
-                onClick={() => setShowAddDialog(true)}
-                className="mt-3"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Project
-              </Button>
-            )}
-          </div>
-        </CardContent>
-        
-        {/* Add Project Dialog */}
-        {canEdit && (
-          <ProjectFormDialog
-            open={showAddDialog || !!editingProject}
-            onClose={handleCloseDialog}
-            onSuccess={handleSuccess}
-            project={editingProject}
-            userId={userId}
-          />
-        )}
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <span className="text-lg">🎬</span>
-          Projects ({projects.length})
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {projects.length > 3 && (
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={scrollLeft}
-                className="h-8 w-8 p-0"
-              >
-                <ChevronLeft size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={scrollRight}
-                className="h-8 w-8 p-0"
-              >
-                <ChevronRight size={16} />
-              </Button>
-            </div>
-          )}
-          {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddDialog(true)}
-              className="h-8 px-2"
-            >
+    <Card className="min-h-[500px]">
+      <CardHeader className="pb-6">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-2xl">Projects ({projects.length})</CardTitle>
+          {isOwnProfile && (
+            <Button onClick={handleAddNew} size="sm" className="flex items-center gap-2">
               <Plus size={16} />
+              Add Project
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <div 
-            id="projects-scroll-container"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
-          >
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="flex-shrink-0 w-80 border rounded-lg p-4 hover:bg-gray-50 transition-colors bg-white"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h3 className="font-semibold text-lg truncate">{project.project_name}</h3>
-                      <Badge variant="outline" className="text-xs flex-shrink-0">
-                        {formatProjectType(project.project_type)}
-                      </Badge>
-                      {project.year_of_release && (
-                        <Badge variant="secondary" className="text-xs flex-shrink-0">
-                          {project.year_of_release}
+      <CardContent className="pt-0 space-y-6 min-h-[400px]">
+        {projects.length > 0 ? (
+          <div className="grid gap-6">
+            {projects.map((project: Project) => (
+              <Card key={project.id} className="border-l-4 border-l-maasta-orange">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-semibold">{project.project_name}</h3>
+                        {project.link && (
+                          <a
+                            href={project.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-maasta-purple hover:text-maasta-purple/80"
+                          >
+                            <ExternalLink size={18} />
+                          </a>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Badge variant="secondary">
+                          {formatProjectType(project.project_type)}
                         </Badge>
-                      )}
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <User size={12} />
+                          {project.role_in_project}
+                        </Badge>
+                        {project.year_of_release && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Calendar size={12} />
+                            {project.year_of_release}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Role: <span className="font-medium">{project.role_in_project}</span>
-                    </p>
-                    {project.description && (
-                      <p className="text-sm text-gray-700 mb-3 leading-relaxed line-clamp-3">
-                        {project.description}
-                      </p>
+                    
+                    {isOwnProfile && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(project)}
+                          className="text-gray-600 hover:text-maasta-purple"
+                        >
+                          <Edit size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(project.id)}
+                          disabled={isDeleting}
+                          className="text-gray-600 hover:text-red-600"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     )}
                   </div>
-                  {canEdit && (
-                    <div className="flex gap-1 flex-shrink-0 ml-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditProject(project)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit2 size={14} />
-                      </Button>
-                    </div>
-                  )}
-                </div>
 
-                <div className="space-y-2 text-sm">
-                  {project.director_producer && (
-                    <div>
-                      <span className="text-gray-500">Director/Producer:</span>
-                      <span className="ml-2 font-medium truncate block">{project.director_producer}</span>
-                    </div>
+                  {project.description && (
+                    <p className="text-gray-700 mb-4 leading-relaxed">
+                      {project.description}
+                    </p>
                   )}
-                  {project.streaming_platform && (
-                    <div>
-                      <span className="text-gray-500">Platform:</span>
-                      <span className="ml-2 font-medium truncate block">{project.streaming_platform}</span>
-                    </div>
-                  )}
-                </div>
 
-                {project.link && (
-                  <div className="mt-3 pt-3 border-t">
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-maasta-orange hover:text-maasta-orange/80 transition-colors"
-                    >
-                      <ExternalLink size={14} />
-                      View Project
-                    </a>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                    {project.director_producer && (
+                      <div>
+                        <span className="font-medium">Director/Producer:</span>
+                        <p>{project.director_producer}</p>
+                      </div>
+                    )}
+                    {project.streaming_platform && (
+                      <div>
+                        <span className="font-medium">Platform:</span>
+                        <p>{project.streaming_platform}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
-      </CardContent>
-      
-      {/* Add/Edit Project Dialog */}
-      {canEdit && (
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <Plus className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
+            <p className="text-gray-600 mb-6">
+              {isOwnProfile 
+                ? "Showcase your work by adding your projects and achievements." 
+                : "This artist hasn't added any projects yet."
+              }
+            </p>
+            {isOwnProfile && (
+              <Button onClick={handleAddNew} className="flex items-center gap-2">
+                <Plus size={16} />
+                Add Your First Project
+              </Button>
+            )}
+          </div>
+        )}
+
         <ProjectFormDialog
-          open={showAddDialog || !!editingProject}
+          open={showFormDialog}
           onClose={handleCloseDialog}
           onSuccess={handleSuccess}
           project={editingProject}
           userId={userId}
         />
-      )}
+      </CardContent>
     </Card>
   );
 };
