@@ -35,7 +35,7 @@ function App() {
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/artists" element={<Artists />} />
-              <Route path="/artist/:id" element={<ArtistProfile />} />
+              <Route path="/artists/:username" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/auditions/create" element={<CreateAudition />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
