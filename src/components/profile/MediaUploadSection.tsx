@@ -25,25 +25,38 @@ interface MediaUploadSectionProps {
 
 const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectionProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const mediaAssets = profileData.media_assets || [];
   const videos = mediaAssets.filter(asset => asset.is_video);
   const images = mediaAssets.filter(asset => !asset.is_video);
 
-  const handleFileUpload = async (files: FileList) => {
+  const handleFileUpload = async (files: FileList, uploadType: 'image' | 'video') => {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     
     try {
       for (const file of Array.from(files)) {
-        // Validate file type
-        const isVideo = file.type.startsWith('video/');
-        const isImage = file.type.startsWith('image/');
+        const isVideo = uploadType === 'video';
+        const isImage = uploadType === 'image';
         
-        if (!isVideo && !isImage) {
-          toast.error(`${file.name} is not a valid image or video file`);
+        // Validate file type for videos
+        if (isVideo) {
+          const videoFormats = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/x-matroska'];
+          const fileExtension = file.name.toLowerCase().split('.').pop();
+          const validExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
+          
+          if (!videoFormats.includes(file.type) && !validExtensions.includes(fileExtension || '')) {
+            toast.error(`${file.name} is not a supported video format. Supported: MP4, MOV, WebM, AVI, MKV`);
+            continue;
+          }
+        }
+        
+        // Validate file type for images
+        if (isImage && !file.type.startsWith('image/')) {
+          toast.error(`${file.name} is not a valid image file`);
           continue;
         }
 
@@ -58,10 +71,10 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           continue;
         }
 
-        // Validate file size (50MB for videos, 10MB for images)
-        const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+        // Validate file size (100MB for videos, 10MB for images)
+        const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
         if (file.size > maxSize) {
-          toast.error(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
+          toast.error(`${file.name} is too large. Max size: ${isVideo ? '100MB' : '10MB'}`);
           continue;
         }
 
@@ -152,26 +165,47 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             {videos.length}/4 Videos • {images.length}/4 Images
           </Badge>
         </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || (!canUploadVideo && !canUploadImage)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Media
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isUploading || !canUploadImage}
+            className="flex items-center gap-2"
+          >
+            <ImageIcon className="w-4 h-4" />
+            Add Image
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={isUploading || !canUploadVideo}
+            className="flex items-center gap-2"
+          >
+            <Video className="w-4 h-4" />
+            Add Video
+          </Button>
+        </div>
       </CardHeader>
       
       <CardContent>
-        {/* Upload Input */}
+        {/* Upload Inputs */}
         <input
-          ref={fileInputRef}
+          ref={imageInputRef}
           type="file"
           multiple
-          accept="image/*,video/*"
-          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+          accept="image/*"
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'image')}
+          className="hidden"
+          disabled={isUploading}
+        />
+        <input
+          ref={videoInputRef}
+          type="file"
+          multiple
+          accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska,.mp4,.mov,.webm,.avi,.mkv"
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'video')}
           className="hidden"
           disabled={isUploading}
         />
@@ -181,7 +215,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           <h4 className="font-medium text-blue-900 mb-2">Upload Guidelines</h4>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Images: Max 10MB each, up to 4 files (JPG, PNG, WebP)</li>
-            <li>• Videos: Max 50MB each, up to 4 files (MP4, MOV, AVI)</li>
+            <li>• Videos: Max 100MB each, up to 4 files (MP4, MOV, WebM, AVI, MKV)</li>
             <li>• Recommended: High-quality portfolio pieces showcasing your work</li>
           </ul>
         </div>
@@ -193,9 +227,9 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
               <Video className="w-5 h-5 text-maasta-purple" />
               <h3 className="text-lg font-semibold">Videos ({videos.length}/4)</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {videos.map((video) => (
-                <div key={video.id} className="relative group">
+                <div key={video.id} className="relative group flex-shrink-0 w-80">
                   <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
                     <video
                       src={video.asset_url}
@@ -219,9 +253,9 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                     </Button>
                   </div>
                   {video.description && (
-                    <p className="text-sm text-gray-600 mt-2">{video.description}</p>
+                    <p className="text-sm text-gray-600 mt-2 truncate">{video.description}</p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">{video.file_name}</p>
+                  <p className="text-xs text-gray-500 mt-1 truncate">{video.file_name}</p>
                 </div>
               ))}
             </div>
@@ -277,14 +311,25 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             <p className="text-gray-600 mb-4">
               Showcase your work by uploading images and videos to your portfolio
             </p>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Upload Your First Media
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isUploading}
+                className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Upload Images
+              </Button>
+              <Button
+                onClick={() => videoInputRef.current?.click()}
+                disabled={isUploading}
+                variant="outline"
+                className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Upload Videos
+              </Button>
+            </div>
           </div>
         )}
 
