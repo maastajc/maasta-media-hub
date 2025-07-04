@@ -157,11 +157,14 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
 
   const mappedProjects: Project[] = Array.isArray(projects)
     ? projects.map(p => ({
-        ...p,
         id: p.id || crypto.randomUUID(),
         project_name: p.project_name || "",
         role_in_project: p.role_in_project || "",
         project_type: p.project_type || "other",
+        year_of_release: p.year_of_release,
+        director_producer: p.director_producer,
+        streaming_platform: p.streaming_platform,
+        link: p.link,
         artist_id: artistFromDb.id,
         user_id: artistFromDb.id
     }))
@@ -169,9 +172,11 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
 
   const mappedEducationTraining: Education[] = Array.isArray(education_training)
     ? education_training.map(e => ({
-        ...e,
         id: e.id || crypto.randomUUID(),
         qualification_name: e.qualification_name || "",
+        institution: e.institution,
+        year_completed: e.year_completed,
+        is_academic: e.is_academic,
         artist_id: artistFromDb.id,
         user_id: artistFromDb.id
     }))
@@ -185,8 +190,12 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
         asset_url: m.url || "",
         asset_type: m.file_type || "",
         file_size: m.file_size || 0,
+        description: m.description,
+        is_video: m.is_video,
+        is_embed: m.is_embed,
+        embed_source: m.embed_source,
         artist_id: artistFromDb.id,
-        user_id: m.user_id || artistFromDb.id
+        user_id: artistFromDb.id
     }))
     : [];
 
