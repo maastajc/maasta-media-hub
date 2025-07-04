@@ -14,11 +14,9 @@ import ArtistProfile from "./pages/ArtistProfile";
 import Auditions from "./pages/Auditions";
 import AuditionDetails from "./pages/AuditionDetails";
 import CreateAudition from "./pages/CreateAudition";
-import Events from "./pages/Events";
-import EventDetails from "./pages/EventDetails";
 import Dashboard from "./pages/Dashboard";
 import Networking from "./pages/Networking";
-import { ScrollToTop } from "./components/layout/ScrollToTop";
+import ScrollToTop from "./components/layout/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -41,8 +39,6 @@ function App() {
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
               <Route path="/create-audition" element={<CreateAudition />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/events/:id" element={<EventDetails />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/networking" element={<Networking />} />
             </Routes>

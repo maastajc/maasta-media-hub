@@ -607,10 +607,10 @@ const Profile = () => {
         <div id="section-projects" className="scroll-mt-24">
           <div className="max-h-96 overflow-y-auto">
             <ProjectsSection
-              projects={profileData.projects || []}
+              profileData={profileData}
               onUpdate={handleProfileUpdate}
-              canEdit={true}
               userId={user?.id}
+              isOwnProfile={true}
             />
           </div>
         </div>
