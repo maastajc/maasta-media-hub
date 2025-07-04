@@ -81,7 +81,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         // Upload to storage
         const fileName = `${userId}/${Date.now()}-${file.name}`;
         const { data, error: uploadError } = await supabase.storage
-          .from('media-assets')
+          .from('artist_media')
           .upload(fileName, file);
 
         if (uploadError) {
@@ -92,7 +92,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
-          .from('media-assets')
+          .from('artist_media')
           .getPublicUrl(data.path);
 
         // Save to database
@@ -165,26 +165,26 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             {videos.length}/4 Videos • {images.length}/4 Images
           </Badge>
         </CardTitle>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => imageInputRef.current?.click()}
             disabled={isUploading || !canUploadImage}
-            className="flex items-center gap-2"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <ImageIcon className="w-4 h-4" />
-            Add Image
+            <span className="truncate">Add Image</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => videoInputRef.current?.click()}
             disabled={isUploading || !canUploadVideo}
-            className="flex items-center gap-2"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <Video className="w-4 h-4" />
-            Add Video
+            <span className="truncate">Add Video</span>
           </Button>
         </div>
       </CardHeader>
@@ -227,7 +227,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
               <Video className="w-5 h-5 text-maasta-purple" />
               <h3 className="text-lg font-semibold">Videos ({videos.length}/4)</h3>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
               {videos.map((video) => (
                 <div key={video.id} className="relative group flex-shrink-0 w-80">
                   <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
@@ -311,11 +311,11 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             <p className="text-gray-600 mb-4">
               Showcase your work by uploading images and videos to your portfolio
             </p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
               <Button
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isUploading}
-                className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                className="bg-maasta-orange hover:bg-maasta-orange/90 text-white w-full sm:w-auto"
               >
                 <ImageIcon className="w-4 h-4 mr-2" />
                 Upload Images
@@ -324,7 +324,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                 onClick={() => videoInputRef.current?.click()}
                 disabled={isUploading}
                 variant="outline"
-                className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white"
+                className="border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white w-full sm:w-auto"
               >
                 <Video className="w-4 h-4 mr-2" />
                 Upload Videos
