@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
       console.log("Media:", artist.media_assets);
       console.log("Languages:", artist.language_skills);
       console.log("Tools:", artist.tools_software);
+      console.log("Awards:", artist.awards);
     }
   }, [artist]);
 
@@ -96,7 +96,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                         {video.is_embed ? (
                           <div className="aspect-video">
                             <iframe
-                              src={video.asset_url}
+                              src={video.url}
                               className="w-full h-full rounded-lg"
                               allowFullScreen
                               title={video.description || video.file_name}
@@ -104,7 +104,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                           </div>
                         ) : (
                           <video
-                            src={video.asset_url}
+                            src={video.url}
                             controls
                             className="w-full aspect-video rounded-lg object-cover"
                             title={video.description || video.file_name}
@@ -126,7 +126,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
                     {images.map((image) => (
                       <div key={image.id} className="group">
                         <img
-                          src={image.asset_url}
+                          src={image.url}
                           alt={image.description || image.file_name}
                           className="w-full aspect-square object-cover rounded-lg group-hover:opacity-80 transition-opacity"
                         />
@@ -145,7 +145,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     );
   };
 
-  const renderPortfolioLinks = () => {
+  const renderSocialLinks = () => {
     const customLinks = artist.custom_links || [];
     const allLinks = [...socialLinks, ...customLinks.map(link => ({
       icon: ExternalLink,
@@ -158,14 +158,14 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-maasta-purple" />
-            Portfolio Links
+            Social Links
             {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
           </CardTitle>
           {isOwnProfile && (
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => handleEditClick('portfolio-links')}
+              onClick={() => handleEditClick('social-links')}
               className="flex items-center gap-2"
             >
               <Edit className="w-4 h-4" />
@@ -175,7 +175,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
         </CardHeader>
         <CardContent>
           {allLinks.length === 0 ? (
-            <div className="italic text-gray-400">No portfolio links provided.</div>
+            <div className="italic text-gray-400">No social links provided.</div>
           ) : (
             <div className="flex flex-wrap gap-4">
               {allLinks.map((link, index) => {
@@ -269,6 +269,63 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     );
   };
 
+  const renderAwards = () => {
+    const awards = artist.awards || [];
+    return (
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-maasta-purple" />
+            Awards & Achievements
+            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
+          </CardTitle>
+          {isOwnProfile && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditClick('awards')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {awards.length === 0 ? (
+            <div className="italic text-gray-400">No awards or achievements listed.</div>
+          ) : (
+            <div className="space-y-4">
+              {awards.map((award: any) => (
+                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{award.title}</h4>
+                      {award.organization && (
+                        <p className="text-maasta-orange font-medium">{award.organization}</p>
+                      )}
+                      {award.description && (
+                        <p className="text-gray-600 mt-1">{award.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {award.year && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {award.year}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderSkills = () => {
     const skills = artist.special_skills || [];
     return (
@@ -298,7 +355,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <Badge key={skill.id} variant="secondary" className="px-3 py-1">
-                  {skill.skill_name}
+                  {skill.skill}
                 </Badge>
               ))}
             </div>
@@ -395,7 +452,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {languages.map((lang) => (
                 <div key={lang.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{lang.language_name}</span>
+                  <span className="font-medium">{lang.language}</span>
                   <Badge variant="outline" className="capitalize">
                     {lang.proficiency}
                   </Badge>
@@ -447,68 +504,26 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
     );
   };
 
-  const renderAwards = () => {
-    const awards = artist.awards || [];
-    return (
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-maasta-purple" />
-            Awards & Achievements
-            {isOwnProfile && <Edit className="w-4 h-4 text-gray-400" />}
-          </CardTitle>
-          {isOwnProfile && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditClick('awards')}
-              className="flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {awards.length === 0 ? (
-            <div className="italic text-gray-400">No awards or achievements listed.</div>
-          ) : (
-            <div className="space-y-4">
-              {awards.map((award: any) => (
-                <div key={award.id} className="border-l-4 border-maasta-purple pl-4 py-3 bg-white rounded-lg border border-gray-200">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{award.award_name}</h4>
-                      {award.awarding_organization && (
-                        <p className="text-maasta-orange font-medium">{award.awarding_organization}</p>
-                      )}
-                      {award.description && (
-                        <p className="text-gray-600 mt-1">{award.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {award.year && (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {award.year}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div className="space-y-0">
       {renderMediaSection()}
-      {renderPortfolioLinks()}
-      {renderProjects()}
+      
+      {/* Desktop: Projects and Social Links side by side */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-6 mb-8">
+        <div className="md:col-span-2">
+          {renderProjects()}
+        </div>
+        <div className="md:col-span-1">
+          {renderSocialLinks()}
+        </div>
+      </div>
+      
+      {/* Mobile: Projects first, then Social Links */}
+      <div className="md:hidden">
+        {renderProjects()}
+        {renderSocialLinks()}
+      </div>
+      
       {renderAwards()}
       {renderSkills()}
       {renderEducation()}

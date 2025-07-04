@@ -341,7 +341,6 @@ const Profile = () => {
         </div>
       </div>
 
-
       {/* Fixed Navigation Tabs - Updated order */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4">
@@ -498,14 +497,13 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
-
             </div>
           </div>
         </div>
 
         {/* Media Section */}
         <div id="section-media" className="scroll-mt-24">
-          <MediaSection 
+          <MediaUploadSection 
             profileData={profileData} 
             onUpdate={handleProfileUpdate}
             userId={user?.id || ""}
@@ -637,8 +635,9 @@ const Profile = () => {
           />
         </div>
 
-        {/* Awards Section */}
+        {/* Awards Section - Fixed to render properly */}
         <div id="section-awards" className="scroll-mt-24">
+          {console.log('Awards data in Profile:', profileData?.awards)}
           <AwardsSection 
             profileData={profileData}
             onUpdate={handleProfileUpdate}

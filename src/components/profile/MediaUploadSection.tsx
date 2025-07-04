@@ -3,9 +3,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileUpload } from "@/components/ui/file-upload";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Camera, Video, Trash2, Eye, Plus } from "lucide-react";
+import { Camera, Video, Trash2, Eye, Plus } from "lucide-react";
 
 interface MediaUploadSectionProps {
   profileData: any;
@@ -16,8 +15,6 @@ interface MediaUploadSectionProps {
 const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectionProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const [photoFileInput, setPhotoFileInput] = useState<HTMLInputElement | null>(null);
-  const [videoFileInput, setVideoFileInput] = useState<HTMLInputElement | null>(null);
 
   const mediaAssets = profileData?.media_assets || [];
   const photos = mediaAssets.filter((asset: any) => !asset.is_video);
@@ -28,6 +25,17 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       toast({
         title: "Error",
         description: "User not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check limits before upload
+    const currentCount = isVideo ? videos.length : photos.length;
+    if (currentCount >= 4) {
+      toast({
+        title: "Upload limit reached",
+        description: `You can only upload up to 4 ${isVideo ? 'videos' : 'photos'}`,
         variant: "destructive",
       });
       return;
@@ -120,6 +128,19 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     }
   };
 
+  const handleFileSelect = (isVideo: boolean) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = isVideo ? 'video/*' : 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        uploadFile(file, isVideo);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -141,7 +162,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                   size="sm"
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-gray-100"
-                  onClick={() => photoFileInput?.click()}
+                  onClick={() => handleFileSelect(false)}
+                  disabled={isUploading}
                 >
                   <Plus size={16} className="text-gray-500" />
                 </Button>
@@ -149,19 +171,6 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <input
-              type="file"
-              ref={setPhotoFileInput}
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  uploadFile(file, false);
-                  e.target.value = '';
-                }
-              }}
-              className="hidden"
-            />
             {photos.length >= 4 && (
               <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                 <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -185,7 +194,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                   size="sm"
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-gray-100"
-                  onClick={() => videoFileInput?.click()}
+                  onClick={() => handleFileSelect(true)}
+                  disabled={isUploading}
                 >
                   <Plus size={16} className="text-gray-500" />
                 </Button>
@@ -193,19 +203,6 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <input
-              type="file"
-              ref={setVideoFileInput}
-              accept="video/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  uploadFile(file, true);
-                  e.target.value = '';
-                }
-              }}
-              className="hidden"
-            />
             {videos.length >= 4 && (
               <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                 <Video className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -235,6 +232,10 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                         src={photo.url}
                         alt={photo.description || photo.file_name}
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        onError={(e) => {
+                          console.error('Image failed to load:', photo.url);
+                          (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                        }}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-2">
@@ -254,6 +255,9 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                           </button>
                         </div>
                       </div>
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs text-gray-600 truncate">{photo.file_name}</p>
                     </div>
                   </Card>
                 ))}
@@ -276,6 +280,10 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                         src={video.url}
                         className="w-full h-full object-cover"
                         controls
+                        preload="metadata"
+                        onError={(e) => {
+                          console.error('Video failed to load:', video.url);
+                        }}
                       />
                       <button
                         onClick={() => handleDelete(video.id, video.file_name, true)}
@@ -283,6 +291,9 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                       >
                         <Trash2 size={16} />
                       </button>
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs text-gray-600 truncate">{video.file_name}</p>
                     </div>
                   </Card>
                 ))}
@@ -295,9 +306,30 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       {mediaAssets.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
-            <Upload className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <div className="flex justify-center gap-4 mb-4">
+              <Camera className="w-16 h-16 text-gray-400" />
+              <Video className="w-16 h-16 text-gray-400" />
+            </div>
             <h3 className="text-lg font-medium mb-2">No media assets yet</h3>
-            <p className="text-gray-600">Start building your portfolio by uploading photos and videos</p>
+            <p className="text-gray-600 mb-4">Start building your portfolio by uploading photos and videos</p>
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={() => handleFileSelect(false)}
+                className="bg-maasta-orange hover:bg-maasta-orange/90"
+                disabled={isUploading}
+              >
+                <Camera className="mr-2" size={16} />
+                Upload Photos
+              </Button>
+              <Button
+                onClick={() => handleFileSelect(true)}
+                className="bg-maasta-purple hover:bg-maasta-purple/90"
+                disabled={isUploading}
+              >
+                <Video className="mr-2" size={16} />
+                Upload Videos
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
