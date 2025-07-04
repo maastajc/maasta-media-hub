@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -136,7 +135,7 @@ export const SignUpForm = () => {
             full_name: fullName,
             username: username,
             role,
-            phone_number: `+91${phoneNumber}`,
+            phone_number: `+91${phoneNumber}`, // Auto-prepend +91
           },
           emailRedirectTo: `${window.location.origin}/complete-profile`
         }
@@ -160,6 +159,7 @@ export const SignUpForm = () => {
     try {
       setIsLoading(true);
       
+      // Use the current domain instead of localhost for redirect
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
         ? 'https://preview--maasta-media-hub.lovable.app/complete-profile'
@@ -186,42 +186,40 @@ export const SignUpForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg bg-white/80 backdrop-blur-sm">
-      <CardHeader className="text-center pb-6">
-        <CardTitle className="text-2xl font-semibold text-gray-800">Sign Up</CardTitle>
-        <CardDescription className="text-gray-600">Create a new account to join Maasta</CardDescription>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Sign Up</CardTitle>
+        <CardDescription>Create a new account to join Maasta</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-gray-700 font-medium">Full Name</Label>
+            <Label htmlFor="fullName">Full Name</Label>
             <Input
               id="fullName"
               placeholder="Your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="h-12 rounded-lg border-gray-300"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               placeholder="lowercase_username_only"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
               required
-              className="h-12 rounded-lg border-gray-300"
             />
             {usernameError && <p className="text-sm text-red-500">{usernameError}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phoneNumber" className="text-gray-700 font-medium">Phone Number</Label>
+            <Label htmlFor="phoneNumber">Phone Number</Label>
             <div className="flex">
-              <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-lg">
+              <div className="flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md">
                 <span className="text-sm text-gray-600">+91</span>
               </div>
               <Input
@@ -229,12 +227,12 @@ export const SignUpForm = () => {
                 placeholder="Enter 10-digit phone number"
                 value={phoneNumber}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
+                  const value = e.target.value.replace(/\D/g, ''); // Only allow digits
                   if (value.length <= 10) {
                     setPhoneNumber(value);
                   }
                 }}
-                className="rounded-l-none rounded-r-lg h-12"
+                className="rounded-l-none"
                 required
               />
             </div>
@@ -242,7 +240,7 @@ export const SignUpForm = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -250,14 +248,13 @@ export const SignUpForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-12 rounded-lg border-gray-300"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-gray-700 font-medium">I am a</Label>
+            <Label htmlFor="role">I am a</Label>
             <Select value={role} onValueChange={setRole}>
-              <SelectTrigger id="role" className="h-12 rounded-lg border-gray-300">
+              <SelectTrigger id="role">
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
               <SelectContent>
@@ -269,7 +266,7 @@ export const SignUpForm = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
@@ -277,12 +274,11 @@ export const SignUpForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-12 rounded-lg border-gray-300"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -290,7 +286,6 @@ export const SignUpForm = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="h-12 rounded-lg border-gray-300"
             />
             {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
           </div>
@@ -301,7 +296,7 @@ export const SignUpForm = () => {
               href="/terms" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-orange-500 hover:text-orange-600 underline"
+              className="text-maasta-purple hover:text-maasta-purple/80 underline"
             >
               Terms & Conditions
             </a>
@@ -310,7 +305,7 @@ export const SignUpForm = () => {
               href="/privacy" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-orange-500 hover:text-orange-600 underline"
+              className="text-maasta-purple hover:text-maasta-purple/80 underline"
             >
               Privacy Policy
             </a>
@@ -318,29 +313,25 @@ export const SignUpForm = () => {
           </div>
         </CardContent>
         
-        <CardFooter className="flex flex-col space-y-4 pt-2">
-          <Button 
-            type="submit" 
-            className="w-full h-12 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium shadow-md" 
-            disabled={isLoading}
-          >
+        <CardFooter className="flex flex-col space-y-4">
+          <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
           
           <div className="w-full">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300" />
+                <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
             
             <Button
               type="button"
               variant="outline"
-              className="w-full mt-4 h-12 rounded-lg border-gray-300 hover:bg-gray-50"
+              className="w-full mt-4"
               onClick={handleGoogleSignUp}
               disabled={isLoading}
             >
@@ -359,7 +350,7 @@ export const SignUpForm = () => {
                 href="/terms" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-orange-500 hover:text-orange-600 underline"
+                className="text-maasta-purple hover:text-maasta-purple/80 underline"
               >
                 Terms & Conditions
               </a>
@@ -368,7 +359,7 @@ export const SignUpForm = () => {
                 href="/privacy" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-orange-500 hover:text-orange-600 underline"
+                className="text-maasta-purple hover:text-maasta-purple/80 underline"
               >
                 Privacy Policy
               </a>
@@ -380,7 +371,7 @@ export const SignUpForm = () => {
             Already have an account?{' '}
             <Button 
               variant="link" 
-              className="p-0 text-orange-500 hover:text-orange-600" 
+              className="p-0" 
               onClick={() => navigate('/sign-in')}
             >
               Sign in

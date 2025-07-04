@@ -9,7 +9,6 @@ import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import CompleteProfile from "./pages/CompleteProfile";
-import BasicInformation from "./pages/BasicInformation";
 import Artists from "./pages/Artists";
 import ArtistProfile from "./pages/ArtistProfile";
 import Auditions from "./pages/Auditions";
@@ -35,7 +34,6 @@ function App() {
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
-              <Route path="/basic-information" element={<BasicInformation />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/artists/:username" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />

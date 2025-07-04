@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               if (isOAuthCallback || location.pathname === '/sign-in') {
                 setTimeout(() => {
                   if (isMounted) {
-                    navigate('/basic-information');
+                    navigate('/profile');
                   }
                 }, 100);
               }
@@ -176,7 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [navigate, location]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/basic-information`;
+    const redirectUrl = `${window.location.origin}/profile`;
     
     const { error } = await supabase.auth.signUp({
       email,
