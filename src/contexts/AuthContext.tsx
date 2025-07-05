@@ -3,13 +3,16 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { EmailVerificationPopup } from '@/components/auth/EmailVerificationPopup';
+import { getEmailVerificationStatus, sendVerificationEmail } from '@/services/emailVerificationService';
 
 interface UserProfile {
   id: string;
   full_name: string;
   email: string;
   role: string;
-  // Add other profile fields as needed
+  username?: string;
+  email_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -41,6 +44,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,9 +53,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role')
+        .select('id, full_name, email, role, username, email_verified')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -64,23 +69,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const checkEmailVerification = async (userId: string) => {
+    try {
+      const verificationStatus = await getEmailVerificationStatus();
+      if (verificationStatus && !verificationStatus.isVerified) {
+        // Only show popup on certain pages, not during authentication flow
+        const isAuthPage = ['/sign-in', '/sign-up', '/complete-profile', '/basic-information'].includes(location.pathname);
+        if (!isAuthPage) {
+          setShowEmailVerification(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking email verification:', error);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     
     console.log('Setting up auth state listener...');
     
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
         
         console.log('Auth event:', event, 'Session exists:', !!session);
         
-        // Synchronous state updates only
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer any async operations to prevent blocking
         if (session?.user && event !== 'TOKEN_REFRESHED') {
           setTimeout(async () => {
             if (!isMounted) return;
@@ -89,6 +106,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               const userProfile = await fetchProfile(session.user.id);
               if (isMounted) {
                 setProfile(userProfile);
+                
+                // Check email verification status after profile is loaded
+                if (userProfile && event === 'SIGNED_IN') {
+                  await checkEmailVerification(session.user.id);
+                }
               }
             } catch (error) {
               console.error('Error fetching profile after auth change:', error);
@@ -97,7 +119,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             }
             
-            // Handle navigation only for specific events
             if (event === 'SIGNED_IN' && isMounted) {
               const isOAuthCallback = location.pathname === '/' && 
                 (window.location.hash.includes('access_token') || 
@@ -114,9 +135,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }, 0);
         } else if (!session) {
           setProfile(null);
+          setShowEmailVerification(false);
         }
         
-        // Always set loading to false after processing auth state
         setTimeout(() => {
           if (isMounted) {
             setLoading(false);
@@ -125,7 +146,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
@@ -150,6 +170,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userProfile = await fetchProfile(existingSession.user.id);
             if (isMounted) {
               setProfile(userProfile);
+              // Check email verification on initial load
+              await checkEmailVerification(existingSession.user.id);
             }
           } catch (error) {
             console.error('Error fetching initial profile:', error);
@@ -205,9 +227,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await supabase.auth.signOut();
       setProfile(null);
+      setShowEmailVerification(false);
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setIsResendingEmail(true);
+    try {
+      await sendVerificationEmail();
+    } catch (error) {
+      console.error('Error resending email:', error);
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -224,7 +258,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      {user && (
+        <EmailVerificationPopup
+          open={showEmailVerification}
+          onClose={() => setShowEmailVerification(false)}
+          email={user.email || ''}
+          onResendEmail={handleResendEmail}
+          isResending={isResendingEmail}
+        />
+      )}
     </AuthContext.Provider>
   );
 };
-

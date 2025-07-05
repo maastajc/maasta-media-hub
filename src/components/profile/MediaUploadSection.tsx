@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Upload, 
   Image as ImageIcon, 
-  X, 
   Trash2,
   Plus
 } from "lucide-react";
@@ -27,86 +26,123 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
   const mediaAssets = profileData.media_assets || [];
   const images = mediaAssets.filter(asset => !asset.is_video);
 
+  const validateImageFile = (file: File): boolean => {
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error(`${file.name} is not a supported image format. Please use JPG, PNG, or WebP.`);
+      return false;
+    }
+
+    // Check file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`${file.name} is too large. Maximum file size is 10MB.`);
+      return false;
+    }
+
+    // Check image count limit
+    if (images.length >= 4) {
+      toast.error("You can upload a maximum of 4 images.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFileUpload = async (files: FileList) => {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     
     try {
-      for (const file of Array.from(files)) {
-        // Validate file type for images
-        if (!file.type.startsWith('image/')) {
-          toast.error(`${file.name} is not a valid image file`);
-          continue;
-        }
-
-        // Check limits
-        if (images.length >= 4) {
-          toast.error("Maximum 4 images allowed");
-          continue;
-        }
-
-        // Validate file size (10MB for images)
-        const maxSize = 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-          toast.error(`${file.name} is too large. Max size: 10MB`);
-          continue;
-        }
-
-        // Upload to storage
-        const fileName = `${userId}/${Date.now()}-${file.name}`;
-        const { data, error: uploadError } = await supabase.storage
-          .from('artist_media')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          toast.error(`Failed to upload ${file.name}`);
-          continue;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('artist_media')
-          .getPublicUrl(data.path);
-
-        // Save to database
-        const { error: dbError } = await supabase
-          .from('media_assets')
-          .insert({
-            user_id: userId,
-            artist_id: userId,
-            file_name: file.name,
-            file_type: file.type,
-            file_size: file.size,
-            url: publicUrl,
-            asset_url: publicUrl,
-            asset_type: file.type,
-            is_video: false,
-            is_embed: false
-          });
-
-        if (dbError) {
-          console.error('Database error:', dbError);
-          toast.error(`Failed to save ${file.name} information`);
-          continue;
-        }
-
-        toast.success(`${file.name} uploaded successfully`);
+      const validFiles = Array.from(files).filter(validateImageFile);
+      
+      if (validFiles.length === 0) {
+        setIsUploading(false);
+        return;
       }
 
+      // Check if adding these files would exceed the limit
+      if (images.length + validFiles.length > 4) {
+        toast.error(`You can only upload ${4 - images.length} more image(s).`);
+        setIsUploading(false);
+        return;
+      }
+
+      for (const file of validFiles) {
+        try {
+          // Upload to storage
+          const fileName = `${userId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('artist_media')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            toast.error(`Failed to upload ${file.name}: ${uploadError.message}`);
+            continue;
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('artist_media')
+            .getPublicUrl(uploadData.path);
+
+          // Save to database
+          const { error: dbError } = await supabase
+            .from('media_assets')
+            .insert({
+              user_id: userId,
+              artist_id: userId,
+              file_name: file.name,
+              file_type: file.type,
+              file_size: file.size,
+              url: publicUrl,
+              is_video: false,
+              is_embed: false,
+              description: null
+            });
+
+          if (dbError) {
+            console.error('Database error:', dbError);
+            toast.error(`Failed to save ${file.name} information: ${dbError.message}`);
+            
+            // Clean up uploaded file if database save fails
+            await supabase.storage
+              .from('artist_media')
+              .remove([uploadData.path]);
+            continue;
+          }
+
+          toast.success(`${file.name} uploaded successfully!`);
+        } catch (error) {
+          console.error('Upload error for file:', file.name, error);
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+
+      // Refresh the profile data
       onUpdate();
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload media files');
     } finally {
       setIsUploading(false);
+      // Clear the input
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
     }
   };
 
-  const handleDeleteMedia = async (mediaId: string, fileName: string) => {
+  const handleDeleteMedia = async (mediaId: string, fileName: string, url: string) => {
     try {
-      // Delete from database
+      // Delete from database first
       const { error: dbError } = await supabase
         .from('media_assets')
         .delete()
@@ -115,8 +151,29 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
       if (dbError) {
         console.error('Database delete error:', dbError);
-        toast.error('Failed to delete media');
+        toast.error('Failed to delete media from database');
         return;
+      }
+
+      // Extract file path from URL for storage deletion
+      try {
+        const urlParts = url.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'artist_media');
+        if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
+          const filePath = urlParts.slice(bucketIndex + 1).join('/');
+          
+          const { error: storageError } = await supabase.storage
+            .from('artist_media')
+            .remove([filePath]);
+          
+          if (storageError) {
+            console.warn('Storage delete warning:', storageError);
+            // Don't show error to user as database deletion succeeded
+          }
+        }
+      } catch (storageError) {
+        console.warn('Storage cleanup failed:', storageError);
+        // Don't show error to user as database deletion succeeded
       }
 
       toast.success(`${fileName} deleted successfully`);
@@ -133,7 +190,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     <Card className="mb-8">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5 text-maasta-orange" />
+          <Upload className="w-5 h-5 text-[#ff8200]" />
           Media Portfolio
           <Badge variant="outline" className="ml-2">
             {images.length}/4 Images
@@ -144,9 +201,9 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           size="sm"
           onClick={() => imageInputRef.current?.click()}
           disabled={isUploading || !canUploadImage}
-          className="flex items-center justify-center gap-2 border-maasta-orange text-maasta-orange hover:bg-maasta-orange hover:text-white"
+          className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
         >
-          <ImageIcon className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
           <span className="truncate">Add Image</span>
         </Button>
       </CardHeader>
@@ -157,7 +214,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           ref={imageInputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
           className="hidden"
           disabled={isUploading}
@@ -165,9 +222,10 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
         {/* Upload Guidelines */}
         <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-          <h4 className="font-medium text-maasta-orange mb-2">Upload Guidelines</h4>
+          <h4 className="font-medium text-[#ff8200] mb-2">Upload Guidelines</h4>
           <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Images: Max 10MB each, up to 4 files (JPG, PNG, WebP)</li>
+            <li>• Images: Max 10MB each, up to 4 files</li>
+            <li>• Supported formats: JPG, PNG, WebP</li>
             <li>• Recommended: High-quality portfolio pieces showcasing your work</li>
           </ul>
         </div>
@@ -176,7 +234,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         {images.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <ImageIcon className="w-5 h-5 text-maasta-orange" />
+              <ImageIcon className="w-5 h-5 text-[#ff8200]" />
               <h3 className="text-lg font-semibold">Images ({images.length}/4)</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -184,9 +242,13 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                 <div key={image.id} className="relative group">
                   <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
                     <img
-                      src={image.asset_url}
+                      src={image.asset_url || image.url}
                       alt={image.description || image.file_name}
                       className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.svg';
+                      }}
                     />
                     <div className="absolute top-2 left-2">
                       <Badge variant="secondary" className="bg-white/90 text-gray-700">
@@ -197,8 +259,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                     <Button
                       variant="destructive"
                       size="sm"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600"
-                      onClick={() => handleDeleteMedia(image.id, image.file_name)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 h-8 w-8 p-0 rounded-lg"
+                      onClick={() => handleDeleteMedia(image.id, image.file_name, image.asset_url || image.url)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -224,7 +286,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             <Button
               onClick={() => imageInputRef.current?.click()}
               disabled={isUploading}
-              className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+              className="bg-[#ff8200] hover:bg-[#ff8200]/90 text-white rounded-lg"
             >
               <ImageIcon className="w-4 h-4 mr-2" />
               Upload Images
@@ -236,8 +298,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         {isUploading && (
           <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <div className="flex items-center gap-2">
-              <Upload className="w-4 h-4 text-maasta-orange animate-spin" />
-              <span className="text-maasta-orange">Uploading images...</span>
+              <Upload className="w-4 h-4 text-[#ff8200] animate-spin" />
+              <span className="text-[#ff8200]">Uploading images...</span>
             </div>
           </div>
         )}
