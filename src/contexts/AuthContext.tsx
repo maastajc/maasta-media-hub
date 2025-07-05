@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session, AuthError } from '@supabase/supabase-js';
@@ -74,9 +75,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const verificationStatus = await getEmailVerificationStatus();
       if (verificationStatus && !verificationStatus.isVerified) {
-        // Only show popup on certain pages, not during authentication flow
-        const isAuthPage = ['/sign-in', '/sign-up', '/complete-profile', '/basic-information'].includes(location.pathname);
-        if (!isAuthPage) {
+        // Only show popup on sign up page specifically
+        if (location.pathname === '/sign-up') {
           setShowEmailVerification(true);
         }
       }
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               if (isMounted) {
                 setProfile(userProfile);
                 
-                // Check email verification status after profile is loaded
+                // Check email verification status only after signup
                 if (userProfile && event === 'SIGNED_IN') {
                   await checkEmailVerification(session.user.id);
                 }
@@ -171,8 +171,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userProfile = await fetchProfile(existingSession.user.id);
             if (isMounted) {
               setProfile(userProfile);
-              // Check email verification on initial load
-              await checkEmailVerification(existingSession.user.id);
+              // Don't check email verification on initial load
             }
           } catch (error) {
             console.error('Error fetching initial profile:', error);

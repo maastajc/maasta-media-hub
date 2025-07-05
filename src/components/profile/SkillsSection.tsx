@@ -44,7 +44,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
 
     try {
       setIsAddingSkill(true);
-      await saveSkill({ skill_name: newSkill.trim() });
+      await saveSkill({ skill: newSkill.trim() }); // Use 'skill' instead of 'skill_name'
       setNewSkill("");
       onUpdate();
       toast({
@@ -87,7 +87,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
     try {
       setIsAddingLanguage(true);
       await saveLanguage({ 
-        language_name: newLanguage.trim(), 
+        language: newLanguage.trim(), // Use 'language' instead of 'language_name'
         proficiency: newLanguageProficiency 
       });
       setNewLanguage("");
@@ -208,7 +208,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
                 variant="outline" 
                 className="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 border-purple-200"
               >
-                {skill.skill_name}
+                {skill.skill}
                 <button
                   onClick={() => handleDeleteSkill(skill.id)}
                   disabled={isDeleting}
@@ -263,7 +263,7 @@ const SkillsSection = ({ profileData, onUpdate, userId }: SkillsSectionProps) =>
             {languages.map((language: any) => (
               <div key={language.id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3">
                 <div>
-                  <span className="font-medium">{language.language_name}</span>
+                  <span className="font-medium">{language.language}</span>
                   <Badge className="ml-2 text-xs bg-orange-100 text-orange-700">
                     {language.proficiency}
                   </Badge>
