@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,12 +41,6 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       return false;
     }
 
-    // Check image count limit
-    if (images.length >= 4) {
-      toast.error("You can upload a maximum of 4 images.");
-      return false;
-    }
-
     return true;
   };
 
@@ -69,6 +64,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         return;
       }
 
+      let successCount = 0;
+      
       for (const file of validFiles) {
         try {
           // Upload to storage
@@ -102,6 +99,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
               file_type: file.type,
               file_size: file.size,
               url: publicUrl,
+              asset_url: publicUrl, // Add both for compatibility
               is_video: false,
               is_embed: false,
               description: null
@@ -118,15 +116,18 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             continue;
           }
 
-          toast.success(`${file.name} uploaded successfully!`);
+          successCount++;
         } catch (error) {
           console.error('Upload error for file:', file.name, error);
           toast.error(`Failed to upload ${file.name}`);
         }
       }
 
-      // Refresh the profile data
-      onUpdate();
+      if (successCount > 0) {
+        toast.success(`Successfully uploaded ${successCount} image${successCount !== 1 ? 's' : ''}!`);
+        // Refresh the profile data
+        onUpdate();
+      }
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload media files');
@@ -184,6 +185,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
   };
 
   const canUploadImage = images.length < 4;
+  const getImageUrl = (image: MediaAsset) => image.asset_url || image.url;
 
   return (
     <Card className="mb-8">
@@ -241,7 +243,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                 <div key={image.id} className="relative group">
                   <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
                     <img
-                      src={image.asset_url || image.url}
+                      src={getImageUrl(image)}
                       alt={image.description || image.file_name}
                       className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                       onError={(e) => {
@@ -259,7 +261,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                       variant="destructive"
                       size="sm"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 h-8 w-8 p-0 rounded-lg"
-                      onClick={() => handleDeleteMedia(image.id, image.file_name, image.asset_url || image.url)}
+                      onClick={() => handleDeleteMedia(image.id, image.file_name, getImageUrl(image))}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
