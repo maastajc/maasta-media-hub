@@ -60,6 +60,7 @@ export interface MediaAsset {
   user_id: string;
   asset_type: string;
   asset_url: string;
+  url?: string; // Keep for backward compatibility
   file_name: string;
   file_type: string;
   file_size: number;
