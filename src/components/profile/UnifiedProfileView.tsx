@@ -300,7 +300,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <Badge key={skill.id} variant="secondary" className="px-3 py-1">
-                  {skill.skill}
+                  {skill.skill_name || skill.skill}
                 </Badge>
               ))}
             </div>
@@ -493,7 +493,7 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {languages.map((lang) => (
                 <div key={lang.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{lang.language}</span>
+                  <span className="font-medium">{lang.language_name || lang.language}</span>
                   <Badge variant="outline" className="capitalize">
                     {lang.proficiency}
                   </Badge>
