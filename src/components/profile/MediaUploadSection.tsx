@@ -98,12 +98,12 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
           console.log('Public URL:', publicUrl);
 
-          // Save to database with both user_id and artist_id for compatibility
+          // Save to database
           const { error: dbError } = await supabase
             .from('media_assets')
             .insert({
               user_id: userId,
-              artist_id: userId, // Set both for compatibility
+              artist_id: userId,
               file_name: file.name,
               file_type: file.type,
               file_size: file.size,
