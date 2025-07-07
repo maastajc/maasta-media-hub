@@ -30,7 +30,7 @@ export interface SpecialSkill {
   id: string;
   artist_id: string;
   user_id: string;
-  skill_name: string;
+  skill: string;
 }
 
 // Export Skill as alias for SpecialSkill for backward compatibility
@@ -40,7 +40,7 @@ export interface LanguageSkill {
   id: string;
   artist_id: string;
   user_id: string;
-  language_name: string;
+  language: string;
   proficiency: string;
 }
 

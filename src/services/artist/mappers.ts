@@ -66,7 +66,7 @@ export const mapFeaturedArtistToArtist = (artist: any): Artist => {
     language_skills: [],
     tools_software: [],
     awards: [],
-    special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill_name: skillName, artist_id: artist.id, user_id: artist.id })),
+    special_skills: skillsArray.map(skillName => ({ id: crypto.randomUUID(), skill: skillName, artist_id: artist.id, user_id: artist.id })),
     skills: skillsArray
   } as Artist;
 };
@@ -130,7 +130,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
   const mappedSpecialSkills: SpecialSkill[] = Array.isArray(special_skills) 
     ? special_skills.map(s => ({ 
         id: s.id || crypto.randomUUID(), 
-        skill_name: s.skill || "", 
+        skill: s.skill || "", 
         artist_id: artistFromDb.id,
         user_id: artistFromDb.id
       })) 
@@ -139,7 +139,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
   const mappedLanguageSkills: LanguageSkill[] = Array.isArray(language_skills) 
     ? language_skills.map(l => ({
         id: l.id || crypto.randomUUID(), 
-        language_name: l.language || "", 
+        language: l.language || "", 
         proficiency: l.proficiency || "beginner", 
         artist_id: artistFromDb.id,
         user_id: artistFromDb.id
@@ -253,6 +253,6 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
     education_training: mappedEducationTraining,
     media_assets: mappedMediaAssets,
     awards: mappedAwards,
-    skills: mappedSpecialSkills.map(s => s.skill_name)
+    skills: mappedSpecialSkills.map(s => s.skill)
   } as Artist;
 };

@@ -43,7 +43,7 @@ const Artists = () => {
     new Set(
       artists
         .flatMap(artist => 
-          artist.special_skills?.map(skill => skill.skill_name) || 
+          artist.special_skills?.map(skill => skill.skill) ||
           artist.skills || 
           []
         )
@@ -62,7 +62,7 @@ const Artists = () => {
       // Additional tag filtering - check both special_skills and skills for compatibility
       if (selectedTags.length === 0) return true;
       const artistSkills = [
-        ...(artist.special_skills?.map(skill => skill.skill_name) || []),
+        ...(artist.special_skills?.map(skill => skill.skill) || []),
         ...(artist.skills || [])
       ];
       return selectedTags.some(tag => artistSkills.includes(tag));
