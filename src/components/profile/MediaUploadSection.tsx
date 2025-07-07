@@ -68,9 +68,14 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       
       for (const file of validFiles) {
         try {
-          // Upload to storage
-          const fileName = `${userId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          // Create a simple filename without special characters
+          const timestamp = Date.now();
+          const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const fileName = `${userId}/${timestamp}-${cleanName}`;
           
+          console.log('Uploading file:', fileName);
+          
+          // Upload to storage
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('artist_media')
             .upload(fileName, file, {
@@ -84,22 +89,25 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             continue;
           }
 
+          console.log('Upload successful:', uploadData);
+
           // Get public URL
           const { data: { publicUrl } } = supabase.storage
             .from('artist_media')
             .getPublicUrl(uploadData.path);
 
-          // Save to database
+          console.log('Public URL:', publicUrl);
+
+          // Save to database with both user_id and artist_id for compatibility
           const { error: dbError } = await supabase
             .from('media_assets')
             .insert({
               user_id: userId,
-              artist_id: userId,
+              artist_id: userId, // Set both for compatibility
               file_name: file.name,
               file_type: file.type,
               file_size: file.size,
               url: publicUrl,
-              asset_url: publicUrl, // Add both for compatibility
               is_video: false,
               is_embed: false,
               description: null
@@ -116,6 +124,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
             continue;
           }
 
+          console.log('Database save successful');
           successCount++;
         } catch (error) {
           console.error('Upload error for file:', file.name, error);
@@ -185,7 +194,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
   };
 
   const canUploadImage = images.length < 4;
-  const getImageUrl = (image: MediaAsset) => image.asset_url || image.url;
+  const getImageUrl = (image: MediaAsset) => image.url;
 
   return (
     <Card className="mb-8">
