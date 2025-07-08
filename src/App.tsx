@@ -17,6 +17,7 @@ import CreateAudition from "./pages/CreateAudition";
 import EditAudition from "./pages/EditAudition";
 import Dashboard from "./pages/Dashboard";
 import Networking from "./pages/Networking";
+import AuditionApplications from "./pages/AuditionApplications";
 import ScrollToTop from "./components/layout/ScrollToTop";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ function App() {
               <Route path="/create-audition" element={<CreateAudition />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/networking" element={<Networking />} />
+              <Route path="/applications/:auditionId" element={<AuditionApplications />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
