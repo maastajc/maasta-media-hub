@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 (window.location.hash.includes('access_token') || 
                  window.location.search.includes('code'));
               
-              if (isOAuthCallback || location.pathname === '/sign-in') {
+                if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
                 setTimeout(() => {
                   if (isMounted) {
                     navigate('/profile');

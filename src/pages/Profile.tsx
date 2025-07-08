@@ -50,6 +50,7 @@ const Profile = () => {
   const [isPortfolioLinksEditOpen, setIsPortfolioLinksEditOpen] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
   const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>();
+  const [isNewUser, setIsNewUser] = useState(false);
 
   const {
     data: profileData,
@@ -78,6 +79,24 @@ const Profile = () => {
       navigate('/basic-information');
     }
   }, [error, user, authLoading, navigate]);
+
+  // Check if user is new (profile incomplete) and auto-trigger edit form
+  useEffect(() => {
+    if (profileData && user && !authLoading) {
+      // Check if profile has minimal required information
+      const hasBasicInfo = profileData.bio && profileData.date_of_birth && profileData.username;
+      
+      if (!hasBasicInfo) {
+        setIsNewUser(true);
+        // Auto-trigger edit form after 2 seconds for new users
+        const timer = setTimeout(() => {
+          setIsEditFormOpen(true);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [profileData, user, authLoading]);
 
   useEffect(() => {
     if (profileData) {

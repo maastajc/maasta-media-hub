@@ -157,7 +157,7 @@ export const SignUpForm = () => {
             role,
             phone_number: `+91${phoneNumber}`,
           },
-          emailRedirectTo: `${window.location.origin}/complete-profile`
+          emailRedirectTo: `${window.location.origin}/profile`
         }
       });
 
@@ -182,8 +182,8 @@ export const SignUpForm = () => {
       
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
-        ? 'https://preview--maasta-media-hub.lovable.app/complete-profile'
-        : `${currentDomain}/complete-profile`;
+        ? 'https://preview--maasta-media-hub.lovable.app/profile'
+        : `${currentDomain}/profile`;
 
       console.log('Google sign-up redirect URL:', redirectUrl);
 
@@ -207,7 +207,7 @@ export const SignUpForm = () => {
 
   const handleEmailVerificationClose = () => {
     setShowEmailVerification(false);
-    navigate('/complete-profile');
+    navigate('/profile');
   };
 
   return (
