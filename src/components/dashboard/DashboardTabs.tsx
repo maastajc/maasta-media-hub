@@ -26,11 +26,12 @@ export const DashboardTabs = ({
       </TabsList>
       
       <TabsContent value="auditions">
-        <AuditionsTab 
-          isLoading={isLoading}
-          userAuditions={userAuditions}
-          formatDate={formatDate}
-        />
+            <AuditionsTab 
+              isLoading={isLoading}
+              userAuditions={userAuditions}
+              formatDate={formatDate}
+              onAuditionDeleted={() => window.location.reload()}
+            />
       </TabsContent>
       
       <TabsContent value="applications">

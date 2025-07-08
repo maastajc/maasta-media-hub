@@ -14,6 +14,7 @@ import ArtistProfile from "./pages/ArtistProfile";
 import Auditions from "./pages/Auditions";
 import AuditionDetails from "./pages/AuditionDetails";
 import CreateAudition from "./pages/CreateAudition";
+import EditAudition from "./pages/EditAudition";
 import Dashboard from "./pages/Dashboard";
 import Networking from "./pages/Networking";
 import ScrollToTop from "./components/layout/ScrollToTop";
@@ -38,6 +39,7 @@ function App() {
               <Route path="/artists/:username" element={<ArtistProfile />} />
               <Route path="/auditions" element={<Auditions />} />
               <Route path="/auditions/create" element={<CreateAudition />} />
+              <Route path="/auditions/edit/:auditionId" element={<EditAudition />} />
               <Route path="/auditions/:id" element={<AuditionDetails />} />
               <Route path="/create-audition" element={<CreateAudition />} />
               <Route path="/dashboard" element={<Dashboard />} />

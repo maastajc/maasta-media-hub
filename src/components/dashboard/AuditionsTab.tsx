@@ -4,15 +4,63 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface AuditionsTabProps {
   isLoading: boolean;
   userAuditions: any[];
   formatDate: (dateString: string) => string;
+  onAuditionDeleted?: () => void;
 }
 
-export const AuditionsTab = ({ isLoading, userAuditions, formatDate }: AuditionsTabProps) => {
+export const AuditionsTab = ({ isLoading, userAuditions, formatDate, onAuditionDeleted }: AuditionsTabProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteAudition = async (auditionId: string) => {
+    try {
+      setDeletingId(auditionId);
+      
+      const { error } = await supabase
+        .from('auditions')
+        .delete()
+        .eq('id', auditionId);
+
+      if (error) {
+        console.error('Error deleting audition:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete audition",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Audition deleted successfully",
+      });
+
+      // Refresh the auditions list
+      if (onAuditionDeleted) {
+        onAuditionDeleted();
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -86,6 +134,36 @@ export const AuditionsTab = ({ isLoading, userAuditions, formatDate }: Auditions
               >
                 Edit
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                    disabled={deletingId === audition.id}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {deletingId === audition.id ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Audition</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{audition.title}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteAudition(audition.id)}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
