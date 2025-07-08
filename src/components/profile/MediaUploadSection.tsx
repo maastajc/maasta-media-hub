@@ -194,7 +194,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
   };
 
   const canUploadImage = images.length < 4;
-  const getImageUrl = (image: MediaAsset) => image.url;
+  const getImageUrl = (image: MediaAsset) => image.asset_url || image.url;
 
   return (
     <Card className="mb-8">

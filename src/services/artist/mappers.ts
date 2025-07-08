@@ -188,6 +188,7 @@ export const mapArtistByIdToArtist = (artistFromDb: ArtistByIdRow): Artist => {
         file_name: m.file_name || "",
         file_type: m.file_type || "",
         asset_url: m.url || "",
+        url: m.url || "",
         asset_type: m.file_type || "",
         file_size: m.file_size || 0,
         description: m.description,
