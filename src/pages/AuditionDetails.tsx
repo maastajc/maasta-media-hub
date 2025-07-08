@@ -10,13 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AlertCircle, ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign } from "lucide-react";
 import { format } from "date-fns";
-import AuditionApplicationDialog from "@/components/auditions/AuditionApplicationDialog";
-import { useState, useEffect } from "react";
+import { AuditionApplicationButton } from "@/components/auditions/AuditionApplicationButton";
+import { useEffect } from "react";
 
 const AuditionDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [showApplicationDialog, setShowApplicationDialog] = useState(false);
 
   // Handle special routes like "create" - redirect immediately
   useEffect(() => {
@@ -266,13 +265,14 @@ const AuditionDetails = () => {
               {/* Apply Button */}
               <Card>
                 <CardContent className="p-6">
-                  <Button 
-                    className="w-full" 
+                  <AuditionApplicationButton
+                    auditionId={audition.id}
+                    auditionTitle={audition.title}
+                    className="w-full"
                     size="lg"
-                    onClick={() => setShowApplicationDialog(true)}
                   >
                     Apply Now
-                  </Button>
+                  </AuditionApplicationButton>
                 </CardContent>
               </Card>
 
@@ -329,18 +329,6 @@ const AuditionDetails = () => {
         </div>
       </main>
       <Footer />
-
-      {/* Application Dialog */}
-      <AuditionApplicationDialog
-        isOpen={showApplicationDialog}
-        onClose={() => setShowApplicationDialog(false)}
-        auditionId={audition.id}
-        auditionTitle={audition.title}
-        onSuccess={() => {
-          setShowApplicationDialog(false);
-          toast.success("Application submitted successfully!");
-        }}
-      />
     </div>
   );
 };
