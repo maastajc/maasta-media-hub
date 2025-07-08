@@ -22,7 +22,13 @@ const ArtistProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Fetch artist by username
+  // Check if the parameter is a UUID (ID) or username
+  const isUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
+  // Fetch artist by username or ID
   const { 
     data: artistData, 
     isLoading, 
@@ -30,13 +36,14 @@ const ArtistProfile = () => {
     error,
     refetch 
   } = useQuery({
-    queryKey: ['artist-profile-by-username', username],
+    queryKey: ['artist-profile-by-identifier', username],
     queryFn: async () => {
       if (!username) {
-        throw new Error('Username is required');
+        throw new Error('Username or ID is required');
       }
 
-      console.log('Fetching artist profile for username:', username);
+      const isID = isUUID(username);
+      console.log('Fetching artist profile for:', isID ? 'ID' : 'username', username);
 
       const { data: artist, error } = await supabase
         .from('profiles')
@@ -105,7 +112,7 @@ const ArtistProfile = () => {
             updated_at
           )
         `)
-        .eq('username', username)
+        .eq(isID ? 'id' : 'username', username)
         .eq('status', 'active')
         .single();
 
@@ -263,7 +270,7 @@ const ArtistProfile = () => {
             </h2>
             <p className="text-gray-600 mb-4">
               {isNotFound 
-                ? `We couldn't find an artist with username "@${username}". The profile may have been removed or the link might be incorrect.`
+                ? `We couldn't find an artist with ${isUUID(username) ? 'ID' : 'username'} "${username}". The profile may have been removed or the link might be incorrect.`
                 : "We're having trouble loading this profile. Please try again."
               }
             </p>
