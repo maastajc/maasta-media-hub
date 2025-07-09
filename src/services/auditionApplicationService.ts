@@ -28,6 +28,7 @@ export interface AuditionApplication {
     personal_website?: string | null;
     linkedin?: string | null;
     youtube_vimeo?: string | null;
+    phone_number?: string | null;
   };
 }
 
@@ -110,7 +111,7 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
     const artistIds = [...new Set(applications.map(app => app.artist_id))];
     const { data: artists, error: artistsError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, profile_picture_url, category, experience_level, personal_website, linkedin, youtube_vimeo')
+      .select('id, full_name, email, profile_picture_url, category, experience_level, personal_website, linkedin, youtube_vimeo, phone_number')
       .in('id', artistIds);
 
     if (artistsError) {
@@ -150,7 +151,8 @@ export const fetchApplicationsForCreator = async (creatorId: string): Promise<Au
           experience_level: artist.experience_level,
           personal_website: artist.personal_website,
           linkedin: artist.linkedin,
-          youtube_vimeo: artist.youtube_vimeo
+          youtube_vimeo: artist.youtube_vimeo,
+          phone_number: artist.phone_number
         } : undefined
       };
     });

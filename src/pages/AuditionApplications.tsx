@@ -212,6 +212,13 @@ const AuditionApplications = () => {
                           <p className="text-gray-600 mb-2">
                             {application.artist?.email}
                           </p>
+                          {application.artist?.phone_number && (
+                            <p className="text-gray-600 mb-2 flex items-center gap-1">
+                              <span>📞</span>
+                              <span className="font-medium">Mobile:</span>
+                              {application.artist.phone_number}
+                            </p>
+                          )}
                           <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                             <span className="flex items-center gap-1">
                               <User size={14} />
