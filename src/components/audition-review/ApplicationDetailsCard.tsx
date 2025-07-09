@@ -102,6 +102,20 @@ export const ApplicationDetailsCard = ({ application }: ApplicationDetailsCardPr
               </Button>
             </div>
             
+            {application.artist?.phone_number && (
+              <div className="flex items-center gap-3">
+                <Phone size={16} className="text-gray-500" />
+                <span className="flex-1 font-medium">Mobile: {application.artist.phone_number}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(application.artist?.phone_number || '', 'Mobile number')}
+                >
+                  <Copy size={14} />
+                </Button>
+              </div>
+            )}
+            
             {/* Basic Details */}
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
