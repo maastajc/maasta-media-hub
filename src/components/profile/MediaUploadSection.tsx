@@ -57,7 +57,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         return;
       }
 
-      // Check if adding these files would exceed the limit
+      // Check if adding these files would exceed the limit of 4
       if (images.length + validFiles.length > 4) {
         toast.error(`You can only upload ${4 - images.length} more image(s).`);
         setIsUploading(false);

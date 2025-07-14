@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { AuditionApplication } from "@/services/auditionApplicationService";
 import { useToast } from "@/hooks/use-toast";
+import DownloadApplicantPortfolio from "./DownloadApplicantPortfolio";
 
 interface ApplicationDetailsCardProps {
   application: AuditionApplication;
@@ -81,6 +82,14 @@ export const ApplicationDetailsCard = ({ application }: ApplicationDetailsCardPr
                 </span>
               </div>
             </div>
+          </div>
+          
+          {/* Download Portfolio PDF Button */}
+          <div className="flex flex-col gap-2">
+            <DownloadApplicantPortfolio 
+              application={application}
+              className="border-maasta-orange text-maasta-orange hover:bg-maasta-orange hover:text-white"
+            />
           </div>
         </div>
       </CardHeader>
