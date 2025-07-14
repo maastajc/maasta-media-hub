@@ -39,6 +39,7 @@ import ProfileStats from "@/components/profile/ProfileStats";
 import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
 import CoverImageUpload from "@/components/profile/CoverImageUpload";
+import DownloadPortfolioPDF from "@/components/profile/DownloadPortfolioPDF";
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -387,7 +388,12 @@ const Profile = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
+                      <DownloadPortfolioPDF 
+                        artist={profileData}
+                        variant="default"
+                        className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                      />
                       <Button
                         onClick={handleViewPublicProfile}
                         variant="outline"
@@ -398,7 +404,7 @@ const Profile = () => {
                       </Button>
                       <Button 
                         onClick={() => setIsEditFormOpen(true)}
-                        className="bg-[#ff8200] hover:bg-[#ff8200]/90 text-white"
+                        className="bg-gray-600 hover:bg-gray-700 text-white"
                       >
                         <Edit size={16} className="mr-2" />
                         Edit Profile

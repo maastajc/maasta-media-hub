@@ -7,14 +7,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Edit, MapPin, Briefcase, ArrowLeft, Share2 } from "lucide-react";
 import { Artist } from "@/types/artist";
 import ShareProfileDialog from "./ShareProfileDialog";
+import DownloadPortfolioPDF from "./DownloadPortfolioPDF";
 
 interface ProfileHeroProps {
   artist: Artist;
   onEditProfile?: () => void;
   onBack?: () => void;
+  isOwnProfile?: boolean;
 }
 
-const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
+const ProfileHero = ({ artist, onEditProfile, onBack, isOwnProfile = false }: ProfileHeroProps) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   const getInitials = (name: string) => {
@@ -114,7 +116,7 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                       )}
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       {onBack && (
                         <Button 
                           onClick={onBack}
@@ -125,10 +127,17 @@ const ProfileHero = ({ artist, onEditProfile, onBack }: ProfileHeroProps) => {
                           Back
                         </Button>
                       )}
+                      {isOwnProfile && (
+                        <DownloadPortfolioPDF 
+                          artist={artist}
+                          variant="default"
+                          className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                        />
+                      )}
                       {onEditProfile && (
                         <Button 
                           onClick={onEditProfile}
-                          className="bg-maasta-orange hover:bg-maasta-orange/90 text-white"
+                          className="bg-gray-600 hover:bg-gray-700 text-white"
                         >
                           <Edit size={16} className="mr-2" />
                           Edit Profile
