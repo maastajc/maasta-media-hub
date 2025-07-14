@@ -6,7 +6,7 @@ import { AuditionApplication } from "@/services/auditionApplicationService";
 import { generatePortfolioPDF, PDFGenerationOptions } from "@/utils/portfolioPdfGenerator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Artist, ArtistCategory } from "@/types/artist";
+import { Artist, ArtistCategory, ExperienceLevel } from "@/types/artist";
 
 interface DownloadApplicantPortfolioProps {
   application: AuditionApplication;
@@ -44,16 +44,19 @@ const DownloadApplicantPortfolio = ({
         ...application.artist,
         // Ensure category is properly typed - fallback to 'actor' if invalid
         category: (application.artist.category as ArtistCategory) || 'actor',
+        // Ensure experience_level is properly typed - fallback to 'beginner' if invalid
+        experience_level: (application.artist.experience_level as ExperienceLevel) || 'beginner',
         // Add any missing fields that might be expected by the PDF generator
-        projects: application.artist.projects || [],
-        media_assets: application.artist.media_assets || [],
-        special_skills: application.artist.special_skills || [],
-        education: application.artist.education || [],
-        education_training: application.artist.education_training || [],
-        language_skills: application.artist.language_skills || [],
-        tools_software: application.artist.tools_software || [],
-        awards: application.artist.awards || [],
-        professional_references: application.artist.professional_references || [],
+        projects: [],
+        media_assets: [],
+        special_skills: [],
+        education: [],
+        education_training: [],
+        language_skills: [],
+        tools_software: [],
+        awards: [],
+        professional_references: [],
+        skills: [], // Add backward compatibility field
       };
 
       await generatePortfolioPDF(artistData, options);
