@@ -36,6 +36,7 @@ import MediaUploadSection from "@/components/profile/MediaUploadSection";
 import AwardsSection from "@/components/profile/AwardsSection";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import ProfileStats from "@/components/profile/ProfileStats";
+import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
 import CoverImageUpload from "@/components/profile/CoverImageUpload";
@@ -194,7 +195,7 @@ const Profile = () => {
   // Scroll spy functionality - Updated section order
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['overview', 'media', 'projects', 'education', 'skills', 'awards'];
+      const sections = ['overview', 'media', 'projects', 'social', 'education', 'skills', 'awards'];
       const scrollPosition = window.scrollY + 200;
 
       for (const section of sections) {
@@ -422,7 +423,7 @@ const Profile = () => {
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-0 rounded-none border-0 bg-transparent h-auto p-0">
+            <TabsList className="grid w-full grid-cols-7 mb-0 rounded-none border-0 bg-transparent h-auto p-0">
               <TabsTrigger 
                 value="overview" 
                 className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
@@ -448,6 +449,14 @@ const Profile = () => {
                 <span className="hidden sm:inline">Projects</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="social" 
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                onClick={() => document.getElementById('section-social')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <Globe size={16} />
+                <span className="hidden sm:inline">Social</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="education" 
                 className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
                 onClick={() => document.getElementById('section-education')?.scrollIntoView({ behavior: 'smooth' })}
@@ -457,7 +466,7 @@ const Profile = () => {
               </TabsTrigger>
               <TabsTrigger 
                 value="skills" 
-                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state=active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
+                className="flex items-center gap-2 py-4 border-b-2 border-transparent data-[state-active]:border-maasta-orange data-[state=active]:bg-transparent rounded-none"
                 onClick={() => document.getElementById('section-skills')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <Brain size={16} />
@@ -587,111 +596,22 @@ const Profile = () => {
           />
         </div>
 
-        {/* Projects Section - Now after Media with correct props */}
+        {/* Projects Section */}
         <div id="section-projects" className="scroll-mt-24">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Projects */}
-            <div className="lg:col-span-2">
-              <ProjectsSection
-                profileData={profileData}
-                onUpdate={handleProfileUpdate}
-                userId={user?.id}
-                isOwnProfile={true}
-              />
-            </div>
-            
-            {/* Social Links */}
-            <div>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Social Links</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsPortfolioLinksEditOpen(true)}
-                      className="h-8 w-8 p-0 hover:bg-gray-100"
-                    >
-                      <Edit size={16} className="text-gray-500" />
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    {(() => {
-                      const hasLegacyLinks = profileData.personal_website || profileData.instagram || profileData.linkedin;
-                      const customLinks = profileData.custom_links ? 
-                        (Array.isArray(profileData.custom_links) ? 
-                          profileData.custom_links : 
-                          JSON.parse(profileData.custom_links as string)) : [];
-                      
-                      if (!hasLegacyLinks && customLinks.length === 0) {
-                        return <p className="text-sm text-gray-500 italic">No social links added yet</p>;
-                      }
-                      
-                      return (
-                        <>
-                          {/* Legacy links */}
-                          {profileData.personal_website && (
-                            <div className="flex items-center gap-2">
-                              <Globe size={16} className="text-gray-500" />
-                              <a 
-                                href={profileData.personal_website} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-maasta-orange hover:underline text-sm"
-                              >
-                                Website
-                              </a>
-                            </div>
-                          )}
-                          {profileData.instagram && (
-                            <div className="flex items-center gap-2">
-                              <Instagram size={16} className="text-gray-500" />
-                              <a 
-                                href={profileData.instagram} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-maasta-orange hover:underline text-sm"
-                              >
-                                Instagram
-                              </a>
-                            </div>
-                          )}
-                          {profileData.linkedin && (
-                            <div className="flex items-center gap-2">
-                              <Linkedin size={16} className="text-gray-500" />
-                              <a 
-                                href={profileData.linkedin} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-maasta-orange hover:underline text-sm"
-                              >
-                                LinkedIn
-                              </a>
-                            </div>
-                          )}
-                          
-                          {/* Custom links */}
-                          {customLinks.map((link: any, index: number) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <ExternalLink size={16} className="text-gray-500" />
-                              <a 
-                                href={link.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-maasta-orange hover:underline text-sm"
-                              >
-                                {link.title}
-                              </a>
-                            </div>
-                          ))}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <ProjectsSection 
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id || ""}
+          />
+        </div>
+
+        {/* Social Links Section */}
+        <div id="section-social" className="scroll-mt-24">
+          <SocialLinksForm 
+            profileData={profileData}
+            onUpdate={handleProfileUpdate}
+            userId={user?.id || ""}
+          />
         </div>
 
         {/* Education Section */}

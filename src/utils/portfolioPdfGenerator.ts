@@ -57,13 +57,34 @@ export const generatePortfolioPDF = async (
     // Set font
     pdf.setFont('helvetica');
 
-    // Header with Logo/Brand
-    pdf.setFontSize(12);
-    pdf.setTextColor(255, 130, 0); // Maasta orange
-    pdf.text('MAASTA', margin, currentY);
-    currentY += 10;
+    // Add Maasta Logo
+    try {
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = reject;
+        logoImg.src = '/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png';
+      });
+      
+      const logoCanvas = document.createElement('canvas');
+      const logoCtx = logoCanvas.getContext('2d');
+      if (logoCtx) {
+        logoCanvas.width = 150;
+        logoCanvas.height = 40;
+        logoCtx.drawImage(logoImg, 0, 0, 150, 40);
+        const logoData = logoCanvas.toDataURL('image/png', 0.9);
+        pdf.addImage(logoData, 'PNG', margin, currentY, 30, 8);
+      }
+    } catch (error) {
+      console.warn('Could not add Maasta logo to PDF:', error);
+      // Fallback to text
+      pdf.setFontSize(12);
+      pdf.setTextColor(255, 130, 0); // Maasta orange
+      pdf.text('MAASTA', margin, currentY + 5);
+    }
 
-    // Profile Picture
+    // Profile Picture (Circular)
     if (options.includeProfilePicture && artist.profile_picture_url) {
       try {
         const img = new Image();
@@ -77,26 +98,41 @@ export const generatePortfolioPDF = async (
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          canvas.width = 100;
-          canvas.height = 100;
-          ctx.drawImage(img, 0, 0, 100, 100);
+          const size = 120;
+          canvas.width = size;
+          canvas.height = size;
+          
+          // Create circular clipping path
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+          ctx.clip();
+          
+          // Draw image
+          ctx.drawImage(img, 0, 0, size, size);
+          
           const imgData = canvas.toDataURL('image/jpeg', 0.8);
-          pdf.addImage(imgData, 'JPEG', pageWidth - margin - 30, currentY, 30, 30);
+          pdf.addImage(imgData, 'JPEG', pageWidth - margin - 35, currentY - 5, 35, 35);
         }
       } catch (error) {
         console.warn('Could not add profile picture to PDF:', error);
       }
     }
+    
+    currentY += 15;
 
+    // Header background with gradient effect
+    pdf.setFillColor(255, 245, 235); // Light orange background
+    pdf.rect(margin - 5, currentY - 5, contentWidth + 10, 35, 'F');
+    
     // Full Name
-    pdf.setFontSize(24);
+    pdf.setFontSize(26);
     pdf.setTextColor(51, 51, 51);
-    pdf.text(sanitizeText(artist.full_name), margin, currentY + 10);
-    currentY += 20;
+    pdf.text(sanitizeText(artist.full_name), margin, currentY + 8);
+    currentY += 15;
 
     // Headline/Bio
     if (artist.headline || artist.bio) {
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setTextColor(102, 102, 102);
       const text = sanitizeText(artist.headline || artist.bio || '');
       const lines = pdf.splitTextToSize(text.substring(0, 150), contentWidth - 40);
@@ -104,13 +140,16 @@ export const generatePortfolioPDF = async (
       currentY += lines.length * 5 + 5;
     }
 
-    currentY += 10;
+    currentY += 15;
 
     // Basic Information Section
+    pdf.setFillColor(255, 130, 0); // Orange header background
+    pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+    
     pdf.setFontSize(14);
-    pdf.setTextColor(255, 130, 0);
-    pdf.text('Basic Information', margin, currentY);
-    currentY += 8;
+    pdf.setTextColor(255, 255, 255); // White text on orange background
+    pdf.text('✨ Basic Information', margin, currentY + 4);
+    currentY += 15;
 
     pdf.setFontSize(10);
     pdf.setTextColor(51, 51, 51);
@@ -118,7 +157,7 @@ export const generatePortfolioPDF = async (
     // Age calculation
     const age = calculateAge(artist.date_of_birth);
     if (age) {
-      pdf.text(`Age: ${age}`, margin, currentY);
+      pdf.text(`👤 Age: ${age} years`, margin, currentY);
       currentY += 6;
     }
 
@@ -146,44 +185,46 @@ export const generatePortfolioPDF = async (
       currentY += 6;
     }
 
+    // Email
+    if (artist.email) {
+      pdf.text(`📧 Email: ${sanitizeText(artist.email)}`, margin, currentY);
+      currentY += 6;
+    }
+
+    // Phone
+    if (artist.phone_number) {
+      pdf.text(`📞 Phone: ${sanitizeText(artist.phone_number)}`, margin, currentY);
+      currentY += 6;
+    }
+
     currentY += 10;
 
-    // Contact Information Header
-    pdf.setFontSize(14);
-    pdf.setTextColor(255, 130, 0);
-    pdf.text('Contact Information', margin, currentY);
-    currentY += 8;
-
-    // Email and Phone
-    pdf.setFontSize(10);
-    pdf.setTextColor(51, 51, 51);
-    if (artist.email) {
-      pdf.text(`📧 ${sanitizeText(artist.email)}`, margin, currentY);
-      currentY += 6;
-    }
-    if (artist.phone_number) {
-      pdf.text(`📞 ${sanitizeText(artist.phone_number)}`, margin, currentY);
-      currentY += 6;
-    }
-
-    // Social Links
+    // Social Profiles Section
     const socialLinks = [
       { label: 'Website', url: artist.personal_website, icon: '🌐' },
       { label: 'Instagram', url: artist.instagram, icon: '📷' },
       { label: 'LinkedIn', url: artist.linkedin, icon: '💼' },
-      { label: 'YouTube', url: artist.youtube_vimeo, icon: '🎥' },
+      { label: 'YouTube/Vimeo', url: artist.youtube_vimeo, icon: '🎥' },
       { label: 'IMDB', url: artist.imdb_profile, icon: '🎬' },
     ].filter(link => link.url);
 
     if (socialLinks.length > 0) {
-      currentY += 5;
+      pdf.setFillColor(100, 100, 100); // Gray header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
+      pdf.setFontSize(14);
+      pdf.setTextColor(255, 255, 255); // White text
+      pdf.text('🔗 Social Profiles', margin, currentY + 4);
+      currentY += 15;
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(51, 51, 51);
       socialLinks.forEach(link => {
         pdf.text(`${link.icon} ${link.label}: ${sanitizeText(link.url)}`, margin, currentY);
         currentY += 6;
       });
+      currentY += 10;
     }
-
-    currentY += 10;
 
     // Check if we need a new page
     if (currentY > pageHeight - 50) {
@@ -194,21 +235,28 @@ export const generatePortfolioPDF = async (
     // Projects Section
     const projects = artist.projects || [];
     if (projects.length > 0) {
+      pdf.setFillColor(255, 130, 0); // Orange header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Projects & Work', margin, currentY);
-      currentY += 8;
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('🎬 Projects & Work', margin, currentY + 4);
+      currentY += 15;
 
       projects.forEach((project, index) => {
-        if (currentY > pageHeight - 40) {
+        if (currentY > pageHeight - 50) {
           pdf.addPage();
           currentY = margin;
         }
 
+        // Project background
+        pdf.setFillColor(250, 250, 250);
+        pdf.rect(margin - 3, currentY - 3, contentWidth + 6, 35, 'F');
+
         pdf.setFontSize(12);
         pdf.setTextColor(51, 51, 51);
-        pdf.text(sanitizeText(project.project_name), margin, currentY);
-        currentY += 6;
+        pdf.text(sanitizeText(project.project_name), margin, currentY + 3);
+        currentY += 8;
 
         pdf.setFontSize(10);
         pdf.setTextColor(102, 102, 102);
@@ -230,7 +278,14 @@ export const generatePortfolioPDF = async (
           currentY += 5;
         }
 
-        currentY += 8;
+        // Project Link
+        if (project.link) {
+          pdf.setTextColor(34, 139, 34); // Green for links
+          pdf.text(`🔗 View Project: ${sanitizeText(project.link)}`, margin, currentY);
+          currentY += 5;
+        }
+
+        currentY += 10;
       });
     }
 
@@ -242,10 +297,13 @@ export const generatePortfolioPDF = async (
         currentY = margin;
       }
 
+      pdf.setFillColor(100, 100, 100); // Gray header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Skills & Expertise', margin, currentY);
-      currentY += 8;
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('⭐ Skills & Expertise', margin, currentY + 4);
+      currentY += 15;
 
       pdf.setFontSize(10);
       pdf.setTextColor(51, 51, 51);
@@ -263,10 +321,13 @@ export const generatePortfolioPDF = async (
         currentY = margin;
       }
 
+      pdf.setFillColor(255, 130, 0); // Orange header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Education & Training', margin, currentY);
-      currentY += 8;
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('🎓 Education & Training', margin, currentY + 4);
+      currentY += 15;
 
       education.forEach((edu) => {
         if (currentY > pageHeight - 25) {
@@ -301,10 +362,13 @@ export const generatePortfolioPDF = async (
         currentY = margin;
       }
 
+      pdf.setFillColor(100, 100, 100); // Gray header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Languages', margin, currentY);
-      currentY += 8;
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('🌍 Languages', margin, currentY + 4);
+      currentY += 15;
 
       pdf.setFontSize(10);
       pdf.setTextColor(51, 51, 51);
@@ -346,27 +410,35 @@ export const generatePortfolioPDF = async (
     const photos = mediaAssets.filter(asset => !asset.is_video).slice(0, 4);
     
     if (options.includeMedia && photos.length > 0) {
-      if (currentY > pageHeight - 80) {
+      if (currentY > pageHeight - 90) {
         pdf.addPage();
         currentY = margin;
       }
 
+      pdf.setFillColor(150, 75, 0); // Dark orange header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Media Portfolio', margin, currentY);
-      currentY += 10;
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('📸 Media Portfolio', margin, currentY + 4);
+      currentY += 15;
 
       try {
-        const imageSize = 35; // Size of each thumbnail
-        const imageSpacing = 5; // Space between images
+        const imageSize = 40; // Increased size for better quality
+        const imageSpacing = 8; // Space between images
         const imagesPerRow = 2;
+        
+        // Add subtle background for media section
+        pdf.setFillColor(248, 248, 248);
+        const mediaRows = Math.ceil(photos.length / imagesPerRow);
+        pdf.rect(margin - 3, currentY - 3, contentWidth + 6, mediaRows * (imageSize + imageSpacing) + 6, 'F');
         
         for (let i = 0; i < photos.length; i++) {
           const photo = photos[i];
           const row = Math.floor(i / imagesPerRow);
           const col = i % imagesPerRow;
           
-          const x = margin + col * (imageSize + imageSpacing);
+          const x = margin + 5 + col * (imageSize + imageSpacing * 2);
           const y = currentY + row * (imageSize + imageSpacing);
           
           try {
@@ -381,23 +453,34 @@ export const generatePortfolioPDF = async (
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             if (ctx) {
-              canvas.width = 200;
-              canvas.height = 200;
-              ctx.drawImage(img, 0, 0, 200, 200);
-              const imgData = canvas.toDataURL('image/jpeg', 0.7);
+              canvas.width = 250;
+              canvas.height = 250;
+              ctx.drawImage(img, 0, 0, 250, 250);
+              const imgData = canvas.toDataURL('image/jpeg', 0.8);
+              
+              // Add border around image
+              pdf.setDrawColor(200, 200, 200);
+              pdf.setLineWidth(0.5);
+              pdf.rect(x - 1, y - 1, imageSize + 2, imageSize + 2);
+              
               pdf.addImage(imgData, 'JPEG', x, y, imageSize, imageSize);
             }
           } catch (error) {
             console.warn(`Could not add media image ${i + 1} to PDF:`, error);
-            // Draw placeholder rectangle
+            // Draw placeholder rectangle with pattern
+            pdf.setFillColor(240, 240, 240);
+            pdf.rect(x, y, imageSize, imageSize, 'F');
             pdf.setDrawColor(200, 200, 200);
             pdf.rect(x, y, imageSize, imageSize);
+            pdf.setTextColor(150, 150, 150);
+            pdf.setFontSize(8);
+            pdf.text('Image', x + imageSize/3, y + imageSize/2);
           }
         }
         
         // Update currentY to account for the images
         const rows = Math.ceil(photos.length / imagesPerRow);
-        currentY += rows * (imageSize + imageSpacing) + 10;
+        currentY += rows * (imageSize + imageSpacing) + 15;
         
       } catch (error) {
         console.warn('Error processing media portfolio images:', error);
@@ -412,10 +495,13 @@ export const generatePortfolioPDF = async (
         currentY = margin;
       }
 
+      pdf.setFillColor(255, 215, 0); // Gold header background
+      pdf.rect(margin - 5, currentY - 2, contentWidth + 10, 8, 'F');
+      
       pdf.setFontSize(14);
-      pdf.setTextColor(255, 130, 0);
-      pdf.text('Awards & Achievements', margin, currentY);
-      currentY += 8;
+      pdf.setTextColor(0, 0, 0); // Black text on gold
+      pdf.text('🏆 Awards & Achievements', margin, currentY + 4);
+      currentY += 15;
 
       awards.forEach((award) => {
         if (currentY > pageHeight - 25) {
