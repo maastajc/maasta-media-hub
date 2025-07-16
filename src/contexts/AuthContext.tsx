@@ -5,6 +5,8 @@ import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { EmailVerificationPopup } from '@/components/auth/EmailVerificationPopup';
 import { getEmailVerificationStatus, sendVerificationEmail } from '@/services/emailVerificationService';
+import ProfileStrengthPopup from '@/components/profile/ProfileStrengthPopup';
+import { fetchArtistById } from '@/services/artist/artistById';
 
 interface UserProfile {
   id: string;
@@ -48,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [showProfileStrengthPopup, setShowProfileStrengthPopup] = useState(false);
+  const [artistProfile, setArtistProfile] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -85,6 +89,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const checkProfileStrength = async (userId: string) => {
+    try {
+      // Check if user has dismissed the reminder recently (within 24 hours)
+      const lastDismissed = localStorage.getItem('profile_reminder_dismissed');
+      if (lastDismissed) {
+        const timeDiff = Date.now() - parseInt(lastDismissed);
+        const hoursPassed = timeDiff / (1000 * 60 * 60);
+        if (hoursPassed < 24) {
+          return; // Don't show popup if dismissed recently
+        }
+      }
+
+      const artist = await fetchArtistById(userId);
+      if (artist) {
+        setArtistProfile(artist);
+        
+        // Calculate basic profile strength to determine if popup should show
+        const hasBasicInfo = !!(artist.full_name && artist.bio && artist.phone_number);
+        const hasMedia = !!(artist.media_assets && artist.media_assets.length > 0);
+        const hasProjects = !!(artist.projects && artist.projects.length > 0);
+        const hasProfilePic = !!artist.profile_picture_url;
+        
+        const completedSections = [hasBasicInfo, hasMedia, hasProjects, hasProfilePic].filter(Boolean).length;
+        const basicStrength = (completedSections / 4) * 100;
+        
+        // Show popup if profile strength is less than 100% and user is on dashboard/home
+        if (basicStrength < 100 && (location.pathname === '/' || location.pathname === '/dashboard')) {
+          setShowProfileStrengthPopup(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking profile strength:', error);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     
@@ -111,6 +150,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 // Check email verification status only after signup
                 if (userProfile && event === 'SIGNED_IN') {
                   await checkEmailVerification(session.user.id);
+                  // Also check profile strength on login
+                  setTimeout(() => {
+                    checkProfileStrength(session.user.id);
+                  }, 2000); // Delay to let user settle in
                 }
               }
             } catch (error) {
@@ -137,6 +180,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else if (!session) {
           setProfile(null);
           setShowEmailVerification(false);
+          setShowProfileStrengthPopup(false);
+          setArtistProfile(null);
         }
         
         setTimeout(() => {
@@ -228,6 +273,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await supabase.auth.signOut();
       setProfile(null);
       setShowEmailVerification(false);
+      setShowProfileStrengthPopup(false);
+      setArtistProfile(null);
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -259,13 +306,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider value={value}>
       {children}
       {user && (
-        <EmailVerificationPopup
-          open={showEmailVerification}
-          onClose={() => setShowEmailVerification(false)}
-          email={user.email || ''}
-          onResendEmail={handleResendEmail}
-          isResending={isResendingEmail}
-        />
+        <>
+          <EmailVerificationPopup
+            open={showEmailVerification}
+            onClose={() => setShowEmailVerification(false)}
+            email={user.email || ''}
+            onResendEmail={handleResendEmail}
+            isResending={isResendingEmail}
+          />
+          <ProfileStrengthPopup
+            artist={artistProfile}
+            open={showProfileStrengthPopup}
+            onClose={() => setShowProfileStrengthPopup(false)}
+          />
+        </>
       )}
     </AuthContext.Provider>
   );

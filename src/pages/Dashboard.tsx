@@ -13,6 +13,9 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
+import ProfileStrengthMeter from "@/components/profile/ProfileStrengthMeter";
+import { fetchArtistById } from "@/services/artist/artistById";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
@@ -22,6 +25,14 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [userAuditions, setUserAuditions] = useState<any[]>([]);
   const [auditionApplications, setAuditionApplications] = useState<any[]>([]);
+
+  // Fetch artist profile for profile strength meter
+  const { data: artistProfile } = useQuery({
+    queryKey: ["artistProfile", user?.id],
+    queryFn: () => fetchArtistById(user?.id || ""),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   
   useEffect(() => {
     if (!user) {
@@ -170,6 +181,17 @@ const Dashboard = () => {
               isLoading={isLoading}
               onRefresh={fetchUserData}
             />
+
+            {/* Profile Strength Section */}
+            {artistProfile && (
+              <div className="mb-8">
+                <ProfileStrengthMeter 
+                  artist={artistProfile} 
+                  showActionButton={true}
+                  compact={true}
+                />
+              </div>
+            )}
             
             <DashboardStats 
               isLoading={isLoading}
