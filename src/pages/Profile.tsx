@@ -36,6 +36,7 @@ import MediaUploadSection from "@/components/profile/MediaUploadSection";
 import AwardsSection from "@/components/profile/AwardsSection";
 import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import ProfileStats from "@/components/profile/ProfileStats";
+import ProfileStrengthMeter from "@/components/profile/ProfileStrengthMeter";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
@@ -547,6 +548,12 @@ const Profile = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Profile Strength Meter */}
+              <ProfileStrengthMeter 
+                artist={profileData}
+                showActionButton={true}
+              />
+              
               {/* Work Preferences with Edit Icon */}
               <Card>
                 <CardContent className="p-6">
