@@ -52,7 +52,7 @@ const AuditionSearch = ({
         <Button
           type="submit"
           size="sm"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-maasta-orange hover:bg-maasta-orange/90 text-white rounded-md shadow-sm"
         >
           Search
         </Button>

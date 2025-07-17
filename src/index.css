@@ -88,27 +88,50 @@
   }
 }
 
-/* Maasta brand colors */
+/* Maasta brand colors - Update primary to brand orange */
 :root {
-  --maasta-orange: #ff6b35;
+  --primary: 22 100% 56%; /* #ff8200 - Maasta soft orange */
+  --primary-foreground: 0 0% 100%; /* White text on orange */
+  
+  /* Profile strength colors */
+  --strength-low: 0 84% 60%; /* Red #e74c3c */
+  --strength-medium: 48 89% 60%; /* Yellow #f1c40f */
+  --strength-high: 142 71% 45%; /* Green #2ecc71 */
+  
+  /* Google multicolor icon support */
+  --google-blue: 221 83% 53%;
+  --google-red: 4 90% 58%;
+  --google-yellow: 43 96% 56%;
+  --google-green: 122 39% 49%;
 }
 
+.dark {
+  --primary: 22 100% 56%; /* Keep same orange in dark mode */
+  --primary-foreground: 0 0% 100%;
+}
+
+/* Maasta brand utility classes */
 .text-maasta-orange {
-  color: var(--maasta-orange);
+  color: hsl(22 100% 56%);
 }
 
 .bg-maasta-orange {
-  background-color: var(--maasta-orange);
+  background-color: hsl(22 100% 56%);
 }
 
 .border-maasta-orange {
-  border-color: var(--maasta-orange);
+  border-color: hsl(22 100% 56%);
 }
 
 .hover\:bg-maasta-orange\/90:hover {
-  background-color: color-mix(in srgb, var(--maasta-orange) 90%, transparent);
+  background-color: hsl(22 100% 50%);
 }
 
 .hover\:text-maasta-orange\/80:hover {
-  color: color-mix(in srgb, var(--maasta-orange) 80%, transparent);
+  color: hsl(22 100% 45%);
 }
+
+/* Profile strength colors */
+.text-strength-low { color: hsl(var(--strength-low)); }
+.text-strength-medium { color: hsl(var(--strength-medium)); }
+.text-strength-high { color: hsl(var(--strength-high)); }

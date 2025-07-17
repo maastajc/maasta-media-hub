@@ -104,10 +104,18 @@ const ProfileStrengthMeter = ({
           </Badge>
         </div>
         
-        <Progress 
-          value={totalStrength} 
-          className="h-3 mb-3"
-        />
+        <div className="space-y-2 mb-3">
+          <Progress 
+            value={totalStrength} 
+            className="h-3"
+          />
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-muted-foreground">Profile {totalStrength}% Complete</span>
+            <span className="font-medium">
+              {totalStrength < 40 ? '🔴' : totalStrength < 70 ? '🟡' : '🟢'}
+            </span>
+          </div>
+        </div>
         
         <div className="text-xs text-muted-foreground mb-3">
           {totalStrength === 100 ? (

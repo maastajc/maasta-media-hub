@@ -64,10 +64,21 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				maasta: {
-					orange: '#E95420',
-					purple: '#85329B',
-					light: '#F8F9FA',
-					dark: '#333333',
+					orange: 'hsl(22 100% 56%)', /* #ff8200 */
+					purple: 'hsl(289 47% 40%)', /* #85329B */
+					light: 'hsl(210 17% 98%)', /* #F8F9FA */
+					dark: 'hsl(0 0% 20%)', /* #333333 */
+				},
+				strength: {
+					low: 'hsl(var(--strength-low))',
+					medium: 'hsl(var(--strength-medium))',
+					high: 'hsl(var(--strength-high))',
+				},
+				google: {
+					blue: 'hsl(var(--google-blue))',
+					red: 'hsl(var(--google-red))',
+					yellow: 'hsl(var(--google-yellow))',
+					green: 'hsl(var(--google-green))',
 				}
 			},
 			borderRadius: {
