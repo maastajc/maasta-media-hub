@@ -52,8 +52,18 @@ export const useProfileStrength = (artist: Artist | null) => {
     {
       name: "Social Links",
       weight: 10,
-      completed: !!(artist.instagram || artist.linkedin || artist.youtube_vimeo || artist.personal_website),
-      description: "Connect your social media profiles"
+      completed: (() => {
+        const defaultLinks = [artist.instagram, artist.youtube_vimeo].filter(Boolean);
+        const customLinks = artist.custom_links || [];
+        const customLinksArray = Array.isArray(customLinks) 
+          ? customLinks 
+          : typeof customLinks === 'string' 
+            ? JSON.parse(customLinks || '[]')
+            : [];
+        const validCustomLinks = customLinksArray.filter((link: any) => link?.title && link?.url);
+        return defaultLinks.length > 0 || validCustomLinks.length > 0;
+      })(),
+      description: "Add Instagram, YouTube, or custom portfolio links"
     },
     {
       name: "Skills",
