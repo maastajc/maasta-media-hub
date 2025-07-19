@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Artist } from "@/types/artist";
 import React from "react";
+import MyWorksLinksSection from "./MyWorksLinksSection";
 
 interface UnifiedProfileViewProps {
   artist: Artist;
@@ -200,6 +201,16 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
           )}
         </CardContent>
       </Card>
+    );
+  };
+
+  const renderMyWorksLinks = () => {
+    return (
+      <MyWorksLinksSection 
+        userId={artist.id} 
+        isOwnProfile={isOwnProfile}
+        onEditSection={onEditSection}
+      />
     );
   };
 
@@ -509,21 +520,17 @@ const UnifiedProfileView = ({ artist, isOwnProfile = false, onEditSection }: Uni
   return (
     <div className="space-y-0">
       {renderMediaSection()}
+      {renderSocialLinks()}
+      {renderMyWorksLinks()}
       
-      {/* Desktop: Projects and Social Links side by side */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-6 mb-8">
-        <div className="md:col-span-2">
-          {renderProjects()}
-        </div>
-        <div className="md:col-span-1">
-          {renderSocialLinks()}
-        </div>
+      {/* Desktop: Projects side by side layout */}
+      <div className="hidden md:block">
+        {renderProjects()}
       </div>
       
-      {/* Mobile: Projects first, then Social Links */}
+      {/* Mobile: Projects */}
       <div className="md:hidden">
         {renderProjects()}
-        {renderSocialLinks()}
       </div>
       
       {renderAwards()}

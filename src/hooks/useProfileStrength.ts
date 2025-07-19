@@ -94,6 +94,12 @@ export const useProfileStrength = (artist: Artist | null) => {
       weight: 5,
       completed: !!(artist.awards && artist.awards.length > 0),
       description: "Showcase your achievements and awards"
+    },
+    {
+      name: "Work Links",
+      weight: 10,
+      completed: false, // This will be calculated dynamically when work_links data is available
+      description: "Add links to your work portfolio, demo reels, or projects"
     }
   ];
 

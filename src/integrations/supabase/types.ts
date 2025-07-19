@@ -743,6 +743,36 @@ export type Database = {
           },
         ]
       }
+      work_links: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          updated_at: string
+          user_id: string
+          work_title: string
+          work_url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          work_title: string
+          work_url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          work_title?: string
+          work_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
