@@ -47,11 +47,13 @@ const MyWorksLinksSection = ({ userId, isOwnProfile = false, onEditSection }: My
   const [newWorkLink, setNewWorkLink] = useState({ work_title: '', work_url: '' });
 
   useEffect(() => {
+    console.log('[MyWorksLinksSection] Rendered with userId:', userId, 'isOwnProfile:', isOwnProfile);
     fetchWorkLinks();
   }, [userId]);
 
   const fetchWorkLinks = async () => {
     try {
+      console.log('[MyWorksLinksSection] Fetching work links for userId:', userId);
       const { data, error } = await supabase
         .from('work_links')
         .select('*')
@@ -59,6 +61,7 @@ const MyWorksLinksSection = ({ userId, isOwnProfile = false, onEditSection }: My
         .order('display_order', { ascending: true });
 
       if (error) throw error;
+      console.log('[MyWorksLinksSection] Fetched work links:', data);
       setWorkLinks(data || []);
     } catch (error) {
       console.error('Error fetching work links:', error);

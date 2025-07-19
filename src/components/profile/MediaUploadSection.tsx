@@ -7,7 +7,9 @@ import {
   Upload, 
   Image as ImageIcon, 
   Trash2,
-  Plus
+  Plus,
+  Video,
+  Play
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,9 +24,11 @@ interface MediaUploadSectionProps {
 const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectionProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const mediaAssets = profileData.media_assets || [];
   const images = mediaAssets.filter(asset => !asset.is_video);
+  const videos = mediaAssets.filter(asset => asset.is_video);
 
   const validateImageFile = (file: File): boolean => {
     // Check file type
@@ -44,22 +48,51 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     return true;
   };
 
-  const handleFileUpload = async (files: FileList) => {
+  const validateVideoFile = (file: File): boolean => {
+    // Check file type
+    const allowedTypes = ['video/mp4', 'video/mov', 'video/webm', 'video/quicktime'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error(`${file.name} is not a supported video format. Please use MP4, MOV, or WebM.`);
+      return false;
+    }
+
+    // Check file size (50MB max for videos)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`${file.name} is too large. Maximum file size is 50MB.`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleFileUpload = async (files: FileList, isVideo = false) => {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     
     try {
-      const validFiles = Array.from(files).filter(validateImageFile);
+      const validFiles = Array.from(files).filter(isVideo ? validateVideoFile : validateImageFile);
       
       if (validFiles.length === 0) {
         setIsUploading(false);
         return;
       }
 
-      // Check if adding these files would exceed the limit
-      if (images.length + validFiles.length > 4) {
-        toast.error(`You can only upload ${4 - images.length} more image(s).`);
+      const totalCurrentItems = images.length + videos.length;
+      
+      // Check video-specific limits
+      if (isVideo) {
+        if (videos.length + validFiles.length > 2) {
+          toast.error(`You can only upload ${2 - videos.length} more video(s).`);
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // Check total items limit (4 items max)
+      if (totalCurrentItems + validFiles.length > 4) {
+        toast.error(`You can only upload ${4 - totalCurrentItems} more item(s). Max 4 items total (images + videos).`);
         setIsUploading(false);
         return;
       }
@@ -108,7 +141,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
               file_type: file.type,
               file_size: file.size,
               url: publicUrl,
-              is_video: false,
+              is_video: isVideo,
               is_embed: false,
               description: null
             });
@@ -133,7 +166,8 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       }
 
       if (successCount > 0) {
-        toast.success(`Successfully uploaded ${successCount} image${successCount !== 1 ? 's' : ''}!`);
+        const fileType = isVideo ? 'video' : 'image';
+        toast.success(`Successfully uploaded ${successCount} ${fileType}${successCount !== 1 ? 's' : ''}!`);
         // Refresh the profile data
         onUpdate();
       }
@@ -142,9 +176,12 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
       toast.error('Failed to upload media files');
     } finally {
       setIsUploading(false);
-      // Clear the input
+      // Clear the inputs
       if (imageInputRef.current) {
         imageInputRef.current.value = '';
+      }
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
       }
     }
   };
@@ -193,8 +230,10 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
     }
   };
 
-  const canUploadImage = images.length < 4;
-  const getImageUrl = (image: MediaAsset) => image.asset_url || image.url;
+  const totalItems = images.length + videos.length;
+  const canUploadImage = totalItems < 4;
+  const canUploadVideo = videos.length < 2 && totalItems < 4;
+  const getMediaUrl = (media: MediaAsset) => media.asset_url || media.url;
 
   return (
     <Card className="mb-8">
@@ -203,29 +242,50 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           <Upload className="w-5 h-5 text-[#ff8200]" />
           Media Portfolio
           <Badge variant="outline" className="ml-2">
-            {images.length}/4 Images
+            {totalItems}/4 Items
           </Badge>
         </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => imageInputRef.current?.click()}
-          disabled={isUploading || !canUploadImage}
-          className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="truncate">Add Image</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isUploading || !canUploadImage}
+            className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="truncate">Add Image</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={isUploading || !canUploadVideo}
+            className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="truncate">Add Video</span>
+          </Button>
+        </div>
       </CardHeader>
       
       <CardContent>
-        {/* Upload Input */}
+        {/* Upload Inputs */}
         <input
           ref={imageInputRef}
           type="file"
           multiple
           accept="image/jpeg,image/jpg,image/png,image/webp"
-          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files, false)}
+          className="hidden"
+          disabled={isUploading}
+        />
+        <input
+          ref={videoInputRef}
+          type="file"
+          multiple
+          accept="video/mp4,video/mov,video/webm,video/quicktime"
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files, true)}
           className="hidden"
           disabled={isUploading}
         />
@@ -234,25 +294,71 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
           <h4 className="font-medium text-[#ff8200] mb-2">Upload Guidelines</h4>
           <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Images: Max 10MB each, up to 4 files</li>
-            <li>• Supported formats: JPG, PNG, WebP</li>
+            <li>• <strong>Max 4 items</strong> – Images and up to 2 videos allowed</li>
+            <li>• Images: Max 10MB each (JPG, PNG, WebP)</li>
+            <li>• Videos: Max 50MB each (MP4, MOV, WebM)</li>
             <li>• Recommended: High-quality portfolio pieces showcasing your work</li>
           </ul>
         </div>
+
+        {/* Videos Section */}
+        {videos.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Video className="w-5 h-5 text-[#ff8200]" />
+              <h3 className="text-lg font-semibold">Videos ({videos.length}/2)</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {videos.map((video) => (
+                <div key={video.id} className="relative group">
+                  <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <video
+                      src={getMediaUrl(video)}
+                      controls
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLVideoElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-white/90 text-gray-700">
+                        <Play className="w-3 h-3 mr-1" />
+                        Video
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 h-8 w-8 p-0 rounded-lg"
+                      onClick={() => handleDeleteMedia(video.id, video.file_name, getMediaUrl(video))}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {video.description && (
+                    <p className="text-xs text-gray-600 mt-1 truncate">{video.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 truncate">{video.file_name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Images Section */}
         {images.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <ImageIcon className="w-5 h-5 text-[#ff8200]" />
-              <h3 className="text-lg font-semibold">Images ({images.length}/4)</h3>
+              <h3 className="text-lg font-semibold">Images ({images.length})</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((image) => (
                 <div key={image.id} className="relative group">
                   <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
                     <img
-                      src={getImageUrl(image)}
+                      src={getMediaUrl(image)}
                       alt={image.description || image.file_name}
                       className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                       onError={(e) => {
@@ -270,7 +376,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
                       variant="destructive"
                       size="sm"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 h-8 w-8 p-0 rounded-lg"
-                      onClick={() => handleDeleteMedia(image.id, image.file_name, getImageUrl(image))}
+                      onClick={() => handleDeleteMedia(image.id, image.file_name, getMediaUrl(image))}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -286,21 +392,32 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
         )}
 
         {/* Empty State */}
-        {images.length === 0 && (
+        {totalItems === 0 && (
           <div className="text-center py-12">
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No images uploaded</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No media uploaded</h3>
             <p className="text-gray-600 mb-4">
-              Showcase your work by uploading images to your portfolio
+              Showcase your work by uploading images and videos to your portfolio
             </p>
-            <Button
-              onClick={() => imageInputRef.current?.click()}
-              disabled={isUploading}
-              className="bg-[#ff8200] hover:bg-[#ff8200]/90 text-white rounded-lg"
-            >
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Upload Images
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isUploading}
+                className="bg-[#ff8200] hover:bg-[#ff8200]/90 text-white rounded-lg"
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Upload Images
+              </Button>
+              <Button
+                onClick={() => videoInputRef.current?.click()}
+                disabled={isUploading}
+                variant="outline"
+                className="border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Upload Videos
+              </Button>
+            </div>
           </div>
         )}
 
@@ -309,7 +426,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
           <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <div className="flex items-center gap-2">
               <Upload className="w-4 h-4 text-[#ff8200] animate-spin" />
-              <span className="text-[#ff8200]">Uploading images...</span>
+              <span className="text-[#ff8200]">Uploading media files...</span>
             </div>
           </div>
         )}
