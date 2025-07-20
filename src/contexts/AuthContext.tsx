@@ -91,6 +91,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkProfileStrength = async (userId: string) => {
     try {
+      // Check if user has permanently skipped the popup
+      const popupSkipped = localStorage.getItem('profile_strength_popup_skipped');
+      if (popupSkipped === 'true') {
+        return; // Don't show popup if permanently skipped
+      }
+
       // Check if user has dismissed the reminder recently (within 24 hours)
       const lastDismissed = localStorage.getItem('profile_reminder_dismissed');
       if (lastDismissed) {

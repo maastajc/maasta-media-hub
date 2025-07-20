@@ -50,6 +50,12 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
     localStorage.setItem('profile_reminder_dismissed', Date.now().toString());
   };
 
+  const handleSkipForNow = () => {
+    onClose();
+    // Permanently dismiss the popup
+    localStorage.setItem('profile_strength_popup_skipped', 'true');
+  };
+
   if (!artist || totalStrength >= 100) {
     return null;
   }
@@ -120,14 +126,25 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
               <ChevronRight size={16} className="ml-2" />
             </Button>
             
-            <Button 
-              onClick={handleRemindLater}
-              variant="ghost" 
-              size="sm"
-              className="w-full text-muted-foreground hover:text-foreground"
-            >
-              Remind me later
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleRemindLater}
+                variant="ghost" 
+                size="sm"
+                className="flex-1 text-muted-foreground hover:text-foreground"
+              >
+                Remind me later
+              </Button>
+              
+              <Button 
+                onClick={handleSkipForNow}
+                variant="outline" 
+                size="sm"
+                className="flex-1"
+              >
+                Skip for now
+              </Button>
+            </div>
           </div>
         </div>
 
