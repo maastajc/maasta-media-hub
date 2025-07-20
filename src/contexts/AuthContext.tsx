@@ -168,10 +168,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 (window.location.hash.includes('access_token') || 
                  window.location.search.includes('code'));
               
-                if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
+              if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
                 setTimeout(() => {
                   if (isMounted) {
-                    navigate('/profile');
+                    // Check if onboarding is completed, otherwise redirect to onboarding
+                    const onboardingCompleted = localStorage.getItem('onboarding_completed');
+                    if (onboardingCompleted === 'true') {
+                      navigate('/profile');
+                    } else {
+                      navigate('/onboarding/basic-info');
+                    }
                   }
                 }, 100);
               }
