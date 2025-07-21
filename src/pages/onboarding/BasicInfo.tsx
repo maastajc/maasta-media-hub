@@ -138,6 +138,36 @@ const BasicInfo = () => {
     }
   };
 
+  const handleSkip = async () => {
+    if (!user) return;
+    
+    // Save any partial data that exists
+    try {
+      const updateData: any = {};
+      if (formData.full_name) updateData.full_name = formData.full_name;
+      if (formData.headline) updateData.headline = formData.headline;
+      if (date) updateData.date_of_birth = date.toISOString().split('T')[0];
+      if (formData.city) updateData.city = formData.city;
+      if (formData.state) updateData.state = formData.state;
+      if (formData.country) updateData.country = formData.country;
+      if (formData.phone_number) updateData.phone_number = `+91${formData.phone_number}`;
+      if (formData.gender) updateData.gender = formData.gender;
+      
+      if (Object.keys(updateData).length > 0) {
+        updateData.updated_at = new Date().toISOString();
+        await supabase.from('profiles').update(updateData).eq('id', user.id);
+      }
+      
+      localStorage.setItem('onboarding_step', '2');
+      navigate('/onboarding/work-preference');
+    } catch (error) {
+      console.error('Error saving partial data:', error);
+      // Continue to next step even if save fails
+      localStorage.setItem('onboarding_step', '2');
+      navigate('/onboarding/work-preference');
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -317,13 +347,21 @@ const BasicInfo = () => {
               </div>
             </div>
 
-            <div className="flex justify-between pt-6">
-              <Button variant="outline" onClick={() => navigate('/profile')}>
-                Skip for Now
-              </Button>
-              <Button onClick={handleNext} disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Next: Work Preferences'}
-              </Button>
+            <div className="flex justify-between items-center pt-6">
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => navigate('/profile')}>
+                  Exit Setup
+                </Button>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                  Skip for Now
+                </Button>
+                <Button onClick={handleNext} disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Next: Work Preferences'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

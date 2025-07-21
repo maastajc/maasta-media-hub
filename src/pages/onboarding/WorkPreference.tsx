@@ -109,6 +109,32 @@ const WorkPreference = () => {
     }
   };
 
+  const handleSkip = async () => {
+    if (!user) return;
+    
+    // Save any partial data that exists
+    try {
+      const updateData: any = {};
+      if (formData.category) updateData.category = formData.category;
+      if (formData.work_preference) updateData.work_preference = formData.work_preference;
+      if (formData.willing_to_relocate !== false) updateData.willing_to_relocate = formData.willing_to_relocate;
+      if (formData.preferred_domains) updateData.preferred_domains = formData.preferred_domains;
+      
+      if (Object.keys(updateData).length > 0) {
+        updateData.updated_at = new Date().toISOString();
+        await supabase.from('profiles').update(updateData).eq('id', user.id);
+      }
+      
+      localStorage.setItem('onboarding_step', '3');
+      navigate('/onboarding/media-portfolio');
+    } catch (error) {
+      console.error('Error saving partial data:', error);
+      // Continue to next step even if save fails
+      localStorage.setItem('onboarding_step', '3');
+      navigate('/onboarding/media-portfolio');
+    }
+  };
+
   const handleBack = () => {
     navigate('/onboarding/basic-info');
   };
@@ -192,13 +218,19 @@ const WorkPreference = () => {
               <Label htmlFor="relocate">I'm willing to relocate for work opportunities</Label>
             </div>
 
-            <div className="flex justify-between pt-6">
+            <div className="flex justify-between items-center pt-6">
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button onClick={handleNext} disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Next: Media Portfolio'}
-              </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                  Skip for Now
+                </Button>
+                <Button onClick={handleNext} disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Next: Media Portfolio'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

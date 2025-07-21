@@ -21,6 +21,11 @@ const MediaPortfolio = () => {
     navigate('/onboarding/projects');
   };
 
+  const handleSkip = () => {
+    localStorage.setItem('onboarding_step', '4');
+    navigate('/onboarding/projects');
+  };
+
   const handleBack = () => {
     navigate('/onboarding/work-preference');
   };
@@ -56,13 +61,19 @@ const MediaPortfolio = () => {
               userId={user.id}
             />
 
-            <div className="flex justify-between pt-6">
+            <div className="flex justify-between items-center pt-6">
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button onClick={handleNext}>
-                Next: Projects & Work Samples
-              </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                  Skip for Now
+                </Button>
+                <Button onClick={handleNext}>
+                  Next: Projects & Work Samples
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

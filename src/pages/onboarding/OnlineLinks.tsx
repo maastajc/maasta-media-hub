@@ -73,6 +73,30 @@ const OnlineLinks = () => {
     }
   };
 
+  const handleSkip = async () => {
+    if (!user) return;
+    
+    // Save any partial data that exists
+    try {
+      const updateData: any = {};
+      if (formData.instagram) updateData.instagram = formData.instagram;
+      if (formData.youtube_vimeo) updateData.youtube_vimeo = formData.youtube_vimeo;
+      
+      if (Object.keys(updateData).length > 0) {
+        updateData.updated_at = new Date().toISOString();
+        await supabase.from('profiles').update(updateData).eq('id', user.id);
+      }
+      
+      localStorage.setItem('onboarding_step', '6');
+      navigate('/onboarding/skills-tools');
+    } catch (error) {
+      console.error('Error saving partial data:', error);
+      // Continue to next step even if save fails
+      localStorage.setItem('onboarding_step', '6');
+      navigate('/onboarding/skills-tools');
+    }
+  };
+
   const handleBack = () => {
     navigate('/onboarding/projects');
   };
@@ -151,13 +175,19 @@ const OnlineLinks = () => {
             </CardContent>
           </Card>
 
-          <div className="flex justify-between pt-6">
+          <div className="flex justify-between items-center pt-6">
             <Button variant="outline" onClick={handleBack}>
               Back
             </Button>
-            <Button onClick={handleNext} disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Next: Skills & Tools'}
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                Skip for Now
+              </Button>
+              <Button onClick={handleNext} disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Next: Skills & Tools'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

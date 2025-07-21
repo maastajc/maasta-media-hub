@@ -21,6 +21,11 @@ const Projects = () => {
     navigate('/onboarding/online-links');
   };
 
+  const handleSkip = () => {
+    localStorage.setItem('onboarding_step', '5');
+    navigate('/onboarding/online-links');
+  };
+
   const handleBack = () => {
     navigate('/onboarding/media-portfolio');
   };
@@ -56,13 +61,19 @@ const Projects = () => {
               userId={user.id}
             />
 
-            <div className="flex justify-between pt-6">
+            <div className="flex justify-between items-center pt-6">
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button onClick={handleNext}>
-                Next: Online Presence & Links
-              </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                  Skip for Now
+                </Button>
+                <Button onClick={handleNext}>
+                  Next: Online Presence & Links
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

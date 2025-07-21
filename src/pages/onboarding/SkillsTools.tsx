@@ -22,6 +22,11 @@ const SkillsTools = () => {
     navigate('/onboarding/complete');
   };
 
+  const handleSkip = () => {
+    localStorage.setItem('onboarding_step', '7');
+    navigate('/onboarding/complete');
+  };
+
   const handleBack = () => {
     navigate('/onboarding/online-links');
   };
@@ -79,13 +84,19 @@ const SkillsTools = () => {
             </CardContent>
           </Card>
 
-          <div className="flex justify-between pt-6">
+          <div className="flex justify-between items-center pt-6">
             <Button variant="outline" onClick={handleBack}>
               Back
             </Button>
-            <Button onClick={handleNext}>
-              Complete Profile Setup
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
+                Skip for Now
+              </Button>
+              <Button onClick={handleNext}>
+                Complete Profile Setup
+              </Button>
+            </div>
           </div>
         </div>
       </div>
