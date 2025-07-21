@@ -120,8 +120,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const completedSections = [hasBasicInfo, hasMedia, hasProjects, hasProfilePic].filter(Boolean).length;
         const basicStrength = (completedSections / 4) * 100;
         
-        // Show popup if profile strength is less than 100% and user is on dashboard/home
-        if (basicStrength < 100 && (location.pathname === '/' || location.pathname === '/dashboard')) {
+        // Only show popup if profile strength is less than 100%, user is on dashboard/home, 
+        // and they haven't completed onboarding (to avoid showing during onboarding flow)
+        const onboardingCompleted = localStorage.getItem('onboarding_completed');
+        if (basicStrength < 100 && 
+            (location.pathname === '/' || location.pathname === '/dashboard') && 
+            onboardingCompleted === 'true') {
           setShowProfileStrengthPopup(true);
         }
       }
@@ -329,7 +333,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           <ProfileStrengthPopup
             artist={artistProfile}
             open={showProfileStrengthPopup}
-            onClose={() => setShowProfileStrengthPopup(false)}
+            onClose={() => {
+              setShowProfileStrengthPopup(false);
+              // Clear artist profile to prevent showing again
+              setArtistProfile(null);
+            }}
           />
         </>
       )}
