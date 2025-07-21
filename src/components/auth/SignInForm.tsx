@@ -108,9 +108,9 @@ export const SignInForm = () => {
         return; // Don't navigate on error
       }
       
-      // Navigate to profile page instead of home
+      // Navigate to home page to let OnboardingRedirect handle routing
       signInRateLimiter.reset(email.trim()); // Reset on successful login
-      navigate('/profile');
+      navigate('/');
     } catch (error: any) {
       // Handle any unexpected errors
       if (error.message.includes('Invalid login credentials') || 
@@ -131,8 +131,8 @@ export const SignInForm = () => {
       
       const currentDomain = window.location.origin;
       const redirectUrl = currentDomain.includes('localhost') 
-        ? 'https://preview--maasta-media-hub.lovable.app/profile'
-        : `${currentDomain}/profile`;
+        ? 'https://preview--maasta-media-hub.lovable.app/'
+        : `${currentDomain}/`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
