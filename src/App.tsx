@@ -30,7 +30,7 @@ const HomeRedirect = () => {
     );
   }
   
-  return user ? <Navigate to="/profile" replace /> : <Navigate to="/sign-in" replace />;
+  return user ? <Navigate to="/profile" replace /> : <Navigate to="/sign-up" replace />;
 };
 
 const queryClient = new QueryClient();
