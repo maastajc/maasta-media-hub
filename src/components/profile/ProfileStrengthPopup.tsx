@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -51,29 +50,13 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
     localStorage.setItem('profile_reminder_dismissed', Date.now().toString());
   };
 
-  const handleSkipForNow = () => {
-    onClose();
-    // Permanently dismiss the popup
-    localStorage.setItem('profile_strength_popup_skipped', 'true');
-  };
-
   if (!artist || totalStrength >= 100) {
     return null;
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5 relative">
-        {/* Exit Icon in top-right corner */}
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 w-8 h-8 hover:bg-gray-100"
-        >
-          <X size={16} className="text-gray-500" />
-        </Button>
-
+      <DialogContent className="sm:max-w-md border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
             <Target className="w-8 h-8 text-primary" />
@@ -81,7 +64,7 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
           
           <div>
             <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2">
-              {currentMessage.icon} Hey {artist.full_name || 'there'}! {currentMessage.title}
+              {currentMessage.icon} {currentMessage.title}
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               {currentMessage.subtitle}
@@ -137,27 +120,25 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
               <ChevronRight size={16} className="ml-2" />
             </Button>
             
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleRemindLater}
-                variant="ghost" 
-                size="sm"
-                className="flex-1 text-muted-foreground hover:text-foreground"
-              >
-                Remind me later
-              </Button>
-              
-              <Button 
-                onClick={handleSkipForNow}
-                variant="outline" 
-                size="sm"
-                className="flex-1"
-              >
-                Skip for now
-              </Button>
-            </div>
+            <Button 
+              onClick={handleRemindLater}
+              variant="ghost" 
+              size="sm"
+              className="w-full text-muted-foreground hover:text-foreground"
+            >
+              Remind me later
+            </Button>
           </div>
         </div>
+
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 w-8 h-8"
+        >
+          <X size={16} />
+        </Button>
       </DialogContent>
     </Dialog>
   );

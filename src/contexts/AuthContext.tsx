@@ -91,12 +91,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkProfileStrength = async (userId: string) => {
     try {
-      // Check if user has permanently skipped the popup
-      const popupSkipped = localStorage.getItem('profile_strength_popup_skipped');
-      if (popupSkipped === 'true') {
-        return; // Don't show popup if permanently skipped
-      }
-
       // Check if user has dismissed the reminder recently (within 24 hours)
       const lastDismissed = localStorage.getItem('profile_reminder_dismissed');
       if (lastDismissed) {
@@ -120,12 +114,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const completedSections = [hasBasicInfo, hasMedia, hasProjects, hasProfilePic].filter(Boolean).length;
         const basicStrength = (completedSections / 4) * 100;
         
-        // Only show popup if profile strength is less than 100%, user is on dashboard/home, 
-        // and they haven't completed onboarding (to avoid showing during onboarding flow)
-        const onboardingCompleted = localStorage.getItem('onboarding_completed');
-        if (basicStrength < 100 && 
-            (location.pathname === '/' || location.pathname === '/dashboard') && 
-            onboardingCompleted === 'true') {
+        // Show popup if profile strength is less than 100% and user is on dashboard/home
+        if (basicStrength < 100 && (location.pathname === '/' || location.pathname === '/dashboard')) {
           setShowProfileStrengthPopup(true);
         }
       }
@@ -178,16 +168,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 (window.location.hash.includes('access_token') || 
                  window.location.search.includes('code'));
               
-              if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
+                if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
                 setTimeout(() => {
                   if (isMounted) {
-                    // Check if onboarding is completed, otherwise redirect to onboarding
-                    const onboardingCompleted = localStorage.getItem('onboarding_completed');
-                    if (onboardingCompleted === 'true') {
-                      navigate('/'); // Redirect to homepage (which is now profile)
-                    } else {
-                      navigate('/onboarding/basic-info');
-                    }
+                    navigate('/profile');
                   }
                 }, 100);
               }
@@ -333,11 +317,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           <ProfileStrengthPopup
             artist={artistProfile}
             open={showProfileStrengthPopup}
-            onClose={() => {
-              setShowProfileStrengthPopup(false);
-              // Clear artist profile to prevent showing again
-              setArtistProfile(null);
-            }}
+            onClose={() => setShowProfileStrengthPopup(false)}
           />
         </>
       )}

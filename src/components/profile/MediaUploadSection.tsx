@@ -26,7 +26,7 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const mediaAssets = profileData?.media_assets || [];
+  const mediaAssets = profileData.media_assets || [];
   const images = mediaAssets.filter(asset => !asset.is_video);
   const videos = mediaAssets.filter(asset => asset.is_video);
 
