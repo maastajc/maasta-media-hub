@@ -207,7 +207,15 @@ const PortfolioLinksEditForm = ({ open, onClose, onSuccess, profileData }: Portf
               >
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  form.reset();
+                  onClose();
+                }}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
             </div>

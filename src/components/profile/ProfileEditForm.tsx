@@ -24,6 +24,11 @@ import CoverImageUpload from "./CoverImageUpload";
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be less than 30 characters")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+    .refine((val) => !val.includes(" "), "Username cannot contain spaces"),
   headline: z.string().min(1, "Headline/Bio is required").max(150, "Headline must be less than 150 characters"),
   phone_number: z.string().optional(),
   city: z.string().optional(),
@@ -70,6 +75,7 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
     resolver: zodResolver(formSchema),
     defaultValues: {
       full_name: profileData.full_name || "",
+      username: profileData.username || "",
       headline: profileData.headline || profileData.bio || "",
       phone_number: profileData.phone_number || "",
       city: profileData.city || "",
@@ -90,11 +96,30 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
     const values = form.getValues();
     return !!(
       profilePicture &&
+      values.username &&
       values.headline &&
       values.category &&
       values.work_preference &&
       values.date_of_birth
     );
+  };
+
+  // Check if username is already taken
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username === profileData.username) return true;
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("username", username)
+      .neq("id", profileData.id);
+    
+    if (error) {
+      console.error("Error checking username:", error);
+      return false;
+    }
+    
+    return data.length === 0;
   };
 
   const validateUrl = (url: string) => {
@@ -133,11 +158,23 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       return;
     }
 
+    // Check username availability
+    const isUsernameAvailable = await checkUsernameAvailability(values.username);
+    if (!isUsernameAvailable) {
+      toast({
+        title: "Username Not Available",
+        description: "This username is already taken. Please choose a different one.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const updateData = {
         full_name: values.full_name,
+        username: values.username,
         headline: values.headline,
         bio: values.headline, // Use headline as bio
         phone_number: values.phone_number || null,
@@ -288,6 +325,32 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter unique username" 
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                            field.onChange(value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-gray-500">
+                        Used for your artist page: /artist/{field.value || 'username'}
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="gender"
@@ -660,7 +723,19 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
               </div>
             </div>
 
-            <div className="flex justify-center pt-6 border-t">
+            <div className="flex justify-center gap-4 pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  form.reset();
+                  onClose();
+                }}
+                disabled={isSubmitting}
+                className="px-8 py-3"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !checkMandatoryFields()}
