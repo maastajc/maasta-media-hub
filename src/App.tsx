@@ -2,9 +2,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -20,6 +19,20 @@ import Networking from "./pages/Networking";
 import AuditionApplications from "./pages/AuditionApplications";
 import ScrollToTop from "./components/layout/ScrollToTop";
 
+const HomeRedirect = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  return user ? <Navigate to="/profile" replace /> : <Navigate to="/sign-in" replace />;
+};
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -31,7 +44,7 @@ function App() {
           <AuthProvider>
             <ScrollToTop />
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<HomeRedirect />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
