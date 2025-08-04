@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,17 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
+      <DialogContent className="sm:max-w-md border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5 relative">
+        {/* Exit Icon in top-right corner */}
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 w-8 h-8 hover:bg-gray-100"
+        >
+          <X size={16} className="text-gray-500" />
+        </Button>
+
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
             <Target className="w-8 h-8 text-primary" />
@@ -70,7 +81,7 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
           
           <div>
             <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2">
-              {currentMessage.icon} {currentMessage.title}
+              {currentMessage.icon} Hey {artist.full_name || 'there'}! {currentMessage.title}
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               {currentMessage.subtitle}
@@ -147,15 +158,6 @@ const ProfileStrengthPopup = ({ artist, open, onClose }: ProfileStrengthPopupPro
             </div>
           </div>
         </div>
-
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 w-8 h-8"
-        >
-          <X size={16} />
-        </Button>
       </DialogContent>
     </Dialog>
   );

@@ -184,7 +184,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     // Check if onboarding is completed, otherwise redirect to onboarding
                     const onboardingCompleted = localStorage.getItem('onboarding_completed');
                     if (onboardingCompleted === 'true') {
-                      navigate('/profile');
+                      navigate('/'); // Redirect to homepage (which is now profile)
                     } else {
                       navigate('/onboarding/basic-info');
                     }
