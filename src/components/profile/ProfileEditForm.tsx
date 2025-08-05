@@ -316,8 +316,6 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                         <Input 
                           placeholder="Enter your full name" 
                           {...field} 
-                          readOnly={!!profileData.full_name}
-                          className={profileData.full_name ? "bg-gray-50" : ""}
                         />
                       </FormControl>
                       <FormMessage />

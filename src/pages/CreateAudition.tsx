@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -59,6 +59,7 @@ const CreateAudition = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -85,6 +86,65 @@ const CreateAudition = () => {
       experience_level: '',
     },
   });
+
+  // Load saved draft on component mount
+  useEffect(() => {
+    if (user) {
+      const savedDraft = localStorage.getItem(`audition-draft-${user.id}`);
+      const savedTags = localStorage.getItem(`audition-tags-${user.id}`);
+      
+      if (savedDraft) {
+        try {
+          const draftData = JSON.parse(savedDraft);
+          form.reset(draftData);
+        } catch (error) {
+          console.error('Error loading draft:', error);
+        }
+      }
+      
+      if (savedTags) {
+        try {
+          setTags(JSON.parse(savedTags));
+        } catch (error) {
+          console.error('Error loading tags:', error);
+        }
+      }
+    }
+  }, [user, form]);
+
+  // Auto-save functionality
+  const formValues = useWatch({ control: form.control });
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    const timeoutId = setTimeout(() => {
+      const dataToSave = {
+        ...formValues,
+        // Only save non-empty values
+        title: formValues.title?.trim() || '',
+        description: formValues.description?.trim() || '',
+        requirements: formValues.requirements?.trim() || '',
+      };
+      
+      // Only save if there's meaningful content
+      if (dataToSave.title || dataToSave.description || dataToSave.requirements) {
+        localStorage.setItem(`audition-draft-${user.id}`, JSON.stringify(dataToSave));
+        localStorage.setItem(`audition-tags-${user.id}`, JSON.stringify(tags));
+        setLastSaved(new Date());
+      }
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(timeoutId);
+  }, [formValues, tags, user]);
+
+  // Clear draft after successful submission
+  const clearDraft = () => {
+    if (user) {
+      localStorage.removeItem(`audition-draft-${user.id}`);
+      localStorage.removeItem(`audition-tags-${user.id}`);
+    }
+  };
 
   // Watch audition type and category to conditionally show fields
   const auditionType = useWatch({
@@ -198,6 +258,9 @@ const CreateAudition = () => {
         description: "Audition created successfully!",
       });
 
+      // Clear the draft after successful submission
+      clearDraft();
+
       // Navigate to the auditions list or the created audition
       navigate('/auditions');
     } catch (error: any) {
@@ -238,6 +301,11 @@ const CreateAudition = () => {
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">Create New Audition</h1>
               <p className="text-gray-600">Post a new audition opportunity for artists</p>
+              {lastSaved && (
+                <p className="text-sm text-green-600 mt-2">
+                  Draft auto-saved at {lastSaved.toLocaleTimeString()}
+                </p>
+              )}
             </div>
 
             <Card>
