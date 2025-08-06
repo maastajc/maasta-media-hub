@@ -43,7 +43,7 @@ const SignUp = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-secondary/5">
       {/* Header with Logo */}
       <div className="container max-w-7xl mx-auto px-4 pt-8">
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8 lg:mb-12">
           <img 
             src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
             alt="Maasta Logo" 
@@ -53,8 +53,64 @@ const SignUp = () => {
       </div>
 
       <div className="container max-w-7xl mx-auto px-4 pb-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left side - Welcome content */}
+        {/* Mobile Layout - Vertical Stack */}
+        <div className="lg:hidden space-y-8">
+          {/* Create Account Form */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              <SignUpForm />
+            </div>
+          </div>
+
+          {/* Join Maasta Section */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Join Maasta
+              </h1>
+              <p className="text-lg text-muted-foreground mb-2">
+                Create your profile and get discovered by industry leaders!
+              </p>
+              <p className="text-base text-muted-foreground">
+                Connect with top casting directors, agents, and event organizers
+              </p>
+            </div>
+
+            {/* Feature cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="group p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-primary/10 hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <feature.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1 text-sm">
+                        {feature.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Join thousands of artists already on Maasta
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout - Horizontal */}
+        <div className="hidden lg:grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left side - Join Maasta content */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h1 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -92,27 +148,19 @@ const SignUp = () => {
               ))}
             </div>
 
-            {/* Mobile-only tagline */}
-            <div className="lg:hidden text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="text-center lg:text-left">
+              <p className="text-muted-foreground">
                 Join thousands of artists already on Maasta
               </p>
             </div>
           </div>
 
-          {/* Right side - Sign up form */}
+          {/* Right side - Create Account Form */}
           <div className="flex justify-center">
             <div className="w-full max-w-md">
               <SignUpForm />
             </div>
           </div>
-        </div>
-
-        {/* Desktop-only bottom tagline */}
-        <div className="hidden lg:block text-center mt-16">
-          <p className="text-muted-foreground">
-            Join thousands of artists already on Maasta
-          </p>
         </div>
       </div>
     </div>
