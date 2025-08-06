@@ -40,7 +40,7 @@ const SignUp = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-secondary/5">
+    <div className="min-h-screen bg-gradient-to-br from-maasta-purple-light/20 via-white to-primary/5">
       {/* Header with Logo */}
       <div className="container max-w-7xl mx-auto px-4 pt-8">
         <div className="flex justify-center mb-8 lg:mb-12">
@@ -65,7 +65,7 @@ const SignUp = () => {
           {/* Join Maasta Section */}
           <div className="space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
                 Join Maasta
               </h1>
               <p className="text-lg text-muted-foreground mb-2">
@@ -81,11 +81,11 @@ const SignUp = () => {
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className="group p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-primary/10 hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  className="group p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-maasta-purple/10 hover:border-maasta-purple/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <feature.icon className="h-5 w-5 text-primary" />
+                    <div className="p-2 rounded-xl bg-maasta-purple-light/30 group-hover:bg-maasta-purple/20 transition-colors">
+                      <feature.icon className="h-5 w-5 text-maasta-purple" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-1 text-sm">
@@ -113,7 +113,7 @@ const SignUp = () => {
           {/* Left side - Join Maasta content */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-4xl lg:text-5xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
                 Join Maasta
               </h1>
               <p className="text-xl text-muted-foreground mb-2">
@@ -129,11 +129,11 @@ const SignUp = () => {
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className="group p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-primary/10 hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  className="group p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-maasta-purple/10 hover:border-maasta-purple/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                 >
                   <div className="flex items-start space-x-4">
-                    <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <feature.icon className="h-6 w-6 text-primary" />
+                    <div className="p-3 rounded-xl bg-maasta-purple-light/30 group-hover:bg-maasta-purple/20 transition-colors">
+                      <feature.icon className="h-6 w-6 text-maasta-purple" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-1">

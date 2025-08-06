@@ -93,6 +93,11 @@
   --primary: 22 100% 56%; /* #ff8200 - Maasta soft orange */
   --primary-foreground: 0 0% 100%; /* White text on orange */
   
+  /* Maasta purple from logo */
+  --maasta-purple: 259 94% 51%; /* #6366f1 - Maasta purple */
+  --maasta-purple-light: 259 94% 85%; /* Light purple for backgrounds */
+  --maasta-purple-dark: 259 94% 35%; /* Dark purple for accents */
+  
   /* Profile strength colors */
   --strength-low: 0 84% 60%; /* Red #e74c3c */
   --strength-medium: 48 89% 60%; /* Yellow #f1c40f */
@@ -108,6 +113,11 @@
 .dark {
   --primary: 22 100% 56%; /* Keep same orange in dark mode */
   --primary-foreground: 0 0% 100%;
+  
+  /* Maasta purple in dark mode */
+  --maasta-purple: 259 94% 51%;
+  --maasta-purple-light: 259 94% 20%;
+  --maasta-purple-dark: 259 94% 65%;
 }
 
 /* Maasta brand utility classes */
@@ -129,6 +139,31 @@
 
 .hover\:text-maasta-orange\/80:hover {
   color: hsl(22 100% 45%);
+}
+
+/* Maasta purple utility classes */
+.text-maasta-purple {
+  color: hsl(var(--maasta-purple));
+}
+
+.bg-maasta-purple {
+  background-color: hsl(var(--maasta-purple));
+}
+
+.bg-maasta-purple-light {
+  background-color: hsl(var(--maasta-purple-light));
+}
+
+.border-maasta-purple {
+  border-color: hsl(var(--maasta-purple));
+}
+
+.hover\:bg-maasta-purple\/90:hover {
+  background-color: hsl(var(--maasta-purple) / 0.9);
+}
+
+.gradient-purple-orange {
+  background: linear-gradient(135deg, hsl(var(--maasta-purple)), hsl(22 100% 56%));
 }
 
 /* Profile strength colors */
