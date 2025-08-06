@@ -212,10 +212,14 @@ export const SignUpForm = () => {
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>Sign Up</CardTitle>
-          <CardDescription>Create a new account to join Maasta</CardDescription>
+      <Card className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm border-primary/20 shadow-xl">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Create Account
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Start your journey in the entertainment industry
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -365,7 +369,7 @@ export const SignUpForm = () => {
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full bg-[#ff8200] hover:bg-[#ff8200]/90 text-white rounded-lg" 
+              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white rounded-lg font-semibold py-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5" 
               disabled={isLoading}
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -384,7 +388,7 @@ export const SignUpForm = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full mt-4 rounded-lg"
+                className="w-full mt-4 rounded-lg py-6 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
               >

@@ -3,6 +3,7 @@ import { SignUpForm } from '@/components/auth/SignUpForm';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Users, Star, Zap, Calendar } from 'lucide-react';
 
 const SignUp = () => {
   const { user } = useAuth();
@@ -15,16 +16,104 @@ const SignUp = () => {
     }
   }, [user, navigate]);
 
+  const features = [
+    {
+      icon: Calendar,
+      title: "Casting Calls",
+      description: "Discover exclusive audition opportunities"
+    },
+    {
+      icon: Star,
+      title: "Talent Showcase",
+      description: "Display your skills and portfolio"
+    },
+    {
+      icon: Users,
+      title: "Industry Connect",
+      description: "Network with directors and agents"
+    },
+    {
+      icon: Zap,
+      title: "Auditions",
+      description: "Apply to roles that match your talent"
+    }
+  ];
+
   return (
-    <div className="container max-w-screen-xl mx-auto py-12">
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Join Maasta</h1>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-secondary/5">
+      {/* Header with Logo */}
+      <div className="container max-w-7xl mx-auto px-4 pt-8">
+        <div className="flex justify-center mb-12">
+          <img 
+            src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
+            alt="Maasta Logo" 
+            className="h-16 w-auto"
+          />
+        </div>
+      </div>
+
+      <div className="container max-w-7xl mx-auto px-4 pb-12">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left side - Welcome content */}
+          <div className="space-y-8">
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Join Maasta
+              </h1>
+              <p className="text-xl text-muted-foreground mb-2">
+                Create your profile and get discovered by industry leaders!
+              </p>
+              <p className="text-lg text-muted-foreground">
+                Connect with top casting directors, agents, and event organizers
+              </p>
+            </div>
+
+            {/* Feature cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="group p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-primary/10 hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <feature.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile-only tagline */}
+            <div className="lg:hidden text-center">
+              <p className="text-sm text-muted-foreground">
+                Join thousands of artists already on Maasta
+              </p>
+            </div>
+          </div>
+
+          {/* Right side - Sign up form */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              <SignUpForm />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop-only bottom tagline */}
+        <div className="hidden lg:block text-center mt-16">
           <p className="text-muted-foreground">
-            Create your account to access all features
+            Join thousands of artists already on Maasta
           </p>
         </div>
-        <SignUpForm />
       </div>
     </div>
   );
