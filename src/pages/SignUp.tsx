@@ -108,12 +108,12 @@ const SignUp = () => {
           </div>
         </div>
 
-        {/* Desktop Layout - Horizontal */}
-        <div className="hidden lg:grid lg:grid-cols-2 gap-12 items-center">
+        {/* Desktop Layout - Horizontal Alignment */}
+        <div className="hidden lg:flex lg:items-start lg:justify-between lg:gap-16">
           {/* Left side - Join Maasta content */}
-          <div className="space-y-8">
-            <div className="text-center lg:text-left">
-              <h1 className="text-4xl lg:text-5xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
+          <div className="flex-1 max-w-2xl space-y-8">
+            <div className="text-left">
+              <h1 className="text-4xl xl:text-5xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
                 Join Maasta
               </h1>
               <p className="text-xl text-muted-foreground mb-2">
@@ -125,7 +125,7 @@ const SignUp = () => {
             </div>
 
             {/* Feature cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {features.map((feature, index) => (
                 <div
                   key={index}
@@ -148,7 +148,7 @@ const SignUp = () => {
               ))}
             </div>
 
-            <div className="text-center lg:text-left">
+            <div className="text-left">
               <p className="text-muted-foreground">
                 Join thousands of artists already on Maasta
               </p>
@@ -156,10 +156,8 @@ const SignUp = () => {
           </div>
 
           {/* Right side - Create Account Form */}
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <SignUpForm />
-            </div>
+          <div className="flex-shrink-0 w-full max-w-md">
+            <SignUpForm />
           </div>
         </div>
       </div>
