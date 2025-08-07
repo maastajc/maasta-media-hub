@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { EmailVerificationPopup } from './EmailVerificationPopup';
 import { sendVerificationEmail } from '@/services/emailVerificationService';
+import { WORK_PREFERENCE_CATEGORIES } from '@/constants/workPreferences';
 
 export const SignUpForm = () => {
   const [fullName, setFullName] = useState('');
@@ -22,6 +24,7 @@ export const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState('artist');
+  const [workPreferences, setWorkPreferences] = useState<string[]>([]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
@@ -156,6 +159,7 @@ export const SignUpForm = () => {
             username: username,
             role,
             phone_number: `+91${phoneNumber}`,
+            work_preferences: workPreferences,
           },
           emailRedirectTo: `${window.location.origin}/profile`
         }
@@ -285,10 +289,10 @@ export const SignUpForm = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="role">I am a</Label>
+              <Label htmlFor="role">User Type</Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger id="role" className="rounded-lg">
-                  <SelectValue placeholder="Select your role" />
+                  <SelectValue placeholder="Select your user type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="artist">Artist</SelectItem>
@@ -296,6 +300,19 @@ export const SignUpForm = () => {
                   <SelectItem value="casting_agent">Casting Agent</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workPreferences">Work Preferences</Label>
+              <MultiSelect
+                options={WORK_PREFERENCE_CATEGORIES}
+                selected={workPreferences}
+                onChange={setWorkPreferences}
+                placeholder="Select your work preferences..."
+                searchPlaceholder="Search preferences..."
+                emptyText="No preferences found."
+                maxDisplay={2}
+              />
             </div>
             
             <div className="space-y-2">

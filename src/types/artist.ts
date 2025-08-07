@@ -96,6 +96,9 @@ export interface ProfessionalReference {
 
 export type ArtistCategory = 'actor' | 'director' | 'cinematographer' | 'musician' | 'editor' | 'art_director' | 'stunt_coordinator' | 'producer' | 'writer' | 'other';
 
+// Work preferences - allow multiple selections
+export type WorkPreference = string;
+
 export type ExperienceLevel = 'beginner' | 'fresher' | 'intermediate' | 'expert' | 'veteran';
 
 export interface CustomLink {
@@ -120,6 +123,7 @@ export interface Artist {
   years_of_experience?: number;
   association_membership?: string;
   work_preference?: string;
+  work_preferences?: string[]; // New field for multiple work preferences
   willing_to_relocate?: boolean;
   personal_website?: string;
   instagram?: string;
