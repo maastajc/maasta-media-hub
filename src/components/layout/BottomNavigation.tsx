@@ -27,8 +27,8 @@ export function BottomNavigation() {
   const location = useLocation();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border">
-      <nav className="flex items-center justify-around py-2 px-4 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border md:hidden">
+      <nav className="flex items-center justify-around py-3 px-4 safe-area-inset-bottom">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href || 

@@ -16,7 +16,7 @@ export function LayoutWithNavigation({ children }: LayoutWithNavigationProps) {
 
   return (
     <div className="min-h-screen">
-      <div className={shouldShowNavigation ? "pb-16" : ""}>
+      <div className={shouldShowNavigation ? "pb-20 md:pb-0" : ""}>
         {children}
       </div>
       {shouldShowNavigation && <BottomNavigation />}
