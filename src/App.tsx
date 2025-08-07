@@ -18,6 +18,8 @@ import Dashboard from "./pages/Dashboard";
 import Networking from "./pages/Networking";
 import AuditionApplications from "./pages/AuditionApplications";
 import ScrollToTop from "./components/layout/ScrollToTop";
+import { BottomNavigation } from "./components/layout/BottomNavigation";
+import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
 
 const HomeRedirect = () => {
   const { user, loading } = useAuth();
@@ -43,23 +45,25 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<HomeRedirect />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/complete-profile" element={<CompleteProfile />} />
-              <Route path="/artists" element={<Artists />} />
-              <Route path="/artists/:username" element={<ArtistProfile />} />
-              <Route path="/auditions" element={<Auditions />} />
-              <Route path="/auditions/create" element={<CreateAudition />} />
-              <Route path="/auditions/edit/:auditionId" element={<EditAudition />} />
-              <Route path="/auditions/:id" element={<AuditionDetails />} />
-              <Route path="/create-audition" element={<CreateAudition />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/networking" element={<Networking />} />
-              <Route path="/applications/:auditionId" element={<AuditionApplications />} />
-            </Routes>
+            <LayoutWithNavigation>
+              <Routes>
+                <Route path="/" element={<HomeRedirect />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/complete-profile" element={<CompleteProfile />} />
+                <Route path="/artists" element={<Artists />} />
+                <Route path="/artists/:username" element={<ArtistProfile />} />
+                <Route path="/auditions" element={<Auditions />} />
+                <Route path="/auditions/create" element={<CreateAudition />} />
+                <Route path="/auditions/edit/:auditionId" element={<EditAudition />} />
+                <Route path="/auditions/:id" element={<AuditionDetails />} />
+                <Route path="/create-audition" element={<CreateAudition />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/networking" element={<Networking />} />
+                <Route path="/applications/:auditionId" element={<AuditionApplications />} />
+              </Routes>
+            </LayoutWithNavigation>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
