@@ -16,7 +16,7 @@ import { Artist, ExperienceLevel } from "@/types/artist";
 import { WORK_PREFERENCE_CATEGORIES } from "@/constants/workPreferences";
 
 const formSchema = z.object({
-  work_preferences: z.array(z.string()).min(1, "Please select at least one work preference"),
+  work_preferences: z.array(z.string()).min(1, "Please select at least one profession").max(5, "You can select up to 5 professions"),
   experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).optional(),
   years_of_experience: z.number().min(0).max(50).optional(),
   work_preference: z.string().optional(),
@@ -72,7 +72,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
 
       toast({
         title: "Success",
-        description: "Work preferences updated successfully",
+        description: "Profession & preferences updated successfully",
       });
 
       onSuccess();
@@ -81,7 +81,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
       console.error("Error updating work preferences:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update work preferences",
+        description: error.message || "Failed to update profession & preferences",
         variant: "destructive",
       });
     } finally {
@@ -93,7 +93,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Work Preferences</DialogTitle>
+          <DialogTitle>Edit Profession & Preferences</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -103,18 +103,27 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
               name="work_preferences"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Work Preferences</FormLabel>
+                  <FormLabel>Primary Profession * (Select up to 5)</FormLabel>
                   <FormControl>
                     <MultiSelect
                       options={WORK_PREFERENCE_CATEGORIES}
                       selected={field.value || []}
-                      onChange={field.onChange}
-                      placeholder="Select your work preferences..."
-                      searchPlaceholder="Search preferences..."
-                      emptyText="No preferences found."
+                      onChange={(values) => {
+                        if (values.length <= 5) {
+                          field.onChange(values);
+                        }
+                      }}
+                      placeholder="Select your primary professions..."
+                      searchPlaceholder="Search professions..."
+                      emptyText="No professions found."
                       maxDisplay={2}
                     />
                   </FormControl>
+                  {field.value && field.value.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {field.value.length}/5 professions selected
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
