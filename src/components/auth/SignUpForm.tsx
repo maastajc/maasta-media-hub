@@ -303,16 +303,25 @@ export const SignUpForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="workPreferences">Work Preferences</Label>
+              <Label htmlFor="workPreferences">Primary Profession * (Select up to 5)</Label>
               <MultiSelect
                 options={WORK_PREFERENCE_CATEGORIES}
                 selected={workPreferences}
-                onChange={setWorkPreferences}
-                placeholder="Select your work preferences..."
-                searchPlaceholder="Search preferences..."
-                emptyText="No preferences found."
+                onChange={(values) => {
+                  if (values.length <= 5) {
+                    setWorkPreferences(values);
+                  }
+                }}
+                placeholder="Select your primary professions..."
+                searchPlaceholder="Search professions..."
+                emptyText="No professions found."
                 maxDisplay={2}
               />
+              {workPreferences.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {workPreferences.length}/5 professions selected
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
