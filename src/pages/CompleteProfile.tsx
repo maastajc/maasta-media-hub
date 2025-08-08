@@ -14,6 +14,8 @@ import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { WORK_PREFERENCE_CATEGORIES } from '@/constants/workPreferences';
 
 const CompleteProfile = () => {
   const { user } = useAuth();
@@ -28,7 +30,8 @@ const CompleteProfile = () => {
     city: '',
     state: '',
     country: '',
-    phone_number: ''
+    phone_number: '',
+    work_preferences: [] as string[]
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -99,6 +102,12 @@ const CompleteProfile = () => {
       newErrors.phone_number = 'Phone number must be exactly 10 digits';
     }
 
+    if (formData.work_preferences.length === 0) {
+      newErrors.work_preferences = 'Please select at least one profession';
+    } else if (formData.work_preferences.length > 5) {
+      newErrors.work_preferences = 'You can select up to 5 professions';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -149,6 +158,8 @@ const CompleteProfile = () => {
           state: formData.state,
           country: formData.country,
           phone_number: `+91${formData.phone_number}`,
+          work_preferences: formData.work_preferences,
+          category: formData.work_preferences[0] || null, // Set first profession as category for backward compatibility
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -176,6 +187,20 @@ const CompleteProfile = () => {
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleWorkPreferencesChange = (values: string[]) => {
+    if (values.length <= 5) {
+      setFormData(prev => ({
+        ...prev,
+        work_preferences: values
+      }));
+      
+      // Clear error when user makes selection
+      if (errors.work_preferences) {
+        setErrors(prev => ({ ...prev, work_preferences: '' }));
+      }
     }
   };
 
@@ -261,6 +286,25 @@ const CompleteProfile = () => {
                 <span>{formData.bio.length}/50 characters minimum</span>
                 {errors.bio && <span className="text-red-500">{errors.bio}</span>}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="work_preferences">Primary Profession * (Select up to 5)</Label>
+              <MultiSelect
+                options={WORK_PREFERENCE_CATEGORIES}
+                selected={formData.work_preferences}
+                onChange={handleWorkPreferencesChange}
+                placeholder="Select your primary professions..."
+                searchPlaceholder="Search professions..."
+                emptyText="No professions found."
+                maxDisplay={2}
+              />
+              {formData.work_preferences.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  {formData.work_preferences.length}/5 professions selected
+                </p>
+              )}
+              {errors.work_preferences && <p className="text-sm text-red-500">{errors.work_preferences}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
