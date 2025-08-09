@@ -23,7 +23,9 @@ const sanitizeText = (text: string): string => {
     .replace(/Ø=Üç/g, '')
     .replace(/Ø=ÜÞ/g, '')
     .replace(/Ø=Ü¼/g, '')
+    .replace(/Üd,ca\./g, '') // Remove specific special character pattern
     .replace(/[^\x20-\x7E\u00A0-\u017F\u0100-\u024F]/g, '') // Remove non-printable chars
+    .replace(/^[^\w\s]+/, '') // Remove leading special characters
     .trim();
 };
 
@@ -70,11 +72,15 @@ export const generatePortfolioPDF = async (
       const logoCanvas = document.createElement('canvas');
       const logoCtx = logoCanvas.getContext('2d');
       if (logoCtx) {
-        logoCanvas.width = 150;
-        logoCanvas.height = 40;
-        logoCtx.drawImage(logoImg, 0, 0, 150, 40);
-        const logoData = logoCanvas.toDataURL('image/png', 0.9);
-        pdf.addImage(logoData, 'PNG', margin, currentY, 30, 8);
+        logoCanvas.width = logoImg.naturalWidth;
+        logoCanvas.height = logoImg.naturalHeight;
+        logoCtx.drawImage(logoImg, 0, 0);
+        const logoData = logoCanvas.toDataURL('image/png', 1.0);
+        // Improved logo sizing - maintain aspect ratio and full visibility
+        const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+        const logoHeight = 12;
+        const logoWidth = logoHeight * logoAspectRatio;
+        pdf.addImage(logoData, 'PNG', margin, currentY, logoWidth, logoHeight);
       }
     } catch (error) {
       console.warn('Could not add Maasta logo to PDF:', error);
@@ -98,20 +104,43 @@ export const generatePortfolioPDF = async (
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          const size = 120;
+          const size = 150; // Increased canvas size for better quality
           canvas.width = size;
           canvas.height = size;
+          
+          // Fill with white background first
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
           
           // Create circular clipping path
           ctx.beginPath();
           ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
           ctx.clip();
           
-          // Draw image
-          ctx.drawImage(img, 0, 0, size, size);
+          // Calculate image positioning to maintain aspect ratio and full visibility
+          const imgAspectRatio = img.naturalWidth / img.naturalHeight;
+          let drawWidth = size;
+          let drawHeight = size;
+          let offsetX = 0;
+          let offsetY = 0;
           
-          const imgData = canvas.toDataURL('image/jpeg', 0.8);
-          pdf.addImage(imgData, 'JPEG', pageWidth - margin - 35, currentY - 5, 35, 35);
+          if (imgAspectRatio > 1) {
+            // Image is wider than tall
+            drawHeight = size / imgAspectRatio;
+            offsetY = (size - drawHeight) / 2;
+          } else {
+            // Image is taller than wide
+            drawWidth = size * imgAspectRatio;
+            offsetX = (size - drawWidth) / 2;
+          }
+          
+          // Draw image with proper scaling and centering
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.9);
+          // Improved profile picture sizing and positioning
+          const profileSize = 40; // Increased PDF size
+          pdf.addImage(imgData, 'JPEG', pageWidth - margin - profileSize - 5, currentY - 5, profileSize, profileSize);
         }
       } catch (error) {
         console.warn('Could not add profile picture to PDF:', error);
