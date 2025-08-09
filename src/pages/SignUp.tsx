@@ -40,7 +40,7 @@ const SignUp = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-maasta-purple-light/20 via-white to-primary/5">
+    <div className="min-h-screen bg-background">
       {/* Header with Logo */}
       <div className="container max-w-7xl mx-auto px-4 pt-8">
         <div className="flex justify-center mb-8 lg:mb-12">
