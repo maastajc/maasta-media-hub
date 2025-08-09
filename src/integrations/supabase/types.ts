@@ -551,6 +551,7 @@ export type Database = {
           verified: boolean | null
           willing_to_relocate: boolean | null
           work_preference: string | null
+          work_preferences: string[] | null
           years_of_experience: number | null
           youtube_vimeo: string | null
         }
@@ -592,6 +593,7 @@ export type Database = {
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
+          work_preferences?: string[] | null
           years_of_experience?: number | null
           youtube_vimeo?: string | null
         }
@@ -633,6 +635,7 @@ export type Database = {
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
+          work_preferences?: string[] | null
           years_of_experience?: number | null
           youtube_vimeo?: string | null
         }
