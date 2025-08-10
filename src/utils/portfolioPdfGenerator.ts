@@ -16,16 +16,25 @@ const defaultOptions: PDFGenerationOptions = {
   watermark: true,
 };
 
-// Text sanitization function to remove unwanted characters
+// Enhanced text sanitization function to remove unwanted characters and ensure Unicode compatibility
 const sanitizeText = (text: string): string => {
   if (!text) return '';
   return text
+    // Remove specific problematic character patterns
     .replace(/Ø=Üç/g, '')
     .replace(/Ø=ÜÞ/g, '')
     .replace(/Ø=Ü¼/g, '')
-    .replace(/Üd,ca\./g, '') // Remove specific special character pattern
-    .replace(/[^\x20-\x7E\u00A0-\u017F\u0100-\u024F]/g, '') // Remove non-printable chars
-    .replace(/^[^\w\s]+/, '') // Remove leading special characters
+    .replace(/Üd,ca\./g, '')
+    .replace(/�/g, '') // Remove replacement characters
+    // Remove zero-width characters and other invisible characters
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Remove control characters but preserve valid Unicode
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+    // Remove any remaining non-printable characters while preserving Unicode text
+    .replace(/[^\x20-\x7E\n\r\t\u00A0-\uFFFF]/g, '')
+    // Clean up multiple spaces and leading/trailing whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/^[^\w\s\u00A0-\uFFFF]+/, '') // Remove leading special characters
     .trim();
 };
 
@@ -56,8 +65,10 @@ export const generatePortfolioPDF = async (
     const contentWidth = pageWidth - (2 * margin);
     let currentY = margin;
 
-    // Set font
-    pdf.setFont('helvetica');
+    // Set Unicode-compatible font for better character support
+    // jsPDF's built-in fonts have limited Unicode support, but 'helvetica' with proper text sanitization
+    // provides the best compatibility across different systems
+    pdf.setFont('helvetica', 'normal');
 
     // Add Maasta Logo
     try {
