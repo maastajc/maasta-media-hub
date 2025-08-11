@@ -38,9 +38,6 @@ const formSchema = z.object({
     required_error: "Date of birth is required"
   }).refine((date) => date < new Date(), "Date of birth must be in the past"),
   gender: z.string().optional(),
-  category: z.string().min(1, "Primary profession is required"),
-  work_preference: z.string().min(1, "Work preference is required"),
-  experience_level: z.string().min(1, "Experience level is required"),
   instagram: z.string().optional(),
   youtube_vimeo: z.string().optional(),
 });
@@ -83,9 +80,6 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       country: profileData.country || "",
       date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : undefined,
       gender: profileData.gender || "",
-      category: profileData.category || "",
-      work_preference: profileData.work_preference || "",
-      experience_level: profileData.experience_level || "",
       instagram: profileData.instagram || "",
       youtube_vimeo: profileData.youtube_vimeo || "",
     },
@@ -98,8 +92,6 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       profilePicture &&
       values.username &&
       values.headline &&
-      values.category &&
-      values.work_preference &&
       values.date_of_birth
     );
   };
@@ -183,9 +175,6 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
         country: values.country || null,
         date_of_birth: values.date_of_birth ? values.date_of_birth.toISOString().split('T')[0] : null,
         gender: values.gender || null,
-        category: values.category,
-        work_preference: values.work_preference,
-        experience_level: values.experience_level,
         instagram: values.instagram || null,
         youtube_vimeo: values.youtube_vimeo || null,
         custom_links: JSON.stringify(customLinks.filter(link => link.title && link.url)) as any,
@@ -489,90 +478,6 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
               </div>
             </div>
 
-            {/* Profession & Preferences Section */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-maasta-orange" />
-                <h3 className="text-lg font-semibold">Profession & Preferences</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Primary Profession *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select profession" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {professionOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="work_preference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Work Preference *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select preference" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {workPreferenceOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="experience_level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Experience Level *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {experienceLevelOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option.replace(/\b\w/g, l => l.toUpperCase())}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
 
             {/* Contact Section */}
             <div className="space-y-6">

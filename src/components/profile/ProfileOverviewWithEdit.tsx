@@ -122,8 +122,12 @@ const ProfileOverviewWithEdit = ({
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Category</p>
-              <p className="text-sm capitalize">{artist.category?.replace('_', ' ') || 'Not specified'}</p>
+              <p className="text-sm font-medium text-gray-500">Primary Profession</p>
+              <p className="text-sm capitalize">
+                {artist.work_preferences && artist.work_preferences.length > 0 
+                  ? artist.work_preferences[0].replace('_', ' ') 
+                  : artist.category?.replace('_', ' ') || 'Not specified'}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Experience Level</p>
