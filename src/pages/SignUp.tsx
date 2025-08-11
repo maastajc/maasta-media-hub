@@ -112,7 +112,6 @@ const SignUp = () => {
           <div className="flex-1 max-w-2xl space-y-8">
             <div className="text-left">
             
-              </h1>
               <p className="text-xl text-muted-foreground mb-2">
                 Create your profile and get discovered by industry leaders!
               </p>
