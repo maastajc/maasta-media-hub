@@ -130,16 +130,16 @@ const ProfileOverviewWithEdit = ({
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Experience Level</p>
+              <p className="text-sm font-medium text-gray-500">Work Type</p>
+              <p className="text-sm capitalize">{artist.work_preference?.replace('_', ' ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Experience</p>
               <p className="text-sm capitalize">{artist.experience_level || 'Not specified'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Years of Experience</p>
+              <p className="text-sm font-medium text-gray-500">Years</p>
               <p className="text-sm">{artist.years_of_experience || 0} years</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Work Preference</p>
-              <p className="text-sm capitalize">{artist.work_preference?.replace('_', ' ') || 'Not specified'}</p>
             </div>
           </div>
           {artist.preferred_domains && (
