@@ -65,9 +65,7 @@ const SignUp = () => {
           {/* Join Maasta Section */}
           <div className="space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
-                Join Maasta
-              </h1>
+            
               <p className="text-lg text-muted-foreground mb-2">
                 Create your profile and get discovered by industry leaders!
               </p>
