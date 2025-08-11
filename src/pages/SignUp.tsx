@@ -111,7 +111,7 @@ const SignUp = () => {
           {/* Left side - Join Maasta content */}
           <div className="flex-1 max-w-2xl space-y-8">
             <div className="text-left">
-              <h1 className="text-4xl xl:text-5xl font-bold mb-4 gradient-purple-orange bg-clip-text text-transparent">
+              <h1 className="text-4xl xl:text-5xl font-bold mb-4">
                 Join Maasta
               </h1>
               <p className="text-xl text-muted-foreground mb-2">
