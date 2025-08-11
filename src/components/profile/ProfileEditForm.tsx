@@ -18,7 +18,10 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Artist, CustomLink } from "@/types/artist";
+import { Artist, CustomLink, ExperienceLevel } from "@/types/artist";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { WORK_PREFERENCE_CATEGORIES } from "@/constants/workPreferences";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import CoverImageUpload from "./CoverImageUpload";
 
@@ -40,6 +43,13 @@ const formSchema = z.object({
   gender: z.string().optional(),
   instagram: z.string().optional(),
   youtube_vimeo: z.string().optional(),
+  // Work preferences fields
+  work_preferences: z.array(z.string()).min(1, "Please select at least one profession").max(5, "You can select up to 5 professions"),
+  experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).optional(),
+  years_of_experience: z.number().min(0).max(50).optional(),
+  work_preference: z.string().optional(),
+  preferred_domains: z.string().optional(),
+  willing_to_relocate: z.boolean().optional(),
 });
 
 interface ProfileEditFormProps {
@@ -82,6 +92,13 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       gender: profileData.gender || "",
       instagram: profileData.instagram || "",
       youtube_vimeo: profileData.youtube_vimeo || "",
+      // Work preferences fields
+      work_preferences: (profileData as any)["Primary Profession"] || profileData.work_preferences || (profileData.category ? [profileData.category] : []),
+      experience_level: profileData.experience_level as ExperienceLevel,
+      years_of_experience: profileData.years_of_experience || 0,
+      work_preference: profileData.work_preference || "",
+      preferred_domains: profileData.preferred_domains || "",
+      willing_to_relocate: profileData.willing_to_relocate || false,
     },
   });
 
@@ -92,7 +109,9 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
       profilePicture &&
       values.username &&
       values.headline &&
-      values.date_of_birth
+      values.date_of_birth &&
+      values.work_preferences &&
+      values.work_preferences.length > 0
     );
   };
 
@@ -180,6 +199,14 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
         custom_links: JSON.stringify(customLinks.filter(link => link.title && link.url)) as any,
         profile_picture_url: profilePicture || null,
         cover_image_url: coverImage || null,
+        // Work preferences fields
+        "Primary Profession": values.work_preferences,
+        category: values.work_preferences[0] || null, // Keep first work preference as category for backward compatibility
+        experience_level: values.experience_level,
+        years_of_experience: values.years_of_experience,
+        work_preference: values.work_preference || null,
+        preferred_domains: values.preferred_domains || null,
+        willing_to_relocate: values.willing_to_relocate,
         updated_at: new Date().toISOString(),
       };
 
@@ -516,6 +543,148 @@ const ProfileEditForm = ({ open, onClose, onSuccess, profileData }: ProfileEditF
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Work Preferences Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-maasta-orange" />
+                <h3 className="text-lg font-semibold">Profession & Preferences</h3>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="work_preferences"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary Profession * (Select up to 5)</FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={WORK_PREFERENCE_CATEGORIES}
+                        selected={field.value || []}
+                        onChange={(values) => {
+                          if (values.length <= 5) {
+                            field.onChange(values);
+                          }
+                        }}
+                        placeholder="Select your primary professions..."
+                        searchPlaceholder="Search professions..."
+                        emptyText="No professions found."
+                        maxDisplay={2}
+                      />
+                    </FormControl>
+                    {field.value && field.value.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {field.value.length}/5 professions selected
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="experience_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Experience Level</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select experience level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="fresher">Fresher</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="expert">Expert</SelectItem>
+                          <SelectItem value="veteran">Veteran</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="years_of_experience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Years of Experience</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="work_preference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Work Preference Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select work preference type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="full_time">Full Time</SelectItem>
+                        <SelectItem value="part_time">Part Time</SelectItem>
+                        <SelectItem value="freelance">Freelance</SelectItem>
+                        <SelectItem value="contract">Contract</SelectItem>
+                        <SelectItem value="any">Any</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="preferred_domains"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Available For</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Films, TV Shows, Commercials..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="willing_to_relocate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Willing to relocate</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Social Links Section */}
