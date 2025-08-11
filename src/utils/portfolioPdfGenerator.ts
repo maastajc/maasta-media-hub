@@ -16,27 +16,25 @@ const defaultOptions: PDFGenerationOptions = {
   watermark: true,
 };
 
-// Enhanced text sanitization function to remove unwanted characters and ensure Unicode compatibility
-const sanitizeText = (text: string): string => {
+// Enhanced text sanitization function to remove special characters and ensure clean output
+const cleanText = (text: string): string => {
   if (!text) return '';
   return text
-    // Remove specific problematic character patterns
+    // Remove specific problematic character patterns that appear in PDFs
+    .replace(/Ø=Üd/g, '')
     .replace(/Ø=Üç/g, '')
     .replace(/Ø=ÜÞ/g, '')
     .replace(/Ø=Ü¼/g, '')
     .replace(/Üd,ca\./g, '')
     .replace(/�/g, '') // Remove replacement characters
-    // Remove zero-width characters and other invisible characters
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    // Remove control characters but preserve valid Unicode
-    .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
-    // Remove any remaining non-printable characters while preserving Unicode text
-    .replace(/[^\x20-\x7E\n\r\t\u00A0-\uFFFF]/g, '')
-    // Clean up multiple spaces and leading/trailing whitespace
+    .replace(/[^\x20-\x7E\n\u00A0-\uFFFF]/g, '') // Keep only printable ASCII and Unicode
+    // Clean up spaces and trim
     .replace(/\s+/g, ' ')
-    .replace(/^[^\w\s\u00A0-\uFFFF]+/, '') // Remove leading special characters
     .trim();
 };
+
+// Alias for backward compatibility
+const sanitizeText = cleanText;
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string): number | null => {
@@ -65,12 +63,10 @@ export const generatePortfolioPDF = async (
     const contentWidth = pageWidth - (2 * margin);
     let currentY = margin;
 
-    // Set Unicode-compatible font for better character support
-    // jsPDF's built-in fonts have limited Unicode support, but 'helvetica' with proper text sanitization
-    // provides the best compatibility across different systems
+    // Set font to helvetica for better compatibility and clear rendering
     pdf.setFont('helvetica', 'normal');
 
-    // Add Maasta Logo
+    // Add Maasta Logo - top-left with fixed positioning
     try {
       const logoImg = new Image();
       logoImg.crossOrigin = 'anonymous';
@@ -87,21 +83,23 @@ export const generatePortfolioPDF = async (
         logoCanvas.height = logoImg.naturalHeight;
         logoCtx.drawImage(logoImg, 0, 0);
         const logoData = logoCanvas.toDataURL('image/png', 1.0);
-        // Improved logo sizing - maintain aspect ratio and full visibility
+        
+        // Fixed logo size (80px width) maintaining aspect ratio
+        const logoWidth = 80 / 3.779; // Convert pixels to mm (1px ≈ 0.264mm)
         const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
-        const logoHeight = 12;
-        const logoWidth = logoHeight * logoAspectRatio;
+        const logoHeight = logoWidth / logoAspectRatio;
+        
         pdf.addImage(logoData, 'PNG', margin, currentY, logoWidth, logoHeight);
       }
     } catch (error) {
       console.warn('Could not add Maasta logo to PDF:', error);
-      // Fallback to text
-      pdf.setFontSize(12);
+      // Fallback to styled text
+      pdf.setFontSize(14);
       pdf.setTextColor(255, 130, 0); // Maasta orange
-      pdf.text('MAASTA', margin, currentY + 5);
+      pdf.text('MAASTA', margin, currentY + 8);
     }
 
-    // Profile Picture (Circular)
+    // Profile Picture (Circular) - top-right with fixed positioning
     if (options.includeProfilePicture && artist.profile_picture_url) {
       try {
         const img = new Image();
@@ -115,11 +113,11 @@ export const generatePortfolioPDF = async (
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          const size = 150; // Increased canvas size for better quality
+          const size = 300; // High resolution canvas for better quality
           canvas.width = size;
           canvas.height = size;
           
-          // Fill with white background first
+          // Fill with white background
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, size, size);
           
@@ -128,7 +126,7 @@ export const generatePortfolioPDF = async (
           ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
           ctx.clip();
           
-          // Calculate image positioning to maintain aspect ratio and full visibility
+          // Calculate image positioning for proper centering
           const imgAspectRatio = img.naturalWidth / img.naturalHeight;
           let drawWidth = size;
           let drawHeight = size;
@@ -148,34 +146,45 @@ export const generatePortfolioPDF = async (
           // Draw image with proper scaling and centering
           ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
           
-          const imgData = canvas.toDataURL('image/jpeg', 0.9);
-          // Improved profile picture sizing and positioning
-          const profileSize = 40; // Increased PDF size
-          pdf.addImage(imgData, 'JPEG', pageWidth - margin - profileSize - 5, currentY - 5, profileSize, profileSize);
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          // Fixed profile picture size (120px = ~32mm) positioned top-right
+          const profileSizeMM = 32; // 120px equivalent in mm
+          const profileX = pageWidth - margin - profileSizeMM;
+          const profileY = currentY;
+          
+          pdf.addImage(imgData, 'JPEG', profileX, profileY, profileSizeMM, profileSizeMM);
+          
+          // Add subtle border around profile picture
+          pdf.setDrawColor(200, 200, 200);
+          pdf.setLineWidth(0.2);
+          pdf.circle(profileX + profileSizeMM/2, profileY + profileSizeMM/2, profileSizeMM/2, 'S');
         }
       } catch (error) {
         console.warn('Could not add profile picture to PDF:', error);
       }
     }
     
-    currentY += 15;
+    currentY += 40; // Space for logo and profile picture
 
-    // Header background with gradient effect
+    // Header section with proper spacing
     pdf.setFillColor(255, 245, 235); // Light orange background
     pdf.rect(margin - 5, currentY - 5, contentWidth + 10, 35, 'F');
     
-    // Full Name
-    pdf.setFontSize(26);
+    // Full Name - ensure it doesn't overlap with profile picture
+    pdf.setFontSize(24);
     pdf.setTextColor(51, 51, 51);
-    pdf.text(sanitizeText(artist.full_name), margin, currentY + 8);
+    const nameWidth = contentWidth - 40; // Leave space for profile picture
+    const fullName = cleanText(artist.full_name);
+    pdf.text(fullName, margin, currentY + 8);
     currentY += 15;
 
-    // Headline/Bio
+    // Headline/Bio - properly sanitized and positioned
     if (artist.headline || artist.bio) {
       pdf.setFontSize(12);
       pdf.setTextColor(102, 102, 102);
-      const text = sanitizeText(artist.headline || artist.bio || '');
-      const lines = pdf.splitTextToSize(text.substring(0, 150), contentWidth - 40);
+      const text = cleanText(artist.headline || artist.bio || '');
+      const lines = pdf.splitTextToSize(text.substring(0, 150), nameWidth);
       pdf.text(lines, margin, currentY);
       currentY += lines.length * 5 + 5;
     }
@@ -188,7 +197,7 @@ export const generatePortfolioPDF = async (
     
     pdf.setFontSize(14);
     pdf.setTextColor(255, 255, 255); // White text on orange background
-    pdf.text('✨ Basic Information', margin, currentY + 4);
+    pdf.text('Basic Information', margin, currentY + 4);
     currentY += 15;
 
     pdf.setFontSize(10);
@@ -197,43 +206,43 @@ export const generatePortfolioPDF = async (
     // Age calculation
     const age = calculateAge(artist.date_of_birth);
     if (age) {
-      pdf.text(`👤 Age: ${age} years`, margin, currentY);
+      pdf.text(`Age: ${age} years`, margin, currentY);
       currentY += 6;
     }
 
     // Location info
     if (artist.city || artist.state || artist.country) {
-      const location = [sanitizeText(artist.city), sanitizeText(artist.state), sanitizeText(artist.country)]
+      const location = [cleanText(artist.city), cleanText(artist.state), cleanText(artist.country)]
         .filter(Boolean).join(', ');
       if (location) {
-        pdf.text(`📍 Location: ${location}`, margin, currentY);
+        pdf.text(`Location: ${location}`, margin, currentY);
         currentY += 6;
       }
     }
 
     // Category
     if (artist.category) {
-      const category = sanitizeText(artist.category.charAt(0).toUpperCase() + artist.category.slice(1));
-      pdf.text(`🎭 Category: ${category}`, margin, currentY);
+      const category = cleanText(artist.category.charAt(0).toUpperCase() + artist.category.slice(1));
+      pdf.text(`Category: ${category}`, margin, currentY);
       currentY += 6;
     }
 
     // Work preference
     if (artist.work_preference) {
-      const workPref = sanitizeText(artist.work_preference.charAt(0).toUpperCase() + artist.work_preference.slice(1));
-      pdf.text(`💼 Work Preference: ${workPref}`, margin, currentY);
+      const workPref = cleanText(artist.work_preference.charAt(0).toUpperCase() + artist.work_preference.slice(1));
+      pdf.text(`Work Preference: ${workPref}`, margin, currentY);
       currentY += 6;
     }
 
     // Email
     if (artist.email) {
-      pdf.text(`📧 Email: ${sanitizeText(artist.email)}`, margin, currentY);
+      pdf.text(`Email: ${cleanText(artist.email)}`, margin, currentY);
       currentY += 6;
     }
 
     // Phone
     if (artist.phone_number) {
-      pdf.text(`📞 Phone: ${sanitizeText(artist.phone_number)}`, margin, currentY);
+      pdf.text(`Phone: ${cleanText(artist.phone_number)}`, margin, currentY);
       currentY += 6;
     }
 
@@ -254,13 +263,13 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255); // White text
-      pdf.text('🔗 Social Profiles', margin, currentY + 4);
+      pdf.text('Social Profiles', margin, currentY + 4);
       currentY += 15;
 
       pdf.setFontSize(10);
       pdf.setTextColor(51, 51, 51);
       socialLinks.forEach(link => {
-        pdf.text(`${link.icon} ${link.label}: ${sanitizeText(link.url)}`, margin, currentY);
+        pdf.text(`${link.label}: ${cleanText(link.url)}`, margin, currentY);
         currentY += 6;
       });
       currentY += 10;
@@ -280,7 +289,7 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('🎬 Projects & Work', margin, currentY + 4);
+      pdf.text('Projects & Work', margin, currentY + 4);
       currentY += 15;
 
       projects.forEach((project, index) => {
@@ -295,16 +304,16 @@ export const generatePortfolioPDF = async (
 
         pdf.setFontSize(12);
         pdf.setTextColor(51, 51, 51);
-        pdf.text(sanitizeText(project.project_name), margin, currentY + 3);
+        pdf.text(cleanText(project.project_name), margin, currentY + 3);
         currentY += 8;
 
         pdf.setFontSize(10);
         pdf.setTextColor(102, 102, 102);
-        pdf.text(`Role: ${sanitizeText(project.role_in_project)}`, margin, currentY);
+        pdf.text(`Role: ${cleanText(project.role_in_project)}`, margin, currentY);
         currentY += 5;
 
         if (project.director_producer) {
-          pdf.text(`Director/Producer: ${sanitizeText(project.director_producer)}`, margin, currentY);
+          pdf.text(`Director/Producer: ${cleanText(project.director_producer)}`, margin, currentY);
           currentY += 5;
         }
 
@@ -314,14 +323,14 @@ export const generatePortfolioPDF = async (
         }
 
         if (project.project_type) {
-          pdf.text(`Type: ${project.project_type.replace('_', ' ')}`, margin, currentY);
+          pdf.text(`Type: ${cleanText(project.project_type.replace('_', ' '))}`, margin, currentY);
           currentY += 5;
         }
 
         // Project Link
         if (project.link) {
           pdf.setTextColor(34, 139, 34); // Green for links
-          pdf.text(`🔗 View Project: ${sanitizeText(project.link)}`, margin, currentY);
+          pdf.text(`Link: ${cleanText(project.link)}`, margin, currentY);
           currentY += 5;
         }
 
@@ -342,12 +351,12 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('⭐ Skills & Expertise', margin, currentY + 4);
+      pdf.text('Skills & Expertise', margin, currentY + 4);
       currentY += 15;
 
       pdf.setFontSize(10);
       pdf.setTextColor(51, 51, 51);
-      const skillsText = skills.map(skill => sanitizeText(skill.skill)).join(' • ');
+      const skillsText = skills.map(skill => cleanText(skill.skill)).join(' • ');
       const skillLines = pdf.splitTextToSize(skillsText, contentWidth);
       pdf.text(skillLines, margin, currentY);
       currentY += skillLines.length * 5 + 10;
@@ -366,7 +375,7 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('🎓 Education & Training', margin, currentY + 4);
+      pdf.text('Education & Training', margin, currentY + 4);
       currentY += 15;
 
       education.forEach((edu) => {
@@ -377,13 +386,13 @@ export const generatePortfolioPDF = async (
 
         pdf.setFontSize(11);
         pdf.setTextColor(51, 51, 51);
-        pdf.text(sanitizeText(edu.qualification_name), margin, currentY);
+        pdf.text(cleanText(edu.qualification_name), margin, currentY);
         currentY += 6;
 
         pdf.setFontSize(10);
         pdf.setTextColor(102, 102, 102);
         if (edu.institution) {
-          pdf.text(sanitizeText(edu.institution), margin, currentY);
+          pdf.text(cleanText(edu.institution), margin, currentY);
           currentY += 5;
         }
         if (edu.year_completed) {
@@ -407,13 +416,13 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('🌍 Languages', margin, currentY + 4);
+      pdf.text('Languages', margin, currentY + 4);
       currentY += 15;
 
       pdf.setFontSize(10);
       pdf.setTextColor(51, 51, 51);
       languages.forEach((lang) => {
-        pdf.text(`${sanitizeText(lang.language)} - ${sanitizeText(lang.proficiency)}`, margin, currentY);
+        pdf.text(`${cleanText(lang.language)} - ${cleanText(lang.proficiency)}`, margin, currentY);
         currentY += 6;
       });
       currentY += 5;
@@ -460,7 +469,7 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('📸 Media Portfolio', margin, currentY + 4);
+      pdf.text('Media Portfolio', margin, currentY + 4);
       currentY += 15;
 
       try {
@@ -540,7 +549,7 @@ export const generatePortfolioPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(0, 0, 0); // Black text on gold
-      pdf.text('🏆 Awards & Achievements', margin, currentY + 4);
+      pdf.text('Awards & Achievements', margin, currentY + 4);
       currentY += 15;
 
       awards.forEach((award) => {
@@ -551,13 +560,13 @@ export const generatePortfolioPDF = async (
 
         pdf.setFontSize(11);
         pdf.setTextColor(51, 51, 51);
-        pdf.text(sanitizeText(award.award_name || 'Award'), margin, currentY);
+        pdf.text(cleanText(award.award_name || 'Award'), margin, currentY);
         currentY += 6;
 
         pdf.setFontSize(10);
         pdf.setTextColor(102, 102, 102);
         if (award.awarding_organization) {
-          pdf.text(sanitizeText(award.awarding_organization), margin, currentY);
+          pdf.text(cleanText(award.awarding_organization), margin, currentY);
           currentY += 5;
         }
         if (award.year) {
@@ -580,8 +589,8 @@ export const generatePortfolioPDF = async (
       }
     }
 
-    // Download the PDF
-    const fileName = `${artist.full_name.replace(/[^a-zA-Z0-9]/g, '_')}_Portfolio.pdf`;
+    // Download the PDF with clean filename
+    const fileName = `${cleanText(artist.full_name).replace(/[^a-zA-Z0-9]/g, '_')}_Portfolio.pdf`;
     pdf.save(fileName);
 
   } catch (error) {
