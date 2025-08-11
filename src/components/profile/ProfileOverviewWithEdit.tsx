@@ -124,9 +124,11 @@ const ProfileOverviewWithEdit = ({
             <div>
               <p className="text-sm font-medium text-gray-500">Primary Profession</p>
               <p className="text-sm capitalize">
-                {artist.work_preferences && artist.work_preferences.length > 0 
-                  ? artist.work_preferences.map(pref => pref.replace('_', ' ')).join(', ')
-                  : artist.category?.replace('_', ' ') || 'Not specified'}
+                {((artist as any)["Primary Profession"] && (artist as any)["Primary Profession"].length > 0)
+                  ? (artist as any)["Primary Profession"].map((pref: string) => pref.replace('_', ' ')).join(', ')
+                  : artist.work_preferences && artist.work_preferences.length > 0 
+                    ? artist.work_preferences.map(pref => pref.replace('_', ' ')).join(', ')
+                    : artist.category?.replace('_', ' ') || 'Not specified'}
               </p>
             </div>
             <div>

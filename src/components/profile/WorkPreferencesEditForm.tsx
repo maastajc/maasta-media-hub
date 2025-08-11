@@ -38,7 +38,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      work_preferences: profileData.work_preferences || (profileData.category ? [profileData.category] : []),
+      work_preferences: (profileData as any)["Primary Profession"] || profileData.work_preferences || (profileData.category ? [profileData.category] : []),
       experience_level: profileData.experience_level as ExperienceLevel,
       years_of_experience: profileData.years_of_experience || 0,
       work_preference: profileData.work_preference || "",
@@ -52,7 +52,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
 
     try {
       const updateData = {
-        work_preferences: values.work_preferences,
+        "Primary Profession": values.work_preferences,
         // Keep the first work preference as category for backward compatibility
         category: values.work_preferences[0] || null,
         experience_level: values.experience_level,
