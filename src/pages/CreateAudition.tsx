@@ -223,7 +223,7 @@ const CreateAudition = () => {
         location: values.audition_type === 'offline' ? values.location : 'Online',
         deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
         audition_date: values.audition_date ? new Date(values.audition_date).toISOString() : null,
-        project_details: values.project_details || null,
+        //project_details: values.project_details || null,
         compensation: compensation || null,
         category: finalCategory || null,
         age_range: age_range || null,
@@ -628,7 +628,7 @@ const CreateAudition = () => {
                       )}
                     />
 
-                    <FormField
+                    //<FormField
                       control={form.control}
                       name="project_details"
                       render={({ field }) => (
