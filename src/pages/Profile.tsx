@@ -38,7 +38,6 @@ import ProfilePictureUpload from "@/components/profile/ProfilePictureUpload";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileStrengthMeter from "@/components/profile/ProfileStrengthMeter";
 import SocialLinksForm from "@/components/profile/SocialLinksForm";
-import Navbar from "@/components/layout/Navbar";
 import { toast } from "sonner";
 import CoverImageUpload from "@/components/profile/CoverImageUpload";
 import DownloadPortfolioPDF from "@/components/profile/DownloadPortfolioPDF";
@@ -228,7 +227,6 @@ const Profile = () => {
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <LoadingSpinner size="lg" />
@@ -243,7 +241,6 @@ const Profile = () => {
   if (error && !error.message?.includes('not found')) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center p-4 py-20">
           <Alert className="max-w-md">
             <AlertDescription>
@@ -259,7 +256,6 @@ const Profile = () => {
   if (!profileData) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center py-20">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
@@ -279,8 +275,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       {/* Cover Image Section */}
       <CoverImageUpload
         currentImageUrl={profileData?.cover_image_url}
