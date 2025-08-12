@@ -16,7 +16,7 @@ import { Artist, ExperienceLevel } from "@/types/artist";
 import { WORK_PREFERENCE_CATEGORIES } from "@/constants/workPreferences";
 
 const formSchema = z.object({
-  work_preferences: z.array(z.string()).min(1, "Please select at least one profession").max(5, "You can select up to 5 professions"),
+  work_preferences: z.string().min(1, "Please select a profession"),
   experience_level: z.enum(["beginner", "fresher", "intermediate", "expert", "veteran"]).optional(),
   years_of_experience: z.number().min(0).max(50).optional(),
   work_preference: z.string().optional(),
@@ -38,7 +38,7 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      work_preferences: (profileData as any)["Primary Profession"] || profileData.work_preferences || (profileData.category ? [profileData.category] : []),
+      work_preferences: (profileData as any)["Primary Profession"]?.[0] || profileData.work_preferences || profileData.category || "",
       experience_level: profileData.experience_level as ExperienceLevel,
       years_of_experience: profileData.years_of_experience || 0,
       work_preference: profileData.work_preference || "",
@@ -52,9 +52,9 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
 
     try {
       const updateData = {
-        "Primary Profession": values.work_preferences,
-        // Keep the first work preference as category for backward compatibility
-        category: values.work_preferences[0] || null,
+        "Primary Profession": [values.work_preferences],
+        // Set single work preference as category for backward compatibility
+        category: values.work_preferences || null,
         experience_level: values.experience_level,
         years_of_experience: values.years_of_experience,
         work_preference: values.work_preference || null,
@@ -103,27 +103,21 @@ const WorkPreferencesEditForm = ({ open, onClose, onSuccess, profileData }: Work
               name="work_preferences"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Profession * (Select up to 5)</FormLabel>
-                  <FormControl>
-                    <MultiSelect
-                      options={WORK_PREFERENCE_CATEGORIES}
-                      selected={field.value || []}
-                      onChange={(values) => {
-                        if (values.length <= 5) {
-                          field.onChange(values);
-                        }
-                      }}
-                      placeholder="Select your primary professions..."
-                      searchPlaceholder="Search professions..."
-                      emptyText="No professions found."
-                      maxDisplay={2}
-                    />
-                  </FormControl>
-                  {field.value && field.value.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {field.value.length}/5 professions selected
-                    </p>
-                  )}
+                  <FormLabel>Primary Profession *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your primary profession" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {WORK_PREFERENCE_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
