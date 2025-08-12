@@ -237,35 +237,37 @@ const MediaUploadSection = ({ profileData, onUpdate, userId }: MediaUploadSectio
 
   return (
     <Card className="mb-8">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5 text-[#ff8200]" />
-          Media Portfolio
-          <Badge variant="outline" className="ml-2">
-            {totalItems}/4 Items
-          </Badge>
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => imageInputRef.current?.click()}
-            disabled={isUploading || !canUploadImage}
-            className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="truncate">Add Image</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => videoInputRef.current?.click()}
-            disabled={isUploading || !canUploadVideo}
-            className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="truncate">Add Video</span>
-          </Button>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-[#ff8200]" />
+            Media Portfolio
+            <Badge variant="outline" className="ml-2">
+              {totalItems}/4 Items
+            </Badge>
+          </CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isUploading || !canUploadImage}
+              className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">Add Image</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => videoInputRef.current?.click()}
+              disabled={isUploading || !canUploadVideo}
+              className="flex items-center justify-center gap-2 border-[#ff8200] text-[#ff8200] hover:bg-[#ff8200] hover:text-white rounded-lg w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">Add Video</span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
