@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { WORK_PREFERENCE_CATEGORIES } from "@/constants/workPreferences";
 
 interface OptimizedAuditionCardProps {
   audition: {
@@ -97,6 +98,13 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 
   const compensationInfo = parseCompensation(audition.compensation);
 
+  // Get category label from work preferences constants
+  const getCategoryLabel = (categoryValue?: string) => {
+    if (!categoryValue) return null;
+    const category = WORK_PREFERENCE_CATEGORIES.find(cat => cat.value === categoryValue);
+    return category ? category.label : categoryValue;
+  };
+
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white relative">
       {/* Closed badge in top-right corner */}
@@ -124,6 +132,14 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
             <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-maasta-purple transition-colors leading-tight">
               {audition.title}
             </CardTitle>
+            {/* Category Badge */}
+            {audition.category && (
+              <div className="mt-2">
+                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                  {getCategoryLabel(audition.category)}
+                </Badge>
+              </div>
+            )}
             {audition.created_at && (
               <p className="text-xs text-gray-500 mt-1">
                 {formatDistanceToNow(new Date(audition.created_at), { addSuffix: true })}
@@ -159,11 +175,6 @@ const OptimizedAuditionCard = ({ audition }: OptimizedAuditionCardProps) => {
 
         {/* Badges Row */}
         <div className="flex flex-wrap gap-2">
-          {audition.category && (
-            <Badge variant="secondary" className="text-xs bg-maasta-purple/10 text-maasta-purple border-maasta-purple/20">
-              {audition.category}
-            </Badge>
-          )}
           {audition.experience_level && (
             <Badge variant="outline" className="text-xs">
               {audition.experience_level}

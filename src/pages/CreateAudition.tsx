@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import AuditionCategorySelect from '@/components/auditions/AuditionCategorySelect';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -411,53 +412,23 @@ const CreateAudition = () => {
                     )}
 
                     {/* Category Selection */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
                       <FormField
                         control={form.control}
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="actor">Actor</SelectItem>
-                                <SelectItem value="singer">Singer</SelectItem>
-                                <SelectItem value="dancer">Dancer</SelectItem>
-                                <SelectItem value="musician">Musician</SelectItem>
-                                <SelectItem value="model">Model</SelectItem>
-                                <SelectItem value="voice_artist">Voice Artist</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <AuditionCategorySelect
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onCustomCategoryChange={(customCategory) => {
+                                form.setValue('custom_category', customCategory);
+                              }}
+                            />
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Custom Category - only show if "other" is selected */}
-                      {selectedCategory === 'other' && (
-                        <FormField
-                          control={form.control}
-                          name="custom_category"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Custom Category *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter custom category" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                This will be reviewed for approval
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
                     </div>
 
                     {/* Dates */}
