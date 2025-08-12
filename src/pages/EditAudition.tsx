@@ -25,7 +25,6 @@ const formSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   deadline: z.string().optional(),
   audition_date: z.string().optional(),
-  project_details: z.string().optional(),
   compensation: z.string().optional(),
   category: z.string().optional(),
   age_range: z.string().optional(),
@@ -54,7 +53,6 @@ const EditAudition = () => {
       location: '',
       deadline: '',
       audition_date: '',
-      project_details: '',
       compensation: '',
       category: '',
       age_range: '',
@@ -95,7 +93,6 @@ const EditAudition = () => {
             location: data.location || '',
             deadline: data.deadline ? new Date(data.deadline).toISOString().slice(0, 16) : '',
             audition_date: data.audition_date ? new Date(data.audition_date).toISOString().slice(0, 16) : '',
-            project_details: data.project_details || '',
             compensation: data.compensation || '',
             category: data.category || '',
             age_range: data.age_range || '',
@@ -159,7 +156,6 @@ const EditAudition = () => {
         location: values.location,
         deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
         audition_date: values.audition_date ? new Date(values.audition_date).toISOString() : null,
-        project_details: values.project_details || null,
         compensation: values.compensation || null,
         category: values.category || null,
         age_range: values.age_range || null,
@@ -446,24 +442,6 @@ const EditAudition = () => {
                         )}
                       />
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name="project_details"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Details</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Additional details about the project"
-                              className="min-h-[80px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
                     <FormField
                       control={form.control}
