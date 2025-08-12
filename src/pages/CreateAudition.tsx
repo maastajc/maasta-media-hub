@@ -628,24 +628,7 @@ const CreateAudition = () => {
                       )}
                     />
 
-                    //<FormField
-                      control={form.control}
-                      name="project_details"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Details</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Additional project information..."
-                              className="min-h-[80px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
+                   
                     {/* Tags */}
                     <div>
                       <FormLabel>Tags</FormLabel>
