@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import AuditionCategorySelect from '@/components/auditions/AuditionCategorySelect';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -38,6 +39,7 @@ const EditAudition = () => {
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [customCategory, setCustomCategory] = useState('');
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -311,24 +313,11 @@ const EditAudition = () => {
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="film">Film</SelectItem>
-                                <SelectItem value="television">Television</SelectItem>
-                                <SelectItem value="theater">Theater</SelectItem>
-                                <SelectItem value="commercial">Commercial</SelectItem>
-                                <SelectItem value="voice">Voice Acting</SelectItem>
-                                <SelectItem value="music">Music</SelectItem>
-                                <SelectItem value="dance">Dance</SelectItem>
-                                <SelectItem value="modeling">Modeling</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <AuditionCategorySelect
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onCustomCategoryChange={setCustomCategory}
+                            />
                             <FormMessage />
                           </FormItem>
                         )}
