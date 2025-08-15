@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { CalendarIcon, MapPinIcon, UsersIcon, Clock } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { toast } from "sonner";
+import { PaymentButton } from "@/components/payment/PaymentButton";
 
 interface EventDetailsCardProps {
   event: {
@@ -18,6 +20,8 @@ interface EventDetailsCardProps {
     ticket_price?: number;
     max_attendees?: number;
     attendeeCount?: number;
+    payment_required?: boolean;
+    payment_amount?: number;
   };
   onRegister: () => void;
   isRegistered?: boolean;
@@ -131,15 +135,29 @@ const EventDetailsCard = ({
             </Button>
           </div>
         ) : isUpcoming ? (
-          <Button 
-            className={isRegistered 
-              ? "bg-red-500 hover:bg-red-600 w-full sm:w-auto" 
-              : "bg-maasta-orange hover:bg-maasta-orange/90 w-full sm:w-auto"}
-            onClick={onRegister}
-          >
-            {isRegistered ? "Cancel Registration" : "Register for Event"}
-            {event.ticketing_enabled && !isRegistered && event.ticket_price && ` • $${event.ticket_price}`}
-          </Button>
+          event.payment_required && event.payment_amount && !isRegistered ? (
+            <PaymentButton
+              eventId={event.id}
+              amount={event.payment_amount}
+              className="w-full sm:w-auto"
+              onSuccess={() => {
+                toast.success("Payment successful! You are now registered for this event.");
+                onRegister();
+              }}
+            >
+              Pay ₹{event.payment_amount} & Register
+            </PaymentButton>
+          ) : (
+            <Button 
+              className={isRegistered 
+                ? "bg-red-500 hover:bg-red-600 w-full sm:w-auto" 
+                : "bg-maasta-orange hover:bg-maasta-orange/90 w-full sm:w-auto"}
+              onClick={onRegister}
+            >
+              {isRegistered ? "Cancel Registration" : "Register for Event"}
+              {event.ticketing_enabled && !isRegistered && event.ticket_price && ` • $${event.ticket_price}`}
+            </Button>
+          )
         ) : (
           <p className="text-gray-500">This event has already taken place.</p>
         )}

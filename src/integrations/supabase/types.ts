@@ -66,6 +66,8 @@ export type Database = {
           gender: string | null
           id: string
           location: string | null
+          payment_amount: number | null
+          payment_required: boolean
           project_details: string | null
           requirements: string | null
           status: string | null
@@ -86,6 +88,8 @@ export type Database = {
           gender?: string | null
           id?: string
           location?: string | null
+          payment_amount?: number | null
+          payment_required?: boolean
           project_details?: string | null
           requirements?: string | null
           status?: string | null
@@ -106,6 +110,8 @@ export type Database = {
           gender?: string | null
           id?: string
           location?: string | null
+          payment_amount?: number | null
+          payment_required?: boolean
           project_details?: string | null
           requirements?: string | null
           status?: string | null
@@ -338,6 +344,8 @@ export type Database = {
           max_attendees: number | null
           organizer_contact: string | null
           organizer_info: string | null
+          payment_amount: number | null
+          payment_required: boolean
           registration_deadline: string | null
           status: string | null
           ticket_limit: number | null
@@ -366,6 +374,8 @@ export type Database = {
           max_attendees?: number | null
           organizer_contact?: string | null
           organizer_info?: string | null
+          payment_amount?: number | null
+          payment_required?: boolean
           registration_deadline?: string | null
           status?: string | null
           ticket_limit?: number | null
@@ -394,6 +404,8 @@ export type Database = {
           max_attendees?: number | null
           organizer_contact?: string | null
           organizer_info?: string | null
+          payment_amount?: number | null
+          payment_required?: boolean
           registration_deadline?: string | null
           status?: string | null
           ticket_limit?: number | null
@@ -488,6 +500,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          audition_id: string | null
+          created_at: string
+          currency: string
+          event_id: string | null
+          id: string
+          payment_method: string
+          phonepe_order_id: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          audition_id?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string | null
+          id?: string
+          payment_method?: string
+          phonepe_order_id: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          audition_id?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string | null
+          id?: string
+          payment_method?: string
+          phonepe_order_id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       professional_references: {
         Row: {

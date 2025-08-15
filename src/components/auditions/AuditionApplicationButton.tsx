@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { EnhancedAuditionApplicationDialog } from "./EnhancedAuditionApplicationDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { PaymentButton } from "@/components/payment/PaymentButton";
 
 interface AuditionApplicationButtonProps {
   auditionId: string;
@@ -15,6 +16,8 @@ interface AuditionApplicationButtonProps {
   requestUploads?: boolean;
   onSuccess?: () => void;
   hasApplied?: boolean;
+  paymentRequired?: boolean;
+  paymentAmount?: number;
 }
 
 export const AuditionApplicationButton = ({
@@ -26,7 +29,9 @@ export const AuditionApplicationButton = ({
   children = "Apply Now",
   requestUploads = false,
   onSuccess,
-  hasApplied = false
+  hasApplied = false,
+  paymentRequired = false,
+  paymentAmount
 }: AuditionApplicationButtonProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { user } = useAuth();
@@ -44,6 +49,24 @@ export const AuditionApplicationButton = ({
 
     setIsDialogOpen(true);
   };
+
+  if (paymentRequired && paymentAmount) {
+    return (
+      <PaymentButton
+        auditionId={auditionId}
+        amount={paymentAmount}
+        variant={variant}
+        size={size}
+        className={className}
+        onSuccess={() => {
+          toast.success("Payment successful! Your audition application has been submitted.");
+          onSuccess?.();
+        }}
+      >
+        Pay ₹{paymentAmount} & Apply
+      </PaymentButton>
+    );
+  }
 
   return (
     <>

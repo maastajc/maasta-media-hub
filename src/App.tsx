@@ -22,6 +22,7 @@ import Events from "./pages/Events";
 import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
@@ -71,6 +72,7 @@ function App() {
                 <Route path="/events/create" element={<CreateEvent />} />
                 <Route path="/events/edit/:eventId" element={<EditEvent />} />
                 <Route path="/events/:id" element={<EventDetails />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
               </Routes>
             </LayoutWithNavigation>
           </AuthProvider>
