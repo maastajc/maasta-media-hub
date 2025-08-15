@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { PaymentButton } from "@/components/payment/PaymentButton";
 
 interface Event {
   id: string;
@@ -23,6 +24,8 @@ interface Event {
   category?: string;
   ticketing_enabled: boolean;
   ticket_price?: number;
+  payment_required: boolean;
+  payment_amount?: number;
   max_attendees?: number;
   creator_id: string;
   status: string;
@@ -248,7 +251,7 @@ const EventDetails = () => {
 
   const eventDate = new Date(event.event_date);
   const isUpcoming = eventDate > new Date();
-  const isPaid = event.ticketing_enabled && (event.ticket_price || 0) > 0;
+  const isPaid = event.payment_required && (event.payment_amount || 0) > 0;
   const isOrganizer = user?.id === event.creator_id;
   const isEventFull = event.max_attendees && attendeeCount >= event.max_attendees;
 
@@ -301,7 +304,7 @@ const EventDetails = () => {
                     </Badge>
                   )}
                   <Badge variant={isPaid ? "destructive" : "secondary"}>
-                    {isPaid ? `₹${event.ticket_price}` : 'FREE'}
+                    {isPaid ? `₹${event.payment_amount}` : 'FREE'}
                   </Badge>
                   {isUpcoming && (
                     <Badge className={registration ? "bg-green-600" : "bg-primary"}>
@@ -418,7 +421,7 @@ const EventDetails = () => {
               <CardContent className="p-6">
                 {isPaid && (
                   <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-primary">₹{event.ticket_price}</div>
+                    <div className="text-3xl font-bold text-primary">₹{event.payment_amount}</div>
                     <div className="text-sm text-muted-foreground">per ticket</div>
                   </div>
                 )}
@@ -441,25 +444,39 @@ const EventDetails = () => {
                       <Button disabled className="w-full">
                         Event Full
                       </Button>
-                    ) : (
-                      <Button 
-                        className={`w-full ${registration 
-                          ? "bg-red-500 hover:bg-red-600" 
-                          : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                        }`}
-                        onClick={handleRegistration}
-                        disabled={registering}
-                      >
-                        {registering 
-                          ? "Processing..." 
-                          : registration 
-                            ? "Cancel Registration" 
-                            : isPaid 
-                              ? `Book for ₹${event.ticket_price}` 
-                              : "Register Free"
-                        }
-                      </Button>
-                    )}
+                     ) : isPaid && !registration ? (
+                       <PaymentButton
+                         eventId={event.id}
+                         amount={event.payment_amount || 0}
+                         className="w-full"
+                         onSuccess={() => {
+                           // Refresh event details to show registration status
+                           fetchEventDetails();
+                           toast({
+                             title: "Payment Successful!",
+                             description: "You have been registered for this event.",
+                           });
+                         }}
+                       >
+                         Pay ₹{event.payment_amount} & Register
+                       </PaymentButton>
+                     ) : (
+                       <Button 
+                         className={`w-full ${registration 
+                           ? "bg-red-500 hover:bg-red-600" 
+                           : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                         }`}
+                         onClick={handleRegistration}
+                         disabled={registering}
+                       >
+                         {registering 
+                           ? "Processing..." 
+                           : registration 
+                             ? "Cancel Registration" 
+                             : "Register Free"
+                         }
+                       </Button>
+                     )}
                     
                     {registration && (
                       <div className="text-center text-sm text-green-600 bg-green-50 p-3 rounded-lg">
