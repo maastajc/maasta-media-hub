@@ -41,6 +41,8 @@ import SocialLinksForm from "@/components/profile/SocialLinksForm";
 import { toast } from "sonner";
 import CoverImageUpload from "@/components/profile/CoverImageUpload";
 import DownloadPortfolioPDF from "@/components/profile/DownloadPortfolioPDF";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -275,6 +277,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar />
       {/* Cover Image Section */}
       <CoverImageUpload
         currentImageUrl={profileData?.cover_image_url}
@@ -670,6 +673,7 @@ const Profile = () => {
           profileData={profileData}
         />
       )}
+      <Footer />
     </div>
   );
 };
