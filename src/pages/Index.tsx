@@ -45,122 +45,114 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        {/* Enhanced Hero Section with Desktop Optimizations */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-maasta-purple/5 via-white to-maasta-orange/5 py-8 md:py-16">
-          {/* Enhanced Animated Background Elements */}
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-16 md:py-24">
+          {/* Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-maasta-orange/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-maasta-purple/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-maasta-orange/5 to-maasta-purple/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-secondary/5 to-primary/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              {/* Enhanced Text Content with Reduced Font Sizes */}
-              <div className="text-center lg:text-left">
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 animate-fade-in leading-tight">
-                  Create Your Media{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-orange via-red-500 to-maasta-purple animate-pulse">
-                    Portfolio
-                  </span>{" "}
-                  & Apply for Verified{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-maasta-purple via-blue-500 to-maasta-orange animate-pulse">
-                    Auditions
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Text Content */}
+              <div className="text-center lg:text-left space-y-8">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+                  Platform for{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
+                    Talents
                   </span>
                 </h1>
                 
-                <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0 animate-slide-up leading-relaxed">
-                  From <strong>Kollywood</strong> to digital platforms, discover authentic casting calls and showcase your talent to Tamil cinema's finest directors and producers.
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                  Showcase your skills, participate in auditions, and connect with the media industry
                 </p>
                 
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-6 animate-slide-up">
+                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-maasta-orange to-red-500 hover:from-maasta-orange/90 hover:to-red-500/90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-3 text-base font-semibold"
-                    onClick={handleViewAuditions}
+                    className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    onClick={handleCreateAccount}
                   >
-                    Explore Auditions →
+                    Join Maasta
                   </Button>
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="border-2 border-maasta-purple text-maasta-purple hover:bg-maasta-purple hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-3 text-base font-semibold"
-                    onClick={handleCreateAccount}
+                    className="border-2 border-primary text-primary hover:bg-primary hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    onClick={() => document.getElementById('featured-content')?.scrollIntoView({ behavior: 'smooth' })}
                   >
-                    Create Your Free Portfolio →
+                    Explore Opportunities
                   </Button>
                 </div>
 
-                <div className="mb-6 animate-fade-in">
-                  <span className="inline-block px-4 py-2 bg-gradient-to-r from-maasta-orange/10 to-maasta-purple/10 text-maasta-orange rounded-full text-sm font-medium animate-scale-in border border-maasta-orange/20">
-                    Tamil Cinema's Digital Revolution
-                  </span>
-                </div>
-
-                {/* Enhanced Stats Section with Tamil focus */}
-                <div className="grid grid-cols-3 gap-6 animate-fade-in p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg" style={{ animationDelay: '0.5s' }}>
-                  <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-orange mb-1">500+</div>
-                    <div className="text-xs font-medium text-gray-700">Active Artists</div>
-                    <div className="text-xs text-gray-500">Ready to audition</div>
-                  </div>
-                  <div className="text-center border-x border-gray-200">
-                    <div className="text-2xl md:text-3xl font-bold text-maasta-purple mb-1">150+</div>
-                    <div className="text-xs font-medium text-gray-700">Live Auditions</div>
-                    <div className="text-xs text-gray-500">Updated daily</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-red-500 mb-1">25+</div>
-                    <div className="text-xs font-medium text-gray-700">Casting Directors</div>
-                    <div className="text-xs text-gray-500">Verified profiles</div>
+                {/* Search Bar (Optional) */}
+                <div className="max-w-md mx-auto lg:mx-0">
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Search events, auditions, or artists..."
+                      className="w-full px-4 py-3 rounded-full border border-border bg-background/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder-muted-foreground"
+                    />
+                    <Button size="sm" className="absolute right-2 top-2 rounded-full">
+                      Search
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              {/* Enhanced Visual Content with Artist Slideshow - Moved Up */}
-              <div className="relative lg:ml-8 -mt-4 lg:-mt-8">
+              {/* Visual Content */}
+              <div className="relative lg:ml-8">
                 <HeroArtistSlideshow />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Recent Auditions Section - Moved to top after hero */}
-        <RecentAuditions />
+        {/* Featured Content Sections */}
+        <div id="featured-content">
+          {/* Featured Events Section */}
+          <UpcomingEvents />
 
-        {/* Featured Artists Section - Moved to second after hero */}
-        <FeaturedArtists />
+          {/* Featured Auditions Section */}
+          <RecentAuditions />
 
-        {/* Upcoming Events Section */}
-        <UpcomingEvents />
+          {/* Featured Artists Section */}
+          <FeaturedArtists />
+        </div>
 
-        {/* Enhanced CTA Section with Tamil Focus */}
-        <section className="relative py-20 bg-gradient-to-r from-maasta-purple/10 via-white to-maasta-orange/10 overflow-hidden">
+        {/* Call to Action Banner */}
+        <section className="relative py-20 bg-gradient-to-r from-primary/10 via-background to-secondary/10 overflow-hidden">
           <div className="absolute inset-0">
-            <div className="absolute top-0 left-1/4 w-64 h-64 bg-maasta-orange/5 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-maasta-purple/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-0 left-1/4 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
           </div>
           
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="mb-8">
-              <img 
-                src="https://images.unsplash.com/photo-1524863479829-916d8e77f114?w=120&h=120&fit=crop&crop=center" 
-                alt="Tamil cultural heritage" 
-                className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
-              />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-in">Join the Tamil Creative Community Today</h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Connect with Tamil industry professionals, showcase your artistic talents, and be part of the growing Tamil entertainment ecosystem.
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+              Join thousands of talents building their career on Maasta
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Connect with industry professionals, showcase your artistic talents, and be part of the growing entertainment ecosystem.
             </p>
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-maasta-orange to-maasta-purple hover:from-maasta-orange/90 hover:to-maasta-purple/90 text-white transform hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl animate-fade-in px-8 py-4 text-lg"
-              style={{ animationDelay: '0.4s' }}
-              onClick={handleCreateAccount}
-            >
-              Start Your Tamil Journey
-            </Button>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white transform hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl px-8 py-4 text-lg"
+                onClick={handleCreateAccount}
+              >
+                Create Your Profile
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg"
+                onClick={handleViewAuditions}
+              >
+                Find Opportunities
+              </Button>
+            </div>
           </div>
         </section>
 

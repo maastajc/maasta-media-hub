@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from "@/components/ui/carousel";
 import { ArtistCard } from "../artists/ArtistCard";
@@ -11,21 +11,28 @@ import Autoplay from "embla-carousel-autoplay";
 const FeaturedArtists = () => {
   const { artists, isLoading } = useArtists();
   const [api, setApi] = useState<CarouselApi>();
+  const navigate = useNavigate();
 
   // Get featured artists (first 6)
   const featuredArtists = artists.slice(0, 6);
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Tamil Artists</h2>
-          <p className="text-lg text-gray-600 mb-8">Discover talented artists ready for your next project</p>
-          <Link to="/artists">
-            <Button variant="outline" className="text-maasta-orange border-maasta-orange hover:bg-maasta-orange hover:text-white transition-all duration-300">
-              Browse all artists →
-            </Button>
-          </Link>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Featured Artists
+          </h2>
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Discover talented artists building their portfolios on Maasta
+          </p>
+          <Button 
+            onClick={() => navigate('/artists')}
+            variant="outline"
+            size="lg"
+          >
+            View All Artists
+          </Button>
         </div>
         
         {isLoading ? (
@@ -64,14 +71,15 @@ const FeaturedArtists = () => {
             </Carousel>
           </div>
         ) : (
-          <div className="text-center py-16 bg-gray-50 rounded-2xl">
-            <h3 className="text-xl font-semibold mb-2 text-gray-900">No featured artists yet</h3>
-            <p className="text-gray-500 mb-6">Check back soon to discover amazing talent</p>
-            <Link to="/artists">
-              <Button className="bg-gradient-to-r from-maasta-orange to-maasta-purple hover:from-maasta-orange/90 hover:to-maasta-purple/90 text-white px-8 py-3">
-                Explore Artists
-              </Button>
-            </Link>
+          <div className="text-center py-16 bg-muted rounded-2xl">
+            <h3 className="text-xl font-semibold mb-2 text-foreground">No featured artists yet</h3>
+            <p className="text-muted-foreground mb-6">Check back soon to discover amazing talent</p>
+            <Button 
+              onClick={() => navigate('/artists')}
+              className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white px-8 py-3"
+            >
+              Explore Artists
+            </Button>
           </div>
         )}
       </div>
