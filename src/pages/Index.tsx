@@ -55,9 +55,9 @@ const Index = () => {
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center space-y-8">
               {/* Text Content */}
-              <div className="text-center lg:text-left space-y-8">
+              <div className="space-y-8">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
                   Platform for{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
@@ -65,11 +65,11 @@ const Index = () => {
                   </span>
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   Showcase your skills, participate in auditions, and connect with the media industry
                 </p>
                 
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <Button 
                     size="lg" 
                     className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
@@ -88,7 +88,7 @@ const Index = () => {
                 </div>
 
                 {/* Search Bar (Optional) */}
-                <div className="max-w-md mx-auto lg:mx-0">
+                <div className="max-w-md mx-auto">
                   <div className="relative">
                     <input 
                       type="text" 
@@ -101,11 +101,6 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Visual Content - Slideshow Hidden */}
-              {/* <div className="relative lg:ml-8">
-                <HeroArtistSlideshow />
-              </div> */}
             </div>
           </div>
         </section>
