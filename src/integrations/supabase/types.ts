@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -539,6 +539,7 @@ export type Database = {
           personal_website: string | null
           phone_number: string | null
           preferred_domains: string | null
+          "Primary Profession": string[] | null
           profile_picture_url: string | null
           rate_card: Json | null
           role: string | null
@@ -551,7 +552,6 @@ export type Database = {
           verified: boolean | null
           willing_to_relocate: boolean | null
           work_preference: string | null
-          work_preferences: string[] | null
           years_of_experience: number | null
           youtube_vimeo: string | null
         }
@@ -581,6 +581,7 @@ export type Database = {
           personal_website?: string | null
           phone_number?: string | null
           preferred_domains?: string | null
+          "Primary Profession"?: string[] | null
           profile_picture_url?: string | null
           rate_card?: Json | null
           role?: string | null
@@ -593,7 +594,6 @@ export type Database = {
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
-          work_preferences?: string[] | null
           years_of_experience?: number | null
           youtube_vimeo?: string | null
         }
@@ -623,6 +623,7 @@ export type Database = {
           personal_website?: string | null
           phone_number?: string | null
           preferred_domains?: string | null
+          "Primary Profession"?: string[] | null
           profile_picture_url?: string | null
           rate_card?: Json | null
           role?: string | null
@@ -635,7 +636,6 @@ export type Database = {
           verified?: boolean | null
           willing_to_relocate?: boolean | null
           work_preference?: string | null
-          work_preferences?: string[] | null
           years_of_experience?: number | null
           youtube_vimeo?: string | null
         }
@@ -788,10 +788,10 @@ export type Database = {
       get_event_stats: {
         Args: { event_id_param: string }
         Returns: {
-          total_registrations: number
-          confirmed_registrations: number
           cancelled_registrations: number
+          confirmed_registrations: number
           is_full: boolean
+          total_registrations: number
         }[]
       }
       get_unique_categories: {
