@@ -274,6 +274,8 @@ export type Database = {
           payment_status: string | null
           status: string | null
           ticket_id: string
+          ticket_price: number | null
+          ticket_type_name: string | null
           user_id: string
         }
         Insert: {
@@ -288,6 +290,8 @@ export type Database = {
           payment_status?: string | null
           status?: string | null
           ticket_id?: string
+          ticket_price?: number | null
+          ticket_type_name?: string | null
           user_id: string
         }
         Update: {
@@ -302,6 +306,8 @@ export type Database = {
           payment_status?: string | null
           status?: string | null
           ticket_id?: string
+          ticket_price?: number | null
+          ticket_type_name?: string | null
           user_id?: string
         }
         Relationships: [
@@ -337,9 +343,11 @@ export type Database = {
           ticket_limit: number | null
           ticket_price: number | null
           ticket_type: string | null
+          ticket_types: Json | null
           ticketing_enabled: boolean | null
           title: string
           updated_at: string | null
+          winning_prize: number | null
         }
         Insert: {
           banner_url?: string | null
@@ -363,9 +371,11 @@ export type Database = {
           ticket_limit?: number | null
           ticket_price?: number | null
           ticket_type?: string | null
+          ticket_types?: Json | null
           ticketing_enabled?: boolean | null
           title: string
           updated_at?: string | null
+          winning_prize?: number | null
         }
         Update: {
           banner_url?: string | null
@@ -389,9 +399,11 @@ export type Database = {
           ticket_limit?: number | null
           ticket_price?: number | null
           ticket_type?: string | null
+          ticket_types?: Json | null
           ticketing_enabled?: boolean | null
           title?: string
           updated_at?: string | null
+          winning_prize?: number | null
         }
         Relationships: []
       }

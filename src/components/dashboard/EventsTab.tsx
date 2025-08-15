@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, MapPin, Users, Eye, Edit, Trash2, Plus } from "lucide-react";
+import { Calendar, MapPin, Users, Eye, Edit, Trash2, Plus, UserCheck } from "lucide-react";
 import { EmptyState } from "./EmptyState";
+import { EventAttendeesModal } from "@/components/events/EventAttendeesModal";
 
 interface EventsTabProps {
   isLoading: boolean;
@@ -21,6 +22,8 @@ export const EventsTab = ({ isLoading, userEvents, formatDate, onEventDeleted }:
   const navigate = useNavigate();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEventTitle, setSelectedEventTitle] = useState<string>("");
 
   const handleDeleteEvent = async (eventId: string) => {
     setDeletingId(eventId);
@@ -138,6 +141,12 @@ export const EventsTab = ({ isLoading, userEvents, formatDate, onEventDeleted }:
                   </div>
                 )}
 
+{event.category === 'contests' && event.winning_prize && (
+                  <div className="text-sm font-medium text-green-600">
+                    Prize: ₹{event.winning_prize}
+                  </div>
+                )}
+
                 {event.ticketing_enabled && (
                   <div className="text-sm font-medium">
                     {event.ticket_price > 0 ? `₹${event.ticket_price}` : 'Free'}
@@ -145,24 +154,37 @@ export const EventsTab = ({ isLoading, userEvents, formatDate, onEventDeleted }:
                 )}
               </div>
 
-              <div className="flex space-x-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigate(`/events/${event.id}`)}
-                  className="flex-1"
+                  className="flex items-center gap-1"
                 >
-                  <Eye className="w-4 h-4 mr-1" />
+                  <Eye className="w-4 h-4" />
                   View
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/events/edit/${event.id}`)}
-                  className="flex-1"
+                  onClick={() => {
+                    setSelectedEventId(event.id);
+                    setSelectedEventTitle(event.title);
+                  }}
+                  className="flex items-center gap-1"
                 >
-                  <Edit className="w-4 h-4 mr-1" />
+                  <UserCheck className="w-4 h-4" />
+                  Attendees
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/events/edit/${event.id}`)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="w-4 h-4" />
                   Edit
                 </Button>
 
@@ -172,9 +194,10 @@ export const EventsTab = ({ isLoading, userEvents, formatDate, onEventDeleted }:
                       variant="outline"
                       size="sm"
                       disabled={deletingId === event.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
                     >
                       <Trash2 className="w-4 h-4" />
+                      Delete
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -200,6 +223,18 @@ export const EventsTab = ({ isLoading, userEvents, formatDate, onEventDeleted }:
           </Card>
         ))}
       </div>
+
+      {selectedEventId && (
+        <EventAttendeesModal
+          eventId={selectedEventId}
+          eventTitle={selectedEventTitle}
+          isOpen={!!selectedEventId}
+          onClose={() => {
+            setSelectedEventId(null);
+            setSelectedEventTitle("");
+          }}
+        />
+      )}
     </div>
   );
 };

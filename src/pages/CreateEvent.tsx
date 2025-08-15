@@ -14,6 +14,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { uploadSingleFile } from "@/utils/fileUpload";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { MultipleTicketTypes, TicketType } from "@/components/events/MultipleTicketTypes";
 import { ArrowLeft } from "lucide-react";
 
 const CreateEvent = () => {
@@ -39,8 +40,11 @@ const CreateEvent = () => {
     organizer_info: "",
     organizer_contact: "",
     image_url: "",
-    banner_url: ""
+    banner_url: "",
+    winning_prize: ""
   });
+
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -171,6 +175,8 @@ const CreateEvent = () => {
         date_start: formData.date_start ? new Date(formData.date_start).toISOString() : null,
         date_end: formData.date_end ? new Date(formData.date_end).toISOString() : null,
         registration_deadline: formData.registration_deadline ? new Date(formData.registration_deadline).toISOString() : null,
+        winning_prize: formData.winning_prize ? parseFloat(formData.winning_prize) : null,
+        ticket_types: ticketTypes.length > 0 ? JSON.parse(JSON.stringify(ticketTypes)) : null,
         status: 'published'
       };
 
@@ -317,40 +323,72 @@ const CreateEvent = () => {
                   <Label>Enable Ticketing</Label>
                 </div>
 
-                {formData.ticketing_enabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="ticket_price">Ticket Price (₹)</Label>
-                      <Input
-                        id="ticket_price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={formData.ticket_price}
-                        onChange={(e) => handleInputChange("ticket_price", e.target.value)}
-                      />
-                    </div>
+{formData.ticketing_enabled && (
+                  <div className="space-y-6">
+                    <MultipleTicketTypes
+                      ticketTypes={ticketTypes}
+                      onTicketTypesChange={setTicketTypes}
+                      disabled={isSubmitting}
+                    />
+                    
+                    {/* Legacy single ticket option for backwards compatibility */}
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Legacy Single Ticket (Optional - only if no ticket types above)
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="ticket_price">Ticket Price (₹)</Label>
+                          <Input
+                            id="ticket_price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.ticket_price}
+                            onChange={(e) => handleInputChange("ticket_price", e.target.value)}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="ticket_limit">Ticket Limit</Label>
-                      <Input
-                        id="ticket_limit"
-                        type="number"
-                        min="1"
-                        value={formData.ticket_limit}
-                        onChange={(e) => handleInputChange("ticket_limit", e.target.value)}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ticket_limit">Ticket Limit</Label>
+                          <Input
+                            id="ticket_limit"
+                            type="number"
+                            min="1"
+                            value={formData.ticket_limit}
+                            onChange={(e) => handleInputChange("ticket_limit", e.target.value)}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="registration_deadline">Registration Deadline</Label>
-                      <Input
-                        id="registration_deadline"
-                        type="datetime-local"
-                        value={formData.registration_deadline}
-                        onChange={(e) => handleInputChange("registration_deadline", e.target.value)}
-                      />
+                        <div className="space-y-2">
+                          <Label htmlFor="registration_deadline">Registration Deadline</Label>
+                          <Input
+                            id="registration_deadline"
+                            type="datetime-local"
+                            value={formData.registration_deadline}
+                            onChange={(e) => handleInputChange("registration_deadline", e.target.value)}
+                          />
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                )}
+
+                {formData.category === "contests" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="winning_prize">Winning Prize (₹)</Label>
+                    <Input
+                      id="winning_prize"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.winning_prize}
+                      onChange={(e) => handleInputChange("winning_prize", e.target.value)}
+                      placeholder="Enter prize amount for contest"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This will be displayed on the public event page to attract participants.
+                    </p>
                   </div>
                 )}
 
