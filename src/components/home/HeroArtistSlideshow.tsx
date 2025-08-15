@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+/*import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const staticImages = [
@@ -101,7 +101,7 @@ const HeroArtistSlideshow = () => {
             </div>
           </div>
           
-          {/* Navigation Arrows */}
+          {/* Navigation Arrows }
           <button
             onClick={prevSlide}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-all duration-300"
@@ -115,7 +115,7 @@ const HeroArtistSlideshow = () => {
             <ChevronRight className="w-5 h-5 text-white" />
           </button>
           
-          {/* Slide Indicators */}
+          {/* Slide Indicators }
           <div className="absolute bottom-3 right-6 flex space-x-2">
             {staticImages.map((_, index) => (
               <button
@@ -130,7 +130,7 @@ const HeroArtistSlideshow = () => {
         </div>
       </div>
 
-      {/* Enhanced Industry-Specific Floating Cards */}
+      {/* Enhanced Industry-Specific Floating Cards }
       <div className="absolute -top-6 -right-6 bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-4 transform rotate-6 hover:rotate-12 transition-transform duration-300 border-l-4 border-maasta-orange">
         <div className="flex items-center gap-3">
           <div className="w-4 h-4 bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
@@ -156,4 +156,4 @@ const HeroArtistSlideshow = () => {
   );
 };
 
-export default HeroArtistSlideshow;
+export default HeroArtistSlideshow;*/
