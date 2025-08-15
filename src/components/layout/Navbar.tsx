@@ -66,6 +66,12 @@ const Navbar = () => {
             >
               Auditions
             </Link>
+            <Link
+              to="/events"
+              className="text-gray-700 hover:text-maasta-purple px-3 py-2 text-sm font-medium transition-colors"
+            >
+              Events
+            </Link>
 
             {user && isRecruiter && (
               <Link
@@ -162,6 +168,13 @@ const Navbar = () => {
                 onClick={() => setIsOpen(false)}
               >
                 Auditions
+              </Link>
+              <Link
+                to="/events"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                onClick={() => setIsOpen(false)}
+              >
+                Events
               </Link>
 
               {user && isRecruiter && (

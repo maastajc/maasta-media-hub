@@ -17,6 +17,8 @@ import EditAudition from "./pages/EditAudition";
 import Dashboard from "./pages/Dashboard";
 import Networking from "./pages/Networking";
 import AuditionApplications from "./pages/AuditionApplications";
+import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
@@ -62,6 +64,8 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/networking" element={<Networking />} />
                 <Route path="/applications/:auditionId" element={<AuditionApplications />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/events/:id" element={<EventDetails />} />
               </Routes>
             </LayoutWithNavigation>
           </AuthProvider>
