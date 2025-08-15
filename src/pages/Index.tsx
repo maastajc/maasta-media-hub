@@ -9,7 +9,7 @@ import UpcomingEvents from "@/components/home/UpcomingEvents";
 import RecentAuditions from "@/components/home/RecentAuditions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import HeroArtistSlideshow from "@/components/home/HeroArtistSlideshow";
+
 
 const Index = () => {
   const { user } = useAuth();
@@ -102,10 +102,10 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Visual Content */}
-              <div className="relative lg:ml-8">
+              {/* Visual Content - Slideshow Hidden */}
+              {/* <div className="relative lg:ml-8">
                 <HeroArtistSlideshow />
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
