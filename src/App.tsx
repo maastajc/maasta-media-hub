@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -36,7 +37,7 @@ const HomeRedirect = () => {
     );
   }
   
-  return user ? <Navigate to="/profile" replace /> : <Navigate to="/sign-up" replace />;
+  return user ? <Navigate to="/dashboard" replace /> : <Index />;
 };
 
 const queryClient = new QueryClient();
