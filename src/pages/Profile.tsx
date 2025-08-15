@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchArtistById } from "@/services/artist/artistById";
+import { UnauthenticatedProfile } from "@/components/profile/UnauthenticatedProfile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -224,6 +225,11 @@ const Profile = () => {
       toast.error("Failed to load profile. Please try again.");
     }
   }, [error]);
+
+  // Show unauthenticated view if no user
+  if (!authLoading && !user) {
+    return <UnauthenticatedProfile />;
+  }
 
   // Show loading while auth is loading or profile is loading
   if (authLoading || isLoading) {
