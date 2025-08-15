@@ -51,9 +51,19 @@ serve(async (req) => {
     
     // PhonePe API configuration
     const merchantId = "PGTESTPAYUAT";
-    const apiKey = Deno.env.get("PHONEPE_API_KEY") || "";
+    const apiKey = Deno.env.get("PHONEPE_API_KEY");
     const salt = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // PhonePe test salt
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+
+    console.log('PhonePe configuration:', { 
+      merchantId, 
+      hasApiKey: !!apiKey, 
+      apiEndpoint 
+    });
+
+    if (!apiKey) {
+      throw new Error("PHONEPE_API_KEY is not configured");
+    }
 
     // Prepare payment request
     const paymentPayload = {
@@ -82,7 +92,13 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('') + "###1";
 
-    // Make payment request to PhonePe
+    console.log('Making PhonePe API request:', { 
+      apiEndpoint, 
+      orderId, 
+      amount: amount * 100 
+    });
+
+    // Make payment request to PhonePe with timeout
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
@@ -91,10 +107,13 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         request: base64Payload
-      })
+      }),
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
+    console.log('PhonePe API response status:', response.status);
     const phonepeResponse = await response.json();
+    console.log('PhonePe API response:', phonepeResponse);
     
     if (!phonepeResponse.success) {
       throw new Error(`PhonePe API error: ${phonepeResponse.message}`);
