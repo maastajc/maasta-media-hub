@@ -251,7 +251,10 @@ const EventDetails = () => {
 
   const eventDate = new Date(event.event_date);
   const isUpcoming = eventDate > new Date();
-  const isPaid = event.payment_required && (event.payment_amount || 0) > 0;
+  // Check both new payment fields and legacy ticket_price field
+  const isPaid = (event.payment_required && (event.payment_amount || 0) > 0) || 
+                 (event.ticketing_enabled && (event.ticket_price || 0) > 0);
+  const paymentAmount = event.payment_amount || event.ticket_price || 0;
   const isOrganizer = user?.id === event.creator_id;
   const isEventFull = event.max_attendees && attendeeCount >= event.max_attendees;
 
@@ -304,7 +307,7 @@ const EventDetails = () => {
                     </Badge>
                   )}
                   <Badge variant={isPaid ? "destructive" : "secondary"}>
-                    {isPaid ? `₹${event.payment_amount}` : 'FREE'}
+                    {isPaid ? `₹${paymentAmount}` : 'FREE'}
                   </Badge>
                   {isUpcoming && (
                     <Badge className={registration ? "bg-green-600" : "bg-primary"}>
@@ -421,7 +424,7 @@ const EventDetails = () => {
               <CardContent className="p-6">
                 {isPaid && (
                   <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-primary">₹{event.payment_amount}</div>
+                    <div className="text-3xl font-bold text-primary">₹{paymentAmount}</div>
                     <div className="text-sm text-muted-foreground">per ticket</div>
                   </div>
                 )}
@@ -447,7 +450,7 @@ const EventDetails = () => {
                      ) : isPaid && !registration ? (
                        <PaymentButton
                          eventId={event.id}
-                         amount={event.payment_amount || 0}
+                         amount={paymentAmount}
                          className="w-full"
                          onSuccess={() => {
                            // Refresh event details to show registration status
@@ -458,7 +461,7 @@ const EventDetails = () => {
                            });
                          }}
                        >
-                         Pay ₹{event.payment_amount} & Register
+                         Pay ₹{paymentAmount} & Register
                        </PaymentButton>
                      ) : (
                        <Button 
