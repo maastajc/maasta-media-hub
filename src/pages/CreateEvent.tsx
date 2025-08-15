@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { FileUpload } from "@/components/ui/file-upload";
+import { uploadSingleFile } from "@/utils/fileUpload";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ArrowLeft } from "lucide-react";
@@ -40,6 +42,15 @@ const CreateEvent = () => {
     banner_url: ""
   });
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [bannerPreview, setBannerPreview] = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [imageInfo, setImageInfo] = useState<{size: number, dimensions: string} | null>(null);
+  const [bannerInfo, setBannerInfo] = useState<{size: number, dimensions: string} | null>(null);
+
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -64,13 +75,94 @@ const CreateEvent = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const getImageDimensions = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve(`${img.width}x${img.height}px`);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setImageFile(file);
+    setImageUploading(true);
+    
+    try {
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
+      
+      const dimensions = await getImageDimensions(file);
+      setImageInfo({
+        size: Math.round(file.size / 1024), // KB
+        dimensions
+      });
+    } catch (error) {
+      console.error("Error processing image:", error);
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleBannerUpload = async (file: File) => {
+    setBannerFile(file);
+    setBannerUploading(true);
+    
+    try {
+      const preview = URL.createObjectURL(file);
+      setBannerPreview(preview);
+      
+      const dimensions = await getImageDimensions(file);
+      setBannerInfo({
+        size: Math.round(file.size / 1024), // KB
+        dimensions
+      });
+    } catch (error) {
+      console.error("Error processing banner:", error);
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setImageInfo(null);
+    setFormData(prev => ({ ...prev, image_url: "" }));
+  };
+
+  const removeBanner = () => {
+    setBannerFile(null);
+    setBannerPreview("");
+    setBannerInfo(null);
+    setFormData(prev => ({ ...prev, banner_url: "" }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let imageUrl = formData.image_url;
+      let bannerUrl = formData.banner_url;
+
+      // Upload image if file is selected
+      if (imageFile) {
+        const result = await uploadSingleFile(imageFile, 'event-images');
+        imageUrl = result.url;
+      }
+
+      // Upload banner if file is selected
+      if (bannerFile) {
+        const result = await uploadSingleFile(bannerFile, 'event-banners');
+        bannerUrl = result.url;
+      }
+
       const eventData = {
         ...formData,
+        image_url: imageUrl,
+        banner_url: bannerUrl,
         creator_id: user.id,
         ticket_price: formData.ticket_price ? parseFloat(formData.ticket_price) : null,
         ticket_limit: formData.ticket_limit ? parseInt(formData.ticket_limit) : null,
@@ -295,23 +387,45 @@ const CreateEvent = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="image_url">Event Image URL</Label>
-                    <Input
-                      id="image_url"
-                      type="url"
-                      value={formData.image_url}
-                      onChange={(e) => handleInputChange("image_url", e.target.value)}
+                    <Label>Event Image</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Recommended: 1200x600px, Max: 2MB
+                    </p>
+                    <FileUpload
+                      onFileUpload={handleImageUpload}
+                      acceptedTypes="image/*"
+                      maxSizeMB={2}
+                      previewUrl={imagePreview}
+                      isLoading={imageUploading}
+                      onRemove={removeImage}
+                      buttonText="Upload Event Image"
                     />
+                    {imageInfo && (
+                      <p className="text-xs text-muted-foreground">
+                        Size: {imageInfo.size}KB • Dimensions: {imageInfo.dimensions}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="banner_url">Banner Image URL</Label>
-                    <Input
-                      id="banner_url"
-                      type="url"
-                      value={formData.banner_url}
-                      onChange={(e) => handleInputChange("banner_url", e.target.value)}
+                    <Label>Banner Image</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Recommended: 1920x400px, Max: 3MB
+                    </p>
+                    <FileUpload
+                      onFileUpload={handleBannerUpload}
+                      acceptedTypes="image/*"
+                      maxSizeMB={3}
+                      previewUrl={bannerPreview}
+                      isLoading={bannerUploading}
+                      onRemove={removeBanner}
+                      buttonText="Upload Banner Image"
                     />
+                    {bannerInfo && (
+                      <p className="text-xs text-muted-foreground">
+                        Size: {bannerInfo.size}KB • Dimensions: {bannerInfo.dimensions}
+                      </p>
+                    )}
                   </div>
                 </div>
 
