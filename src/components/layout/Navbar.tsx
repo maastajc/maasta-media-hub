@@ -45,7 +45,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img 
-                src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
+                src="/lovable-uploads/f6358e1a-faf0-488f-a7d2-438fe44b2e0e.png" 
                 alt="Maasta Logo" 
                 className="h-10 w-auto"
               />

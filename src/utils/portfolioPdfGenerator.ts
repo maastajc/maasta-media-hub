@@ -73,7 +73,7 @@ export const generatePortfolioPDF = async (
       await new Promise((resolve, reject) => {
         logoImg.onload = resolve;
         logoImg.onerror = reject;
-        logoImg.src = '/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png';
+        logoImg.src = '/lovable-uploads/f6358e1a-faf0-488f-a7d2-438fe44b2e0e.png';
       });
       
       const logoCanvas = document.createElement('canvas');

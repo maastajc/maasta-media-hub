@@ -45,7 +45,7 @@ const SignUp = () => {
       <div className="container max-w-7xl mx-auto px-4 pt-8">
         <div className="flex justify-center mb-8 lg:mb-12">
           <img 
-            src="/lovable-uploads/4fe9af1f-50da-4516-b1d1-a001e4effef3.png" 
+            src="/lovable-uploads/f6358e1a-faf0-488f-a7d2-438fe44b2e0e.png" 
             alt="Maasta Logo" 
             className="h-16 w-auto"
           />
