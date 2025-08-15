@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [userAuditions, setUserAuditions] = useState<any[]>([]);
   const [auditionApplications, setAuditionApplications] = useState<any[]>([]);
+  const [userEvents, setUserEvents] = useState<any[]>([]);
 
   // Fetch artist profile for profile strength meter
   const { data: artistProfile } = useQuery({
@@ -54,7 +55,8 @@ const Dashboard = () => {
       // Use Promise.allSettled to handle partial failures gracefully
       const results = await Promise.allSettled([
         fetchUserAuditions(),
-        fetchAuditionApplications()
+        fetchAuditionApplications(),
+        fetchUserEvents()
       ]);
 
       // Check if any critical operations failed
@@ -139,6 +141,30 @@ const Dashboard = () => {
       throw error; // Re-throw to be caught by Promise.allSettled
     }
   };
+
+  const fetchUserEvents = async () => {
+    try {
+      console.log('Fetching user events for creator_id:', user!.id);
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, status, created_at, location, event_date, description, category, ticketing_enabled, ticket_price, max_attendees")
+        .eq("creator_id", user!.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) {
+        console.error('Error fetching user events:', error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} user events`);
+      setUserEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching user events:", error);
+      setUserEvents([]);
+      throw error; // Re-throw to be caught by Promise.allSettled
+    }
+  };
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -197,6 +223,7 @@ const Dashboard = () => {
               isLoading={isLoading}
               userAuditions={userAuditions}
               auditionApplications={auditionApplications}
+              userEvents={userEvents}
               userRole={profile?.role}
             />
             
@@ -204,6 +231,7 @@ const Dashboard = () => {
               isLoading={isLoading}
               userAuditions={userAuditions}
               auditionApplications={auditionApplications}
+              userEvents={userEvents}
               formatDate={formatDate}
             />
           </div>

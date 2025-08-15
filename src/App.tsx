@@ -19,6 +19,8 @@ import Networking from "./pages/Networking";
 import AuditionApplications from "./pages/AuditionApplications";
 import Events from "./pages/Events";
 import EventDetails from "./pages/EventDetails";
+import CreateEvent from "./pages/CreateEvent";
+import EditEvent from "./pages/EditEvent";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
@@ -65,6 +67,8 @@ function App() {
                 <Route path="/networking" element={<Networking />} />
                 <Route path="/applications/:auditionId" element={<AuditionApplications />} />
                 <Route path="/events" element={<Events />} />
+                <Route path="/events/create" element={<CreateEvent />} />
+                <Route path="/events/edit/:eventId" element={<EditEvent />} />
                 <Route path="/events/:id" element={<EventDetails />} />
               </Routes>
             </LayoutWithNavigation>

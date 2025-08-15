@@ -3,11 +3,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AuditionsTab } from "./AuditionsTab";
 import { ApplicationsTab } from "./ApplicationsTab";
 import { ReviewTab } from "./ReviewTab";
+import { EventsTab } from "./EventsTab";
 
 interface DashboardTabsProps {
   isLoading: boolean;
   userAuditions: any[];
   auditionApplications: any[];
+  userEvents: any[];
   formatDate: (dateString: string) => string;
 }
 
@@ -15,12 +17,14 @@ export const DashboardTabs = ({
   isLoading, 
   userAuditions, 
   auditionApplications, 
+  userEvents,
   formatDate 
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="auditions" className="mt-6">
-      <TabsList className="grid grid-cols-3 mb-6">
+      <TabsList className="grid grid-cols-4 mb-6">
         <TabsTrigger value="auditions">My Auditions</TabsTrigger>
+        <TabsTrigger value="events">My Events</TabsTrigger>
         <TabsTrigger value="applications">Applications</TabsTrigger>
         <TabsTrigger value="review">Review</TabsTrigger>
       </TabsList>
@@ -32,6 +36,15 @@ export const DashboardTabs = ({
               formatDate={formatDate}
               onAuditionDeleted={() => window.location.reload()}
             />
+      </TabsContent>
+      
+      <TabsContent value="events">
+        <EventsTab 
+          isLoading={isLoading}
+          userEvents={userEvents}
+          formatDate={formatDate}
+          onEventDeleted={() => window.location.reload()}
+        />
       </TabsContent>
       
       <TabsContent value="applications">
