@@ -94,14 +94,14 @@ const Events = () => {
         event.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
         event.location.toLowerCase().includes(filters.search.toLowerCase());
       
-      const matchesCategory = !filters.category || event.category === filters.category;
+      const matchesCategory = !filters.category || filters.category === 'all' || event.category === filters.category;
       
-      const matchesLocation = !filters.location || 
+      const matchesLocation = !filters.location || filters.location === 'all' || 
         event.location.toLowerCase().includes(filters.location.toLowerCase());
       
       const eventDate = new Date(event.event_date);
       const now = new Date();
-      const matchesDateRange = !filters.dateRange || (() => {
+      const matchesDateRange = !filters.dateRange || filters.dateRange === 'all' || (() => {
         switch (filters.dateRange) {
           case 'today':
             return eventDate.toDateString() === now.toDateString();
@@ -120,7 +120,7 @@ const Events = () => {
         }
       })();
       
-      const matchesPriceRange = !filters.priceRange || (() => {
+      const matchesPriceRange = !filters.priceRange || filters.priceRange === 'all' || (() => {
         switch (filters.priceRange) {
           case 'free':
             return !event.ticketing_enabled || event.ticket_price === 0;
@@ -198,7 +198,7 @@ const Events = () => {
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Locations</SelectItem>
+                  <SelectItem value="all">All Locations</SelectItem>
                   <SelectItem value="mumbai">Mumbai</SelectItem>
                   <SelectItem value="delhi">Delhi</SelectItem>
                   <SelectItem value="bangalore">Bangalore</SelectItem>

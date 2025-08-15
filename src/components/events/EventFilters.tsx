@@ -39,7 +39,7 @@ const EventFilters = ({ filters, setFilters, sortBy, setSortBy, onClear }: Event
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="contests">🎭 Contests</SelectItem>
                 <SelectItem value="concerts">🎤 Concerts</SelectItem>
                 <SelectItem value="meetups">🤝 Meetups</SelectItem>
@@ -64,7 +64,7 @@ const EventFilters = ({ filters, setFilters, sortBy, setSortBy, onClear }: Event
                 <SelectValue placeholder="Any Time" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Time</SelectItem>
+                <SelectItem value="all">Any Time</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="weekend">This Weekend</SelectItem>
                 <SelectItem value="week">Next 7 Days</SelectItem>
@@ -86,7 +86,7 @@ const EventFilters = ({ filters, setFilters, sortBy, setSortBy, onClear }: Event
                 <SelectValue placeholder="Any Price" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Price</SelectItem>
+                <SelectItem value="all">Any Price</SelectItem>
                 <SelectItem value="free">Free Events</SelectItem>
                 <SelectItem value="paid">Paid Events</SelectItem>
               </SelectContent>
