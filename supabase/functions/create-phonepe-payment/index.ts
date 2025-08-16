@@ -50,15 +50,17 @@ serve(async (req) => {
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
     // PhonePe API configuration
-    const merchantId = "TEST-MAASTAONLINE_250620"; // Your merchant ID
+    const merchantId = Deno.env.get("PHONEPE_MERCHANT_ID");
     const apiKey = Deno.env.get("PHONEPE_API_KEY");
-    const salt = "1"; // Key index for test environment
+    const saltKey = Deno.env.get("PHONEPE_SALT_KEY");
+    const keyIndex = Deno.env.get("PHONEPE_KEY_INDEX") || "1";
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
     console.log('PhonePe configuration:', { 
       merchantId, 
       hasApiKey: !!apiKey,
-      apiKeyLength: apiKey ? apiKey.length : 0,
+      hasSaltKey: !!saltKey,
+      hasKeyIndex: !!keyIndex,
       apiEndpoint 
     });
 
@@ -67,7 +69,17 @@ serve(async (req) => {
       throw new Error("PHONEPE_API_KEY is not configured");
     }
 
-    console.log('API Key verified successfully');
+    if (!merchantId) {
+      console.error("PHONEPE_MERCHANT_ID environment variable is not set");
+      throw new Error("PHONEPE_MERCHANT_ID is not configured");
+    }
+
+    if (!saltKey) {
+      console.error("PHONEPE_SALT_KEY environment variable is not set");
+      throw new Error("PHONEPE_SALT_KEY is not configured");
+    }
+
+    console.log('PhonePe credentials verified successfully');
 
     // Prepare payment request
     const paymentPayload = {
@@ -87,14 +99,14 @@ serve(async (req) => {
     // Create base64 encoded payload
     const base64Payload = btoa(JSON.stringify(paymentPayload));
     
-    // Create checksum
-    const checksumString = base64Payload + "/pg/v1/pay" + salt;
+    // Create checksum as per PhonePe specification
+    const checksumString = base64Payload + "/pg/v1/pay" + saltKey;
     const encoder = new TextEncoder();
     const data_buffer = encoder.encode(checksumString);
     const hash = await crypto.subtle.digest("SHA-256", data_buffer);
     const checksum = Array.from(new Uint8Array(hash))
       .map(b => b.toString(16).padStart(2, '0'))
-      .join('') + "###1";
+      .join('') + "###" + keyIndex;
 
     console.log('Payment payload:', JSON.stringify(paymentPayload, null, 2));
     console.log('Base64 payload:', base64Payload);
@@ -115,6 +127,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         'X-VERIFY': checksum,
+        'X-MERCHANT-ID': merchantId,
       },
       body: JSON.stringify({
         request: base64Payload

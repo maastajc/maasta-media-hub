@@ -40,18 +40,19 @@ serve(async (req) => {
     }
 
     // PhonePe API configuration
-    const merchantId = "TEST-MAASTAONLINE_250620"; // Your merchant ID
-    const salt = "1"; // Key index for test environment
+    const merchantId = Deno.env.get("PHONEPE_MERCHANT_ID");
+    const saltKey = Deno.env.get("PHONEPE_SALT_KEY");
+    const keyIndex = Deno.env.get("PHONEPE_KEY_INDEX") || "1";
     const apiEndpoint = `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${orderId}`;
 
     // Create checksum for status check
-    const checksumString = `/pg/v1/status/${merchantId}/${orderId}${salt}`;
+    const checksumString = `/pg/v1/status/${merchantId}/${orderId}${saltKey}`;
     const encoder = new TextEncoder();
     const data_buffer = encoder.encode(checksumString);
     const hash = await crypto.subtle.digest("SHA-256", data_buffer);
     const checksum = Array.from(new Uint8Array(hash))
       .map(b => b.toString(16).padStart(2, '0'))
-      .join('') + "###1";
+      .join('') + "###" + keyIndex;
 
     // Check payment status with PhonePe
     const response = await fetch(apiEndpoint, {
