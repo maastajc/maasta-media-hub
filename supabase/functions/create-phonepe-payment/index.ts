@@ -57,13 +57,17 @@ serve(async (req) => {
 
     console.log('PhonePe configuration:', { 
       merchantId, 
-      hasApiKey: !!apiKey, 
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey ? apiKey.length : 0,
       apiEndpoint 
     });
 
     if (!apiKey) {
+      console.error("PHONEPE_API_KEY environment variable is not set");
       throw new Error("PHONEPE_API_KEY is not configured");
     }
+
+    console.log('API Key verified successfully');
 
     // Prepare payment request
     const paymentPayload = {
@@ -92,10 +96,17 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('') + "###1";
 
+    console.log('Payment payload:', JSON.stringify(paymentPayload, null, 2));
+    console.log('Base64 payload:', base64Payload);
+    console.log('Checksum string:', checksumString);
+    console.log('Generated checksum:', checksum);
+
     console.log('Making PhonePe API request:', { 
       apiEndpoint, 
       orderId, 
-      amount: amount * 100 
+      amount: amount * 100,
+      merchantId,
+      userId: user.id
     });
 
     // Make payment request to PhonePe with timeout
@@ -112,11 +123,24 @@ serve(async (req) => {
     });
 
     console.log('PhonePe API response status:', response.status);
-    const phonepeResponse = await response.json();
-    console.log('PhonePe API response:', phonepeResponse);
+    console.log('PhonePe API response headers:', Object.fromEntries(response.headers.entries()));
+    
+    const responseText = await response.text();
+    console.log('PhonePe API raw response:', responseText);
+    
+    let phonepeResponse;
+    try {
+      phonepeResponse = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse PhonePe response as JSON:', parseError);
+      throw new Error(`Invalid response from PhonePe: ${responseText}`);
+    }
+    
+    console.log('PhonePe API parsed response:', phonepeResponse);
     
     if (!phonepeResponse.success) {
-      throw new Error(`PhonePe API error: ${phonepeResponse.message}`);
+      console.error('PhonePe API failed:', phonepeResponse);
+      throw new Error(`PhonePe API error: ${phonepeResponse.message || 'Unknown error'}`);
     }
 
     // Store payment in database using service role key

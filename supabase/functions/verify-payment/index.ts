@@ -40,8 +40,8 @@ serve(async (req) => {
     }
 
     // PhonePe API configuration
-    const merchantId = "PGTESTPAYUAT";
-    const salt = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // PhonePe test salt
+    const merchantId = "TEST-MAASTAONLINE_250620"; // Your merchant ID
+    const salt = "1"; // Key index for test environment
     const apiEndpoint = `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${orderId}`;
 
     // Create checksum for status check

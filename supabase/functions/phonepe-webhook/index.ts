@@ -18,9 +18,9 @@ serve(async (req) => {
     const base64Response = body.response;
     const receivedChecksum = req.headers.get('X-VERIFY');
 
-    // Verify checksum
-    const salt = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // PhonePe test salt
-    const checksumString = base64Response + salt;
+    // Verify checksum with key index 1
+    const salt = "1"; // Key index for test environment
+    const checksumString = base64Response + "/pg/v1/status" + salt;
     const encoder = new TextEncoder();
     const data_buffer = encoder.encode(checksumString);
     const hash = await crypto.subtle.digest("SHA-256", data_buffer);
