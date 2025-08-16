@@ -50,9 +50,9 @@ serve(async (req) => {
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
     // PhonePe API configuration
-    const merchantId = "PGTESTPAYUAT";
+    const merchantId = "TEST-MAASTAONLINE_250620"; // Your merchant ID
     const apiKey = Deno.env.get("PHONEPE_API_KEY");
-    const salt = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // PhonePe test salt
+    const salt = "1"; // Key index for test environment
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
     console.log('PhonePe configuration:', { 
