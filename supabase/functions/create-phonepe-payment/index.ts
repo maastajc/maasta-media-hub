@@ -50,12 +50,10 @@ serve(async (req) => {
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
     // PhonePe API configuration
-    //const merchantId = Deno.env.get("PHONEPE_MERCHANT_ID") ;
-    const merchantId = "M22KULTQYBYKO"
-    const apiKey = "c8534121-0c85-4308-8d13-58f61339606a"
-    //const saltKey = Deno.env.get("PHONEPE_SALT_KEY");
-    const saltKey = ""c754cddc-4fc0-4889-b322-88eae9d8f0"
-    const keyIndex = Deno.env.get("PHONEPE_KEY_INDEX") || "1";
+    const merchantId = "M22KULTQYBYKO";
+    const apiKey = "c8534121-0c85-4308-8d13-58f61339606a";
+    const saltKey = "OWZhYjk3MjAtYzkwMy00ZDFmLWI4N2ItZGQxY2Y3YWMwYjk2";
+    const keyIndex = "1";
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
     console.log('PhonePe configuration:', { 
