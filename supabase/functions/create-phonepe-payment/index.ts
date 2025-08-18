@@ -50,37 +50,18 @@ serve(async (req) => {
     // Create unique order ID
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
-    // PhonePe API configuration using your actual credentials
-    const merchantId = "M22KULTQYBYKO"; // Your actual merchant ID
-    const apiKey = "c8534121-0c85-4308-8d13-58f61339606a"; // Your actual API key
-    const saltKey = "c754cddc-4fc0-4889-b322-88eae9d8f006"; // Your actual salt key
+    // PhonePe API configuration with your actual credentials
+    const merchantId = "M22KULTQYBYKO";
+    const saltKey = "c754cddc-4fc0-4889-b322-88eae9d8f006";
     const keyIndex = "1";
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
     console.log('PhonePe configuration:', { 
-      merchantId, 
-      hasApiKey: !!apiKey,
+      merchantId,
       hasSaltKey: !!saltKey,
-      hasKeyIndex: !!keyIndex,
+      keyIndex,
       apiEndpoint 
     });
-
-    if (!apiKey) {
-      console.error("PHONEPE_API_KEY environment variable is not set");
-      throw new Error("PHONEPE_API_KEY is not configured");
-    }
-
-    if (!merchantId) {
-      console.error("PHONEPE_MERCHANT_ID environment variable is not set");
-      throw new Error("PHONEPE_MERCHANT_ID is not configured");
-    }
-
-    if (!saltKey) {
-      console.error("PHONEPE_SALT_KEY environment variable is not set");
-      throw new Error("PHONEPE_SALT_KEY is not configured");
-    }
-
-    console.log('PhonePe credentials verified successfully');
 
     // Prepare payment request
     const paymentPayload = {
@@ -100,8 +81,10 @@ serve(async (req) => {
     // Create base64 encoded payload
     const base64Payload = btoa(JSON.stringify(paymentPayload));
     
-    // Create checksum as per PhonePe specification
+    // Create checksum as per PhonePe specification: SHA256(base64Payload + "/pg/v1/pay" + saltKey) + "###" + keyIndex
     const checksumString = base64Payload + "/pg/v1/pay" + saltKey;
+    console.log('Checksum input string:', checksumString);
+    
     const encoder = new TextEncoder();
     const data_buffer = encoder.encode(checksumString);
     const hash = await crypto.subtle.digest("SHA-256", data_buffer);
@@ -111,7 +94,6 @@ serve(async (req) => {
 
     console.log('Payment payload:', JSON.stringify(paymentPayload, null, 2));
     console.log('Base64 payload:', base64Payload);
-    console.log('Checksum string:', checksumString);
     console.log('Generated checksum:', checksum);
 
     console.log('Making PhonePe API request:', { 
@@ -122,13 +104,12 @@ serve(async (req) => {
       userId: user.id
     });
 
-    // Make payment request to PhonePe with timeout
+    // Make payment request to PhonePe with correct headers
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-VERIFY': checksum,
-        'X-MERCHANT-ID': merchantId,
       },
       body: JSON.stringify({
         request: base64Payload
