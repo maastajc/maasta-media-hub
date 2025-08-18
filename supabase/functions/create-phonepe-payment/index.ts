@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
@@ -49,10 +50,10 @@ serve(async (req) => {
     // Create unique order ID
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
-    // PhonePe API configuration using the correct test credentials
-    const merchantId = "PGTESTPAYUAT86"; // Use PhonePe test merchant ID
-    const apiKey = "96434309-7796-489d-8924-ab56988a6076"; // Use PhonePe test API key
-    const saltKey = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // Use PhonePe test salt key
+    // PhonePe API configuration using your actual credentials
+    const merchantId = "M22KULTQYBYKO"; // Your actual merchant ID
+    const apiKey = "c8534121-0c85-4308-8d13-58f61339606a"; // Your actual API key
+    const saltKey = "c754cddc-4fc0-4889-b322-88eae9d8f006"; // Your actual salt key
     const keyIndex = "1";
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
