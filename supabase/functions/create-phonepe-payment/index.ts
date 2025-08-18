@@ -49,10 +49,10 @@ serve(async (req) => {
     // Create unique order ID
     const orderId = `ORDER_${Date.now()}_${user.id.substring(0, 8)}`;
     
-    // PhonePe API configuration
-    const merchantId = "M22KULTQYBYKO";
-    const apiKey = "c8534121-0c85-4308-8d13-58f61339606a";
-    const saltKey = "OWZhYjk3MjAtYzkwMy00ZDFmLWI4N2ItZGQxY2Y3YWMwYjk2";
+    // PhonePe API configuration using the correct test credentials
+    const merchantId = "PGTESTPAYUAT86"; // Use PhonePe test merchant ID
+    const apiKey = "96434309-7796-489d-8924-ab56988a6076"; // Use PhonePe test API key
+    const saltKey = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"; // Use PhonePe test salt key
     const keyIndex = "1";
     const apiEndpoint = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
