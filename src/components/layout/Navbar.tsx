@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User, LogOut, Settings, Plus } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Plus, Calendar, Building2, FileText, Eye, ClipboardList } from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -112,6 +112,27 @@ const Navbar = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/my-auditions')}>
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    My Auditions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/my-events')}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    My Events
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/my-organizations')}>
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Organizations
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/my-applications')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Applications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/my-review')}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Review Applications
+                  </DropdownMenuItem>
                   {isRecruiter && (
                     <>
                       <DropdownMenuSeparator />
@@ -208,6 +229,41 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    to="/my-auditions"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Auditions
+                  </Link>
+                  <Link
+                    to="/my-events"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Events
+                  </Link>
+                  <Link
+                    to="/my-organizations"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Organizations
+                  </Link>
+                  <Link
+                    to="/my-applications"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Applications
+                  </Link>
+                  <Link
+                    to="/my-review"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Review Applications
                   </Link>
                   <button
                     onClick={handleSignOut}
