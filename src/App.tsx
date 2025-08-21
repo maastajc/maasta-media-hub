@@ -16,6 +16,11 @@ import AuditionDetails from "./pages/AuditionDetails";
 import CreateAudition from "./pages/CreateAudition";
 import EditAudition from "./pages/EditAudition";
 import Dashboard from "./pages/Dashboard";
+import MyAuditions from "./pages/MyAuditions";
+import MyEvents from "./pages/MyEvents";
+import MyOrganizations from "./pages/MyOrganizations";
+import MyApplications from "./pages/MyApplications";
+import MyReview from "./pages/MyReview";
 import Networking from "./pages/Networking";
 import AuditionApplications from "./pages/AuditionApplications";
 import Events from "./pages/Events";
@@ -66,6 +71,11 @@ function App() {
                 <Route path="/auditions/:id" element={<AuditionDetails />} />
                 <Route path="/create-audition" element={<CreateAudition />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/my-auditions" element={<MyAuditions />} />
+                <Route path="/my-events" element={<MyEvents />} />
+                <Route path="/my-organizations" element={<MyOrganizations />} />
+                <Route path="/my-applications" element={<MyApplications />} />
+                <Route path="/my-review" element={<MyReview />} />
                 <Route path="/networking" element={<Networking />} />
                 <Route path="/applications/:auditionId" element={<AuditionApplications />} />
                 <Route path="/events" element={<Events />} />

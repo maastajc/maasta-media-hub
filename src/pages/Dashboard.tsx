@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +10,6 @@ import Footer from "@/components/layout/Footer";
 import { AlertCircle } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
 import ProfileStrengthMeter from "@/components/profile/ProfileStrengthMeter";
 import { fetchArtistById } from "@/services/artist/artistById";
@@ -226,14 +224,37 @@ const Dashboard = () => {
               userEvents={userEvents}
               userRole={profile?.role}
             />
-            
-            <DashboardTabs 
-              isLoading={isLoading}
-              userAuditions={userAuditions}
-              auditionApplications={auditionApplications}
-              userEvents={userEvents}
-              formatDate={formatDate}
-            />
+
+            {/* Quick Navigation Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/profile')}>
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-semibold text-lg mb-2">My Profile</h3>
+                  <p className="text-gray-600 text-sm">Manage your personal profile and portfolio</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/auditions')}>
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-semibold text-lg mb-2">Browse Auditions</h3>
+                  <p className="text-gray-600 text-sm">Find and apply to new opportunities</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/events')}>
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-semibold text-lg mb-2">Explore Events</h3>
+                  <p className="text-gray-600 text-sm">Discover workshops and networking events</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/networking')}>
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-semibold text-lg mb-2">Networking</h3>
+                  <p className="text-gray-600 text-sm">Connect with other artists and professionals</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
         <Footer />

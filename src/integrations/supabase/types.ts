@@ -1027,6 +1027,17 @@ export type Database = {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
+      user_is_org_admin: {
+        Args: { org_uuid: string }
+        Returns: boolean
+      }
+      user_is_org_member_with_role: {
+        Args: {
+          org_uuid: string
+          required_roles: Database["public"]["Enums"]["organization_member_role"][]
+        }
+        Returns: boolean
+      }
       verify_email_token: {
         Args: { token_param: string }
         Returns: boolean
