@@ -1,19 +1,21 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import SwipeStack from "@/components/networking/SwipeStack";
+import EnhancedSwipeStack from "@/components/networking/EnhancedSwipeStack";
 import ConnectionsList from "@/components/networking/ConnectionsList";
 import ChatInterface from "@/components/networking/ChatInterface";
 import NetworkingPreferences from "@/components/networking/NetworkingPreferences";
+import NetworkingFilters from "@/components/networking/NetworkingFilters";
 import { useAuth } from "@/contexts/AuthContext";
 import { useArtists } from "@/hooks/useArtists";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Users, Zap, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageSquare, Users, Zap, Search } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Networking = () => {
   const [selectedChatUser, setSelectedChatUser] = useState(null);
@@ -22,8 +24,15 @@ const Networking = () => {
   const [swipedUserIds, setSwipedUserIds] = useState(new Set());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("");
+  
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { artists, isLoading, refetch } = useArtists();
 
@@ -31,13 +40,12 @@ const Networking = () => {
     if (user && artists.length > 0) {
       filterUsersForSwipe();
     }
-  }, [artists, user, refreshTrigger]);
+  }, [artists, user, refreshTrigger, searchTerm, categoryFilter, locationFilter, experienceFilter]);
 
   const filterUsersForSwipe = async () => {
     if (!user || !artists.length) return;
 
     try {
-      // Get users that have been swiped (both rejected and connected)
       const { data: swipedConnections, error } = await supabase
         .from('connections')
         .select('target_user_id')
@@ -47,13 +55,41 @@ const Networking = () => {
 
       const swipedIds = new Set(swipedConnections?.map(c => c.target_user_id) || []);
       
-      // Filter out current user and already swiped users
-      const availableUsers = artists
+      let availableUsers = artists
         .filter(artist => artist.id !== user.id)
         .filter(artist => !swipedIds.has(artist.id))
         .filter(artist => artist.status === 'active');
 
-      // TODO: Apply user preferences here (load from network_preferences table)
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        availableUsers = availableUsers.filter(artist =>
+          artist.full_name?.toLowerCase().includes(searchLower) ||
+          artist.bio?.toLowerCase().includes(searchLower) ||
+          artist.category?.toLowerCase().includes(searchLower) ||
+          artist.skills?.some(skill => skill.toLowerCase().includes(searchLower))
+        );
+      }
+
+      if (categoryFilter) {
+        availableUsers = availableUsers.filter(artist => 
+          artist.category === categoryFilter
+        );
+      }
+
+      if (locationFilter) {
+        const locationLower = locationFilter.toLowerCase();
+        availableUsers = availableUsers.filter(artist =>
+          artist.city?.toLowerCase().includes(locationLower) ||
+          artist.state?.toLowerCase().includes(locationLower) ||
+          artist.country?.toLowerCase().includes(locationLower)
+        );
+      }
+
+      if (experienceFilter) {
+        availableUsers = availableUsers.filter(artist =>
+          artist.experience_level === experienceFilter
+        );
+      }
       
       setFilteredUsers(availableUsers);
     } catch (error) {
@@ -80,7 +116,6 @@ const Networking = () => {
       profile_picture_url: chatUser.profile_picture_url
     });
 
-    // Load messages for this connection
     try {
       const { data: messagesData, error } = await supabase
         .from('messages')
@@ -134,7 +169,7 @@ const Networking = () => {
             <p className="text-gray-600">You need to be signed in to connect with other professionals.</p>
           </div>
         </main>
-        <Footer />
+        {!isMobile && <Footer />}
       </div>
     );
   }
@@ -164,7 +199,7 @@ const Networking = () => {
       <main className="flex-grow">
         <div className="bg-gradient-to-br from-maasta-purple/10 to-purple-50 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">
                   Network & Connect
@@ -175,6 +210,29 @@ const Networking = () => {
               </div>
               <NetworkingPreferences onPreferencesUpdate={handlePreferencesUpdate} />
             </div>
+
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search by name, skill, or role..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Filters */}
+            <NetworkingFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              locationFilter={locationFilter}
+              setLocationFilter={setLocationFilter}
+              experienceFilter={experienceFilter}
+              setExperienceFilter={setExperienceFilter}
+            />
           </div>
         </div>
         
@@ -200,7 +258,7 @@ const Networking = () => {
                         <div className="animate-spin w-8 h-8 border-4 border-maasta-purple border-t-transparent rounded-full"></div>
                       </div>
                     ) : (
-                      <SwipeStack
+                      <EnhancedSwipeStack
                         users={filteredUsers}
                         onRefresh={handleRefresh}
                       />
@@ -230,7 +288,7 @@ const Networking = () => {
           </div>
         </section>
       </main>
-      <Footer />
+      {!isMobile && <Footer />}
     </div>
   );
 };
