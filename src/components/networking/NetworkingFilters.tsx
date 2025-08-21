@@ -46,7 +46,7 @@ const NetworkingFilters = ({
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All categories</SelectItem>
+                <SelectItem value="all">All categories</SelectItem>
                 <SelectItem value="actor">Actor</SelectItem>
                 <SelectItem value="director">Director</SelectItem>
                 <SelectItem value="musician">Musician</SelectItem>
@@ -72,7 +72,7 @@ const NetworkingFilters = ({
                 <SelectValue placeholder="All levels" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All levels</SelectItem>
+                <SelectItem value="all">All levels</SelectItem>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
                 <SelectItem value="advanced">Advanced</SelectItem>

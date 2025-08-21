@@ -70,7 +70,7 @@ const Networking = () => {
         );
       }
 
-      if (categoryFilter) {
+      if (categoryFilter && categoryFilter !== 'all') {
         availableUsers = availableUsers.filter(artist => 
           artist.category === categoryFilter
         );
@@ -85,7 +85,7 @@ const Networking = () => {
         );
       }
 
-      if (experienceFilter) {
+      if (experienceFilter && experienceFilter !== 'all') {
         availableUsers = availableUsers.filter(artist =>
           artist.experience_level === experienceFilter
         );
