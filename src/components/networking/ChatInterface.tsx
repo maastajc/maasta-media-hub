@@ -14,6 +14,7 @@ interface Message {
   receiver_id: string;
   content: string;
   created_at: string;
+  message_type?: string;
 }
 
 interface ChatInterfaceProps {
@@ -77,53 +78,65 @@ const ChatInterface = ({
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="border-b">
+    <Card className="h-[600px] flex flex-col">
+      <CardHeader className="border-b bg-white sticky top-0 z-10">
         <CardTitle className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <Avatar className="w-8 h-8">
+          <Avatar className="w-10 h-10">
             <AvatarImage src={selectedUser.profile_picture_url} />
             <AvatarFallback className="text-sm">
               {getInitials(selectedUser.full_name)}
             </AvatarFallback>
           </Avatar>
-          <span>{selectedUser.full_name}</span>
+          <div className="flex-1">
+            <h3 className="font-semibold">{selectedUser.full_name}</h3>
+            <p className="text-sm text-gray-500">Connected</p>
+          </div>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.sender_id === currentUserId ? 'justify-end' : 'justify-start'
-                }`}
-              >
+            {messages.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-2">Start your conversation!</p>
+                <p className="text-sm text-gray-400">
+                  You're connected with {selectedUser.full_name}. Send them a message to get started.
+                </p>
+              </div>
+            ) : (
+              messages.map((message) => (
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.sender_id === currentUserId
-                      ? 'bg-maasta-purple text-white'
-                      : 'bg-gray-100 text-gray-900'
+                  key={message.id}
+                  className={`flex ${
+                    message.sender_id === currentUserId ? 'justify-end' : 'justify-start'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.sender_id === currentUserId ? 'text-purple-200' : 'text-gray-500'
-                  }`}>
-                    {format(new Date(message.created_at), 'HH:mm')}
-                  </p>
+                  <div
+                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                      message.sender_id === currentUserId
+                        ? 'bg-maasta-purple text-white'
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      message.sender_id === currentUserId ? 'text-purple-200' : 'text-gray-500'
+                    }`}>
+                      {format(new Date(message.created_at), 'HH:mm')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
         
-        <div className="border-t p-4">
+        <div className="border-t p-4 bg-white">
           <div className="flex gap-2">
             <Input
               placeholder="Type a message..."
@@ -131,8 +144,13 @@ const ChatInterface = ({
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isLoading}
+              className="flex-1"
             />
-            <Button onClick={handleSend} disabled={!newMessage.trim() || isLoading}>
+            <Button 
+              onClick={handleSend} 
+              disabled={!newMessage.trim() || isLoading}
+              size="sm"
+            >
               <Send className="w-4 h-4" />
             </Button>
           </div>

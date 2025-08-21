@@ -180,6 +180,33 @@ export type Database = {
           },
         ]
       }
+      connections: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string
+          target_user_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string
+          target_user_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string
+          target_user_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       education_training: {
         Row: {
           artist_id: string | null
@@ -521,6 +548,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      messages: {
+        Row: {
+          connection_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          message_type: string | null
+          read_at: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          connection_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          read_at?: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          connection_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          read_at?: string | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      network_preferences: {
+        Row: {
+          age_range_max: number | null
+          age_range_min: number | null
+          created_at: string | null
+          id: string
+          max_distance_km: number | null
+          preferred_experience: string | null
+          preferred_location: string | null
+          preferred_roles: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          age_range_max?: number | null
+          age_range_min?: number | null
+          created_at?: string | null
+          id?: string
+          max_distance_km?: number | null
+          preferred_experience?: string | null
+          preferred_location?: string | null
+          preferred_roles?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          age_range_max?: number | null
+          age_range_min?: number | null
+          created_at?: string | null
+          id?: string
+          max_distance_km?: number | null
+          preferred_experience?: string | null
+          preferred_location?: string | null
+          preferred_roles?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       organization_members: {
         Row: {
