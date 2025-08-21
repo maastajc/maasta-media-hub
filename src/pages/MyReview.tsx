@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import { ProfileLayout } from "@/components/layout/ProfileLayout";
 import { ReviewTab } from "@/components/dashboard/ReviewTab";
 
 const MyReview = () => {
@@ -53,24 +52,20 @@ const MyReview = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Review Applications</h1>
-            <p className="text-gray-600">Review and manage applications for your auditions</p>
-          </div>
-          
-          <ReviewTab 
-            isLoading={isLoading}
-            userAuditions={userAuditions}
-            formatDate={formatDate}
-          />
+    <ProfileLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Review Applications</h1>
+          <p className="text-gray-600">Review and manage applications for your auditions</p>
         </div>
-      </main>
-      <Footer />
-    </div>
+        
+        <ReviewTab 
+          isLoading={isLoading}
+          userAuditions={userAuditions}
+          formatDate={formatDate}
+        />
+      </div>
+    </ProfileLayout>
   );
 };
 

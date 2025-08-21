@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import { ProfileLayout } from "@/components/layout/ProfileLayout";
 import { AuditionsTab } from "@/components/dashboard/AuditionsTab";
 
 const MyAuditions = () => {
@@ -53,25 +52,21 @@ const MyAuditions = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">My Auditions</h1>
-            <p className="text-gray-600">Manage all your posted auditions</p>
-          </div>
-          
-          <AuditionsTab 
-            isLoading={isLoading}
-            userAuditions={userAuditions}
-            formatDate={formatDate}
-            onAuditionDeleted={fetchUserAuditions}
-          />
+    <ProfileLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">My Auditions</h1>
+          <p className="text-gray-600">Manage all your posted auditions</p>
         </div>
-      </main>
-      <Footer />
-    </div>
+        
+        <AuditionsTab 
+          isLoading={isLoading}
+          userAuditions={userAuditions}
+          formatDate={formatDate}
+          onAuditionDeleted={fetchUserAuditions}
+        />
+      </div>
+    </ProfileLayout>
   );
 };
 
