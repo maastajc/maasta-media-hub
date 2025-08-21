@@ -66,6 +66,7 @@ export type Database = {
           gender: string | null
           id: string
           location: string | null
+          organization_id: string | null
           payment_amount: number | null
           payment_required: boolean
           project_details: string | null
@@ -88,6 +89,7 @@ export type Database = {
           gender?: string | null
           id?: string
           location?: string | null
+          organization_id?: string | null
           payment_amount?: number | null
           payment_required?: boolean
           project_details?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           gender?: string | null
           id?: string
           location?: string | null
+          organization_id?: string | null
           payment_amount?: number | null
           payment_required?: boolean
           project_details?: string | null
@@ -125,6 +128,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -342,6 +352,7 @@ export type Database = {
           is_talent_needed: boolean | null
           location: string
           max_attendees: number | null
+          organization_id: string | null
           organizer_contact: string | null
           organizer_info: string | null
           payment_amount: number | null
@@ -372,6 +383,7 @@ export type Database = {
           is_talent_needed?: boolean | null
           location: string
           max_attendees?: number | null
+          organization_id?: string | null
           organizer_contact?: string | null
           organizer_info?: string | null
           payment_amount?: number | null
@@ -402,6 +414,7 @@ export type Database = {
           is_talent_needed?: boolean | null
           location?: string
           max_attendees?: number | null
+          organization_id?: string | null
           organizer_contact?: string | null
           organizer_info?: string | null
           payment_amount?: number | null
@@ -417,7 +430,15 @@ export type Database = {
           updated_at?: string | null
           winning_prize?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       language_skills: {
         Row: {
@@ -500,6 +521,101 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organization_members: {
+        Row: {
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["organization_member_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          org_id: string
+          role?: Database["public"]["Enums"]["organization_member_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["organization_member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          about: string | null
+          banner_url: string | null
+          category: Database["public"]["Enums"]["organization_category"]
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          logo_url: string | null
+          mission: string | null
+          name: string
+          services: string | null
+          updated_at: string | null
+          verified: boolean | null
+          website: string | null
+        }
+        Insert: {
+          about?: string | null
+          banner_url?: string | null
+          category: Database["public"]["Enums"]["organization_category"]
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          name: string
+          services?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          about?: string | null
+          banner_url?: string | null
+          category?: Database["public"]["Enums"]["organization_category"]
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          name?: string
+          services?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Relationships: []
       }
       payments: {
         Row: {
@@ -940,6 +1056,17 @@ export type Database = {
         | "fluent"
         | "native"
         | "advanced"
+      organization_category:
+        | "production_house"
+        | "media_association"
+        | "college"
+        | "agency"
+        | "studio"
+        | "event_organizer"
+        | "cultural_body"
+        | "union"
+        | "other"
+      organization_member_role: "admin" | "editor" | "viewer"
       profile_status: "active" | "inactive" | "under_review"
       project_type:
         | "feature_film"
@@ -1107,6 +1234,18 @@ export const Constants = {
         "native",
         "advanced",
       ],
+      organization_category: [
+        "production_house",
+        "media_association",
+        "college",
+        "agency",
+        "studio",
+        "event_organizer",
+        "cultural_body",
+        "union",
+        "other",
+      ],
+      organization_member_role: ["admin", "editor", "viewer"],
       profile_status: ["active", "inactive", "under_review"],
       project_type: [
         "feature_film",
