@@ -1,88 +1,118 @@
 
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { LayoutWithNavigation } from "@/components/layout/LayoutWithNavigation";
+import ScrollToTop from "@/components/layout/ScrollToTop";
+
+// Import pages
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import CompleteProfile from "./pages/CompleteProfile";
 import Artists from "./pages/Artists";
 import ArtistProfile from "./pages/ArtistProfile";
-import Auditions from "./pages/Auditions";
-import AuditionDetails from "./pages/AuditionDetails";
-import CreateAudition from "./pages/CreateAudition";
-import EditAudition from "./pages/EditAudition";
-import Dashboard from "./pages/Dashboard";
-import MyAuditions from "./pages/MyAuditions";
-import MyEvents from "./pages/MyEvents";
-import MyOrganizations from "./pages/MyOrganizations";
-import MyApplications from "./pages/MyApplications";
-import MyReview from "./pages/MyReview";
-import Networking from "./pages/Networking";
-import AuditionApplications from "./pages/AuditionApplications";
 import Events from "./pages/Events";
 import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
+import MyEvents from "./pages/MyEvents";
+import Auditions from "./pages/Auditions";
+import AuditionDetails from "./pages/AuditionDetails";
+import CreateAudition from "./pages/CreateAudition";
+import EditAudition from "./pages/EditAudition";
+import MyAuditions from "./pages/MyAuditions";
+import MyApplications from "./pages/MyApplications";
+import MyOrganizations from "./pages/MyOrganizations";
+import MyReview from "./pages/MyReview";
+import AuditionApplications from "./pages/AuditionApplications";
+import AuditionReview from "./pages/AuditionReview";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
+import CompleteProfile from "./pages/CompleteProfile";
+import BasicInformation from "./pages/BasicInformation";
+import Networking from "./pages/Networking";
+import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import ScrollToTop from "./components/layout/ScrollToTop";
-import { BottomNavigation } from "./components/layout/BottomNavigation";
-import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
 
-const HomeRedirect = () => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
-  return user ? <Navigate to="/dashboard" replace /> : <Index />;
-};
+// Import auth components
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import PublicRoute from "@/components/auth/PublicRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <AuthProvider>
-            <ScrollToTop />
             <LayoutWithNavigation>
               <Routes>
-                <Route path="/" element={<HomeRedirect />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/sign-in" element={<SignIn />} />
-                <Route path="/sign-up" element={<SignUp />} />
-                <Route path="/complete-profile" element={<CompleteProfile />} />
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
                 <Route path="/artists" element={<Artists />} />
-                <Route path="/artists/:username" element={<ArtistProfile />} />
-                <Route path="/auditions" element={<Auditions />} />
-                <Route path="/auditions/create" element={<CreateAudition />} />
-                <Route path="/auditions/edit/:auditionId" element={<EditAudition />} />
-                <Route path="/auditions/:id" element={<AuditionDetails />} />
-                <Route path="/create-audition" element={<CreateAudition />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/my-auditions" element={<MyAuditions />} />
-                <Route path="/my-events" element={<MyEvents />} />
-                <Route path="/my-organizations" element={<MyOrganizations />} />
-                <Route path="/my-applications" element={<MyApplications />} />
-                <Route path="/my-review" element={<MyReview />} />
-                <Route path="/networking" element={<Networking />} />
-                <Route path="/applications/:auditionId" element={<AuditionApplications />} />
+                <Route path="/artists/:id" element={<ArtistProfile />} />
                 <Route path="/events" element={<Events />} />
-                <Route path="/events/create" element={<CreateEvent />} />
-                <Route path="/events/edit/:eventId" element={<EditEvent />} />
                 <Route path="/events/:id" element={<EventDetails />} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/auditions" element={<Auditions />} />
+                <Route path="/auditions/:id" element={<AuditionDetails />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+
+                {/* Auth Routes */}
+                <Route path="/sign-in" element={<PublicRoute><SignIn /></PublicRoute>} />
+                <Route path="/sign-up" element={<PublicRoute><SignUp /></PublicRoute>} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
+                <Route path="/basic-information" element={<ProtectedRoute><BasicInformation /></ProtectedRoute>} />
+                <Route path="/networking" element={<ProtectedRoute><Networking /></ProtectedRoute>} />
+
+                {/* My Pages - Profile Related */}
+                <Route path="/my-auditions" element={<ProtectedRoute><MyAuditions /></ProtectedRoute>} />
+                <Route path="/my-events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
+                <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
+                <Route path="/my-organizations" element={<ProtectedRoute><MyOrganizations /></ProtectedRoute>} />
+                <Route path="/my-review" element={<ProtectedRoute><MyReview /></ProtectedRoute>} />
+
+                {/* Content Management Routes */}
+                <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+                <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
+                <Route path="/auditions/create" element={<ProtectedRoute><CreateAudition /></ProtectedRoute>} />
+                <Route path="/auditions/:id/edit" element={<ProtectedRoute><EditAudition /></ProtectedRoute>} />
+                <Route path="/auditions/:id/applications" element={<ProtectedRoute><AuditionApplications /></ProtectedRoute>} />
+                <Route path="/auditions/:auditionId/applications/:applicationId/review" element={<ProtectedRoute><AuditionReview /></ProtectedRoute>} />
+
+                {/* Payment Routes */}
+                <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </LayoutWithNavigation>
           </AuthProvider>

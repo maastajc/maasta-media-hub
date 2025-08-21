@@ -12,10 +12,10 @@ export function BottomNavigation() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
       <div className="flex items-center justify-around py-2">
         <Link 
-          to="/dashboard" 
+          to="/" 
           className={cn(
             "flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors",
-            isActive("/dashboard") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+            isActive("/") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
           )}
         >
           <Home className="h-5 w-5" />

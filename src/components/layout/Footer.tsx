@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-50 text-gray-600 pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <img 
               src="/lovable-uploads/f6358e1a-faf0-488f-a7d2-438fe44b2e0e.png" 
@@ -19,11 +19,29 @@ const Footer = () => {
           
           <div>
             <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">
-              Platform
+              Discover
             </h3>
             <ul className="space-y-2">
-              <li><Link to="/artists" className="text-sm hover:text-maasta-orange">Tamil Artist Portfolios</Link></li>
-              <li><Link to="/auditions" className="text-sm hover:text-maasta-orange">Kolywood Auditions</Link></li>
+              <li><Link to="/" className="text-sm hover:text-maasta-orange">Home</Link></li>
+              <li><Link to="/artists" className="text-sm hover:text-maasta-orange">Tamil Artists</Link></li>
+              <li><Link to="/auditions" className="text-sm hover:text-maasta-orange">Auditions</Link></li>
+              <li><Link to="/events" className="text-sm hover:text-maasta-orange">Events</Link></li>
+              <li><Link to="/networking" className="text-sm hover:text-maasta-orange">Networking</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">
+              My Account
+            </h3>
+            <ul className="space-y-2">
+              <li><Link to="/dashboard" className="text-sm hover:text-maasta-orange">Dashboard</Link></li>
+              <li><Link to="/profile" className="text-sm hover:text-maasta-orange">Profile</Link></li>
+              <li><Link to="/my-auditions" className="text-sm hover:text-maasta-orange">My Auditions</Link></li>
+              <li><Link to="/my-events" className="text-sm hover:text-maasta-orange">My Events</Link></li>
+              <li><Link to="/my-applications" className="text-sm hover:text-maasta-orange">My Applications</Link></li>
+              <li><Link to="/my-organizations" className="text-sm hover:text-maasta-orange">Organizations</Link></li>
+              <li><Link to="/my-review" className="text-sm hover:text-maasta-orange">Review Applications</Link></li>
             </ul>
           </div>
           
