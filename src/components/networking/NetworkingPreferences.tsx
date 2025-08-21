@@ -81,7 +81,7 @@ const NetworkingPreferences = ({ onPreferencesUpdate }: NetworkingPreferencesPro
         user_id: user.id,
         preferred_roles: preferences.preferred_roles,
         preferred_location: preferences.preferred_location || null,
-        preferred_experience: preferences.preferred_experience || null,
+        preferred_experience: preferences.preferred_experience === "all" ? null : preferences.preferred_experience || null,
         age_range_min: preferences.age_range_min ? parseInt(preferences.age_range_min) : null,
         age_range_max: preferences.age_range_max ? parseInt(preferences.age_range_max) : null,
         max_distance_km: preferences.max_distance_km ? parseInt(preferences.max_distance_km) : null
@@ -163,7 +163,7 @@ const NetworkingPreferences = ({ onPreferencesUpdate }: NetworkingPreferencesPro
                 <SelectValue placeholder="Any experience level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any experience level</SelectItem>
+                <SelectItem value="all">Any experience level</SelectItem>
                 {experienceLevels.map((level) => (
                   <SelectItem key={level} value={level}>
                     {level.charAt(0).toUpperCase() + level.slice(1)}
