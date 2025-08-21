@@ -43,9 +43,9 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
-// Import auth components
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import PublicRoute from "@/components/auth/PublicRoute";
+// Import auth components with named imports
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PublicRoute } from "@/components/auth/PublicRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
