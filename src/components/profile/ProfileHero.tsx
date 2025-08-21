@@ -64,7 +64,7 @@ const ProfileHero = ({ artist, onEditProfile, onBack, isOwnProfile = false }: Pr
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Profile Image */}
                 <div className="relative">
-                  <Avatar className="w-32 h-28 border-4 border-white shadow-lg">
+                  <Avatar className="w-32 h-18 border-4 border-white shadow-lg">
                     <AvatarImage 
                       src={artist.profile_picture_url ? `${artist.profile_picture_url}?t=${Date.now()}` : undefined} 
                       alt={artist.full_name}
