@@ -26,9 +26,9 @@ const Networking = () => {
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("");
-  const [experienceFilter, setExperienceFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("all");
   
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -196,15 +196,15 @@ const Networking = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow">
-        <div className="bg-gradient-to-br from-maasta-purple/10 to-purple-50 py-8">
+      <main className="flex-grow pb-20 md:pb-0">
+        <div className="bg-gradient-to-br from-maasta-purple/10 to-purple-50 py-6 md:py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                <h1 className="text-2xl md:text-4xl font-bold mb-2">
                   Network & Connect
                 </h1>
-                <p className="text-lg text-gray-600">
+                <p className="text-sm md:text-lg text-gray-600">
                   Discover and connect with talented professionals
                 </p>
               </div>
@@ -212,7 +212,7 @@ const Networking = () => {
             </div>
 
             {/* Search Bar */}
-            <div className="relative mb-6">
+            <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search by name, skill, or role..."
@@ -222,7 +222,7 @@ const Networking = () => {
               />
             </div>
 
-            {/* Filters */}
+            {/* Collapsible Filters */}
             <NetworkingFilters
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -236,10 +236,10 @@ const Networking = () => {
           </div>
         </div>
         
-        <section className="py-8">
+        <section className="py-4 md:py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Tabs defaultValue="discover" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsList className="grid w-full grid-cols-2 mb-6 md:mb-8">
                 <TabsTrigger value="discover" className="gap-2">
                   <Zap className="w-4 h-4" />
                   Discover
@@ -288,7 +288,10 @@ const Networking = () => {
           </div>
         </section>
       </main>
-      {!isMobile && <Footer />}
+      {/* Footer hidden on mobile, shown on desktop */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -44,10 +44,11 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
             .select(`
               *,
               media_assets (id, url, file_type, is_video, description),
-              projects (id, project_name, role_in_project, project_type, year_of_release),
+              projects (id, project_name, role_in_project, project_type, year_of_release, director_producer),
               special_skills (id, skill),
               awards (id, title, organization, year),
-              education_training (id, qualification_name, institution, year_completed)
+              education_training (id, qualification_name, institution, year_completed),
+              tools_software (id, tool_name)
             `)
             .eq('id', profile.id)
             .single();
@@ -70,8 +71,9 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
   const handleSwipeLeft = async (userId: string) => {
     if (!user) return;
     
+    console.log('Handling swipe left for user:', userId);
+    
     setSwipedUsers(prev => new Set(prev).add(userId));
-    setCurrentIndex(prev => prev + 1);
     
     // Store rejected connections for analytics
     try {
@@ -85,10 +87,17 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
     } catch (error) {
       console.error('Error storing rejection:', error);
     }
+    
+    // Move to next profile after animation
+    setTimeout(() => {
+      setCurrentIndex(prev => prev + 1);
+    }, 200);
   };
 
   const handleSwipeRight = async (userId: string) => {
     if (!user) return;
+    
+    console.log('Handling swipe right for user:', userId);
     
     setLoading(true);
     setSwipedUsers(prev => new Set(prev).add(userId));
@@ -140,7 +149,10 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
       toast.error("Failed to send connection request");
     } finally {
       setLoading(false);
-      setCurrentIndex(prev => prev + 1);
+      // Move to next profile after animation
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+      }, 200);
     }
   };
 
