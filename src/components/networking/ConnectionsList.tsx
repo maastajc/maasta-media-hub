@@ -41,39 +41,53 @@ const ConnectionsList = ({ onStartChat }: ConnectionsListProps) => {
     if (!user) return;
 
     try {
-      // Get connections where current user is either sender or receiver and status is connected
-      const { data, error } = await supabase
+      // First get connections where current user is involved and status is connected
+      const { data: connectionsData, error: connectionsError } = await supabase
         .from('connections')
-        .select(`
-          id,
-          status,
-          created_at,
-          user_id,
-          target_user_id,
-          profiles!connections_target_user_id_fkey (
-            id,
-            full_name,
-            profile_picture_url,
-            category,
-            city,
-            state
-          )
-        `)
+        .select('id, status, created_at, user_id, target_user_id')
         .or(`user_id.eq.${user.id},target_user_id.eq.${user.id}`)
         .eq('status', 'connected');
 
-      if (error) throw error;
+      if (connectionsError) throw connectionsError;
 
-      // Transform the data to get the other user's profile
-      const transformedConnections = data?.map(connection => {
-        const isCurrentUserSender = connection.user_id === user.id;
+      if (!connectionsData || connectionsData.length === 0) {
+        setConnections([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get the other user IDs from connections
+      const otherUserIds = connectionsData.map(connection => {
+        return connection.user_id === user.id ? connection.target_user_id : connection.user_id;
+      });
+
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, profile_picture_url, category, city, state')
+        .in('id', otherUserIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine connections with profile data
+      const transformedConnections = connectionsData.map(connection => {
+        const otherUserId = connection.user_id === user.id ? connection.target_user_id : connection.user_id;
+        const profile = profilesData?.find(p => p.id === otherUserId);
+        
         return {
           id: connection.id,
           status: connection.status,
           created_at: connection.created_at,
-          target_user: connection.profiles
+          target_user: profile || {
+            id: otherUserId,
+            full_name: 'Unknown User',
+            profile_picture_url: undefined,
+            category: undefined,
+            city: undefined,
+            state: undefined
+          }
         };
-      }) || [];
+      });
 
       setConnections(transformedConnections);
     } catch (error) {
