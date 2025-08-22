@@ -40,7 +40,11 @@ export function LayoutWithNavigation({ children }: LayoutWithNavigationProps) {
       <div className={shouldShowNavigation ? "pb-20 md:pb-0" : ""}>
         {children}
       </div>
-      {shouldShowNavigation && <BottomNavigation />}
+      {shouldShowNavigation && (
+        <div className="md:hidden">
+          <BottomNavigation />
+        </div>
+      )}
     </div>
   );
 }

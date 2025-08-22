@@ -25,35 +25,50 @@ const EnhancedSwipeCard = ({ user, onSwipeLeft, onSwipeRight, isPreview = false 
   const rotate = useTransform(x, [-200, 200], [-30, 30]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
-  // Handle touch events for scroll-to-expand
+  // Handle touch events for scroll-to-expand with better gesture detection
   useEffect(() => {
     const card = cardRef.current;
     if (!card || isPreview) return;
 
     let startTouchY = 0;
-    let isDragging = false;
+    let startTouchX = 0;
+    let isVerticalScroll = false;
+    let isHorizontalSwipe = false;
 
     const handleTouchStart = (e: TouchEvent) => {
       startTouchY = e.touches[0].clientY;
-      isDragging = false;
+      startTouchX = e.touches[0].clientX;
+      isVerticalScroll = false;
+      isHorizontalSwipe = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging) {
-        const deltaY = e.touches[0].clientY - startTouchY;
-        if (Math.abs(deltaY) > 10) {
-          isDragging = true;
-          if (deltaY > 50 && !isExpanded) {
-            setIsExpanded(true);
-          } else if (deltaY < -50 && isExpanded) {
-            setIsExpanded(false);
+      const deltaY = e.touches[0].clientY - startTouchY;
+      const deltaX = e.touches[0].clientX - startTouchX;
+      
+      // Determine the primary direction of movement
+      if (!isVerticalScroll && !isHorizontalSwipe) {
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 20) {
+          isVerticalScroll = true;
+          // Only handle vertical scroll when not in an expanded scrollable area
+          const target = e.target as Element;
+          const scrollArea = target.closest('[data-radix-scroll-area-viewport]');
+          
+          if (!scrollArea) {
+            if (deltaY > 60 && !isExpanded) {
+              setIsExpanded(true);
+            } else if (deltaY < -60 && isExpanded) {
+              setIsExpanded(false);
+            }
           }
+        } else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+          isHorizontalSwipe = true;
         }
       }
     };
 
-    card.addEventListener('touchstart', handleTouchStart);
-    card.addEventListener('touchmove', handleTouchMove);
+    card.addEventListener('touchstart', handleTouchStart, { passive: true });
+    card.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     return () => {
       card.removeEventListener('touchstart', handleTouchStart);
@@ -62,34 +77,37 @@ const EnhancedSwipeCard = ({ user, onSwipeLeft, onSwipeRight, isPreview = false 
   }, [isExpanded, isPreview]);
 
   const handleDragEnd = (event: any, info: PanInfo) => {
-    if (isPreview) return;
+    if (isPreview || isExpanded) return;
     
     console.log('Drag ended with offset:', info.offset.x, 'velocity:', info.velocity.x);
     
     const offset = info.offset.x;
     const velocity = info.velocity.x;
 
-    if (offset < -100 || velocity < -500) {
+    // More sensitive thresholds for better mobile experience
+    if (offset < -80 || velocity < -300) {
       console.log('Swiping left');
       setExitX(-1000);
-      setTimeout(() => onSwipeLeft(user.id), 100);
-    } else if (offset > 100 || velocity > 500) {
+      setTimeout(() => onSwipeLeft(user.id), 150);
+    } else if (offset > 80 || velocity > 300) {
       console.log('Swiping right');
       setExitX(1000);
-      setTimeout(() => onSwipeRight(user.id), 100);
+      setTimeout(() => onSwipeRight(user.id), 150);
     }
   };
 
   const handleSwipeLeft = () => {
+    if (isExpanded) return;
     console.log('Manual swipe left');
     setExitX(-1000);
-    setTimeout(() => onSwipeLeft(user.id), 100);
+    setTimeout(() => onSwipeLeft(user.id), 150);
   };
 
   const handleSwipeRight = () => {
+    if (isExpanded) return;
     console.log('Manual swipe right');
     setExitX(1000);
-    setTimeout(() => onSwipeRight(user.id), 100);
+    setTimeout(() => onSwipeRight(user.id), 150);
   };
 
   const getInitials = (name: string) => {
@@ -154,13 +172,15 @@ const EnhancedSwipeCard = ({ user, onSwipeLeft, onSwipeRight, isPreview = false 
     <motion.div
       ref={cardRef}
       style={{ x, rotate, opacity }}
-      drag="x"
+      drag={!isExpanded ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.2}
       onDragEnd={handleDragEnd}
       animate={exitX !== 0 ? { x: exitX, opacity: 0 } : { x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="absolute inset-0 touch-pan-y"
+      className="absolute inset-0"
+      dragMomentum={false}
+      whileDrag={!isExpanded ? { scale: 1.05, zIndex: 10 } : {}}
     >
       <Card className="w-full h-full overflow-hidden bg-gradient-to-b from-white to-gray-50 shadow-xl">
         {/* Basic Profile View */}

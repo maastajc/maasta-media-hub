@@ -288,10 +288,6 @@ const Networking = () => {
           </div>
         </section>
       </main>
-      {/* Footer hidden on mobile, shown on desktop */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
     </div>
   );
 };
