@@ -7,7 +7,6 @@ import { Plus, Building2 } from "lucide-react";
 import { organizationService } from "@/services/organizationService";
 import { Organization, OrganizationMemberRole } from "@/types/organization";
 import { OrganizationCard } from "./OrganizationCard";
-import { CreateOrganizationDialog } from "./CreateOrganizationDialog";
 import { useNavigate } from "react-router-dom";
 
 export const OrganizationsTab = () => {
@@ -16,7 +15,6 @@ export const OrganizationsTab = () => {
   const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Array<Organization & { userRole: OrganizationMemberRole }>>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -48,10 +46,6 @@ export const OrganizationsTab = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCreateSuccess = () => {
-    fetchOrganizations();
   };
 
   const handleEdit = (orgId: string) => {
@@ -89,7 +83,10 @@ export const OrganizationsTab = () => {
           <p className="text-gray-600">Manage your organizations and post as a company</p>
         </div>
         
-        <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+        <Button 
+          onClick={() => navigate('/organizations/create')}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create Organization
         </Button>
@@ -102,7 +99,10 @@ export const OrganizationsTab = () => {
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Create an organization to host events and auditions as a company, studio, or association.
           </p>
-          <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+          <Button 
+            onClick={() => navigate('/organizations/create')}
+            className="flex items-center gap-2"
+          >
             <Plus className="w-4 h-4" />
             Create Your First Organization
           </Button>
@@ -122,12 +122,6 @@ export const OrganizationsTab = () => {
           ))}
         </div>
       )}
-
-      <CreateOrganizationDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSuccess={handleCreateSuccess}
-      />
     </div>
   );
 };

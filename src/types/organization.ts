@@ -6,7 +6,6 @@ export interface Organization {
   logo_url?: string;
   banner_url?: string;
   about?: string;
-  mission?: string;
   services?: string;
   website?: string;
   contact_email: string;
@@ -47,7 +46,6 @@ export interface CreateOrganizationData {
   logo_url?: string;
   banner_url?: string;
   about?: string;
-  mission?: string;
   services?: string;
   website?: string;
   contact_email: string;
