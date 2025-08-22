@@ -4,12 +4,13 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/AuthContext";
-import { PublicRoute } from "./components/routes/PublicRoute";
-import { ProtectedRoute } from "./components/routes/ProtectedRoute";
+import { PublicRoute } from "./components/auth/PublicRoute";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { LayoutWithNavigation } from "./components/layout/LayoutWithNavigation";
-import { ScrollToTop } from "./components/utils/ScrollToTop";
+import { ProfileLayout } from "./components/layout/ProfileLayout";
+import { ScrollToTop } from "./components/layout/ScrollToTop";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -232,7 +233,9 @@ function App() {
               path="/organizations/create"
               element={
                 <ProtectedRoute>
-                  <CreateOrganization />
+                  <LayoutWithNavigation>
+                    <CreateOrganization />
+                  </LayoutWithNavigation>
                 </ProtectedRoute>
               }
             />

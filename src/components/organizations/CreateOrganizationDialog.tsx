@@ -39,7 +39,6 @@ export const CreateOrganizationDialog = ({
     category: 'other',
     contact_email: '',
     about: '',
-    mission: '',
     services: '',
     website: '',
     contact_phone: '',
@@ -78,7 +77,6 @@ export const CreateOrganizationDialog = ({
         category: 'other',
         contact_email: '',
         about: '',
-        mission: '',
         services: '',
         website: '',
         contact_phone: '',
@@ -180,17 +178,6 @@ export const CreateOrganizationDialog = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
                 placeholder="Tell us about your organization..."
                 rows={3}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="mission">Mission/Vision</Label>
-              <Textarea
-                id="mission"
-                value={formData.mission}
-                onChange={(e) => setFormData(prev => ({ ...prev, mission: e.target.value }))}
-                placeholder="What is your organization's mission?"
-                rows={2}
               />
             </div>
             
