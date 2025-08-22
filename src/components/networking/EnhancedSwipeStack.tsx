@@ -75,23 +75,23 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
     
     setSwipedUsers(prev => new Set(prev).add(userId));
     
-    // Store rejected connections for analytics
-    try {
-      await supabase
-        .from('connections')
-        .insert({
-          user_id: user.id,
-          target_user_id: userId,
-          status: 'rejected'
-        });
-    } catch (error) {
-      console.error('Error storing rejection:', error);
-    }
+    // Move to next profile immediately for better UX
+    setCurrentIndex(prev => prev + 1);
     
-    // Move to next profile after animation
-    setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
-    }, 200);
+    // Store rejected connections in background (fire and forget)
+    supabase
+      .from('connections')
+      .insert({
+        user_id: user.id,
+        target_user_id: userId,
+        status: 'rejected'
+      })
+      .then(() => {
+        console.log('Rejection stored successfully');
+      })
+      .catch((error) => {
+        console.error('Error storing rejection:', error);
+      });
   };
 
   const handleSwipeRight = async (userId: string) => {
@@ -102,9 +102,12 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
     setLoading(true);
     setSwipedUsers(prev => new Set(prev).add(userId));
     
+    // Move to next profile immediately for better UX
+    setCurrentIndex(prev => prev + 1);
+    
     try {
-      // Create or update connection
-      const { error: insertError } = await supabase
+      // Create connection with timeout
+      const insertPromise = supabase
         .from('connections')
         .insert({
           user_id: user.id,
@@ -112,33 +115,44 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
           status: 'pending'
         });
 
-      if (insertError) throw insertError;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      );
 
-      // Check if the other user already sent an invite
-      const { data: existingConnection, error: checkError } = await supabase
+      await Promise.race([insertPromise, timeoutPromise]);
+
+      // Check for mutual connection with timeout
+      const checkPromise = supabase
         .from('connections')
         .select('*')
         .eq('user_id', userId)
         .eq('target_user_id', user.id)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
+      const { data: existingConnection } = await Promise.race([
+        checkPromise, 
+        new Promise((resolve) => setTimeout(() => resolve({ data: null }), 3000))
+      ]) as { data: any };
 
       if (existingConnection) {
         // Mutual connection! Update both to connected
-        await supabase
-          .from('connections')
-          .update({ status: 'connected' })
-          .eq('id', existingConnection.id);
-
-        await supabase
-          .from('connections')
-          .update({ status: 'connected' })
-          .eq('user_id', user.id)
-          .eq('target_user_id', userId);
+        await Promise.race([
+          Promise.all([
+            supabase
+              .from('connections')
+              .update({ status: 'connected' })
+              .eq('id', existingConnection.id),
+            supabase
+              .from('connections')
+              .update({ status: 'connected' })
+              .eq('user_id', user.id)
+              .eq('target_user_id', userId)
+          ]),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Update timeout')), 3000)
+          )
+        ]);
 
         toast.success("It's a match! You can now chat with this person.");
       } else {
@@ -146,13 +160,13 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
       }
     } catch (error) {
       console.error('Error creating connection:', error);
-      toast.error("Failed to send connection request");
+      if (error.message === 'Request timeout') {
+        toast.error("Connection is slow, but your request was sent!");
+      } else {
+        toast.error("Failed to send connection request");
+      }
     } finally {
       setLoading(false);
-      // Move to next profile after animation
-      setTimeout(() => {
-        setCurrentIndex(prev => prev + 1);
-      }, 200);
     }
   };
 
