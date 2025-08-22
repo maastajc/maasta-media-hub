@@ -79,19 +79,21 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
     setCurrentIndex(prev => prev + 1);
     
     // Store rejected connections in background (fire and forget)
-    supabase
-      .from('connections')
-      .insert({
-        user_id: user.id,
-        target_user_id: userId,
-        status: 'rejected'
-      })
-      .then(() => {
+    const insertRejection = async () => {
+      try {
+        await supabase
+          .from('connections')
+          .insert({
+            user_id: user.id,
+            target_user_id: userId,
+            status: 'rejected'
+          });
         console.log('Rejection stored successfully');
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error storing rejection:', error);
-      });
+      }
+    };
+    insertRejection();
   };
 
   const handleSwipeRight = async (userId: string) => {
@@ -196,7 +198,7 @@ const EnhancedSwipeStack = ({ users, onRefresh }: EnhancedSwipeStackProps) => {
     <div className="relative w-full h-full">
       {/* Next card (underneath) */}
       {nextUserData && (
-        <div className="absolute inset-0 transform scale-95 opacity-50 z-0">
+        <div className="absolute inset-0 transform scale-95 opacity-50 z-0 pointer-events-none">
           <EnhancedSwipeCard
             user={nextUserData}
             onSwipeLeft={() => {}}
