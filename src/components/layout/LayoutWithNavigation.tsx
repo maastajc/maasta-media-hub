@@ -8,7 +8,16 @@ interface LayoutWithNavigationProps {
 }
 
 export function LayoutWithNavigation({ children }: LayoutWithNavigationProps) {
-  const { user } = useAuth();
+  // Make useAuth optional to prevent errors on public routes
+  let user = null;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+  } catch (error) {
+    // Ignore auth errors for public routes
+    console.log('Auth not available for this route');
+  }
+  
   const location = useLocation();
 
   // Pages where bottom navigation should not appear
