@@ -24,6 +24,7 @@ const ArtistProfile = () => {
 
   // Check if the parameter is a UUID (ID) or username
   const isUUID = (str: string) => {
+    if (!str) return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   };
@@ -113,8 +114,7 @@ const ArtistProfile = () => {
           )
         `)
         .eq(isID ? 'id' : 'username', username)
-        .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Database error fetching artist:', error);

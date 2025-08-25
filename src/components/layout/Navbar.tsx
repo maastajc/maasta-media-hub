@@ -175,7 +175,7 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t bg-white shadow-lg">
               <Link
                 to="/artists"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-maasta-purple"
