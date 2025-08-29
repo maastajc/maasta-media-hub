@@ -1,4 +1,3 @@
-
 // App.tsx - Main application component
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 import Index from './pages/Index';
 import Artists from './pages/Artists';
+import ArtistProfile from './pages/ArtistProfile';
 import Auditions from './pages/Auditions';
 import Events from './pages/Events';
 import Networking from './pages/Networking';
@@ -53,6 +53,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/artists" element={<Artists />} />
+                <Route path="/artists/:id" element={<ArtistProfile />} />
                 <Route path="/auditions" element={<Auditions />} />
                 <Route path="/auditions/:id" element={<AuditionDetails />} />
                 <Route path="/events" element={<Events />} />
