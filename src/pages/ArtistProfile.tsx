@@ -18,7 +18,7 @@ import ProfileHero from "@/components/profile/ProfileHero";
 import UnifiedProfileView from "@/components/profile/UnifiedProfileView";
 
 const ArtistProfile = () => {
-  const { username } = useParams();
+  const { id: username } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
