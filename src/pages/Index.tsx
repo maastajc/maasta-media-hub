@@ -46,33 +46,33 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-16 md:py-24">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary py-16 md:py-24">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-secondary/5 to-primary/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
           </div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-8">
               {/* Text Content */}
               <div className="space-y-8">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
                   Platform for{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
+                  <span className="text-yellow-300 drop-shadow-lg">
                     Talents
                   </span>
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed">
                   Showcase your skills, participate in auditions, and connect with the media industry
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    className="bg-white text-primary hover:bg-white/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
                     onClick={handleCreateAccount}
                   >
                     Join Maasta
@@ -80,7 +80,7 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="border-2 border-primary text-primary hover:bg-primary hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    className="border-2 border-white text-white hover:bg-white hover:text-primary transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
                     onClick={() => document.getElementById('featured-content')?.scrollIntoView({ behavior: 'smooth' })}
                   >
                     Explore Opportunities
@@ -93,9 +93,9 @@ const Index = () => {
                     <input 
                       type="text" 
                       placeholder="Search events, auditions, or artists..."
-                      className="w-full px-4 py-3 rounded-full border border-border bg-background/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder-muted-foreground"
+                      className="w-full px-4 py-3 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-white/70"
                     />
-                    <Button size="sm" className="absolute right-2 top-2 rounded-full">
+                    <Button size="sm" className="absolute right-2 top-2 rounded-full bg-white text-primary hover:bg-white/90">
                       Search
                     </Button>
                   </div>
