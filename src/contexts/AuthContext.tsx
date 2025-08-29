@@ -126,12 +126,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
-    let hasNavigated = false;
     
     console.log('Setting up auth state listener...');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!isMounted) return;
         
         console.log('Auth event:', event, 'Session exists:', !!session);
@@ -139,51 +138,57 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          try {
-            const userProfile = await fetchProfile(session.user.id);
-            if (isMounted) {
-              setProfile(userProfile);
-              
-              // Check email verification status only after signup
-              if (userProfile && event === 'SIGNED_IN' && !hasNavigated) {
-                await checkEmailVerification(session.user.id);
+        if (session?.user && event !== 'TOKEN_REFRESHED') {
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            try {
+              const userProfile = await fetchProfile(session.user.id);
+              if (isMounted) {
+                setProfile(userProfile);
                 
-                // Handle navigation for successful sign-in
-                const isOAuthCallback = location.pathname === '/' && 
-                  (window.location.hash.includes('access_token') || 
-                   window.location.search.includes('code'));
-                
-                if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
-                  hasNavigated = true;
-                  navigate('/profile', { replace: true });
-                }
-                
-                // Check profile strength after navigation
-                setTimeout(() => {
-                  if (isMounted && userProfile.role === 'artist') {
+                // Check email verification status only after signup
+                if (userProfile && event === 'SIGNED_IN') {
+                  await checkEmailVerification(session.user.id);
+                  // Also check profile strength on login
+                  setTimeout(() => {
                     checkProfileStrength(session.user.id);
-                  }
-                }, 3000);
+                  }, 2000); // Delay to let user settle in
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching profile after auth change:', error);
+              if (isMounted) {
+                setProfile(null);
               }
             }
-          } catch (error) {
-            console.error('Error fetching profile after auth change:', error);
-            if (isMounted) {
-              setProfile(null);
+            
+            if (event === 'SIGNED_IN' && isMounted) {
+              const isOAuthCallback = location.pathname === '/' && 
+                (window.location.hash.includes('access_token') || 
+                 window.location.search.includes('code'));
+              
+                if (isOAuthCallback || location.pathname === '/sign-in' || location.pathname === '/sign-up') {
+                setTimeout(() => {
+                  if (isMounted) {
+                    navigate('/profile');
+                  }
+                }, 100);
+              }
             }
-          }
-        } else {
+          }, 0);
+        } else if (!session) {
           setProfile(null);
           setShowEmailVerification(false);
           setShowProfileStrengthPopup(false);
           setArtistProfile(null);
-          hasNavigated = false;
         }
         
-        if (isMounted) {
-          setLoading(false);
-        }
+        setTimeout(() => {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }, 100);
       }
     );
 

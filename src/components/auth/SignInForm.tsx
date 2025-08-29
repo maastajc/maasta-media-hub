@@ -108,8 +108,9 @@ export const SignInForm = () => {
         return; // Don't navigate on error
       }
       
-      // Reset rate limiter on successful login - AuthContext will handle navigation
-      signInRateLimiter.reset(email.trim());
+      // Navigate to profile page instead of home
+      signInRateLimiter.reset(email.trim()); // Reset on successful login
+      navigate('/profile');
     } catch (error: any) {
       // Handle any unexpected errors
       if (error.message.includes('Invalid login credentials') || 
@@ -128,20 +129,24 @@ export const SignInForm = () => {
       setIsLoading(true);
       setAuthError(''); // Clear any previous errors
       
+      const currentDomain = window.location.origin;
+      const redirectUrl = currentDomain.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/profile'
+        : `${currentDomain}/profile`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/profile`
+          redirectTo: redirectUrl
         }
       });
       
       if (error) {
         setAuthError(sanitizeErrorMessage(error.message));
-        setIsLoading(false);
       }
-      // Don't set loading to false here if no error - OAuth will redirect the page
     } catch (error: any) {
       setAuthError('Failed to sign in with Google');
+    } finally {
       setIsLoading(false);
     }
   };

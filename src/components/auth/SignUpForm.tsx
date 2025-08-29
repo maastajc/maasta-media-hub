@@ -184,28 +184,34 @@ export const SignUpForm = () => {
     try {
       setIsLoading(true);
       
+      const currentDomain = window.location.origin;
+      const redirectUrl = currentDomain.includes('localhost') 
+        ? 'https://preview--maasta-media-hub.lovable.app/profile'
+        : `${currentDomain}/profile`;
+
+      console.log('Google sign-up redirect URL:', redirectUrl);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/profile`
+          redirectTo: redirectUrl
         }
       });
       
       if (error) {
         toast.error(error.message);
-        setIsLoading(false);
       }
-      // Don't set loading to false here if no error - OAuth will redirect the page
     } catch (error: any) {
       console.error('Google sign-up error:', error);
       toast.error('Failed to sign up with Google');
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleEmailVerificationClose = () => {
     setShowEmailVerification(false);
-    // AuthContext will handle navigation automatically
+    navigate('/profile');
   };
 
   return (
