@@ -128,24 +128,20 @@ export const SignInForm = () => {
       setIsLoading(true);
       setAuthError(''); // Clear any previous errors
       
-      const currentDomain = window.location.origin;
-      const redirectUrl = currentDomain.includes('localhost') 
-        ? 'https://preview--maasta-media-hub.lovable.app/profile'
-        : `${currentDomain}/profile`;
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: `${window.location.origin}/profile`
         }
       });
       
       if (error) {
         setAuthError(sanitizeErrorMessage(error.message));
+        setIsLoading(false);
       }
+      // Don't set loading to false here if no error - OAuth will redirect the page
     } catch (error: any) {
       setAuthError('Failed to sign in with Google');
-    } finally {
       setIsLoading(false);
     }
   };
