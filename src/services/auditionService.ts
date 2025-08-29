@@ -1,9 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 500;
-const TIMEOUT_MS = 8000;
+const MAX_RETRIES = 1;
+const RETRY_DELAY = 1000;
+const TIMEOUT_MS = 30000;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
