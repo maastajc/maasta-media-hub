@@ -698,6 +698,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           id: string
@@ -1244,6 +1283,7 @@ export type Database = {
         | "fluent"
         | "native"
         | "advanced"
+      notification_type: "audition" | "booking" | "networking" | "event"
       organization_category:
         | "production_house"
         | "media_association"
@@ -1423,6 +1463,7 @@ export const Constants = {
         "native",
         "advanced",
       ],
+      notification_type: ["audition", "booking", "networking", "event"],
       organization_category: [
         "production_house",
         "media_association",

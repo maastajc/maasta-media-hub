@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu, X, User, LogOut, Settings, Plus, Calendar, Building2, FileText, Eye, ClipboardList } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -84,71 +84,74 @@ const Navbar = () => {
             )}
 
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-maasta-purple text-white">
-                        {getInitials(user.user_metadata?.full_name || user.email || 'U')}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.user_metadata?.full_name || 'User'}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">
-                        {user.email}
-                      </p>
+              <>
+                <NotificationBell />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-maasta-purple text-white">
+                          {getInitials(user.user_metadata?.full_name || user.email || 'U')}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        <p className="font-medium">{user.user_metadata?.full_name || 'User'}</p>
+                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/my-auditions')}>
-                    <ClipboardList className="mr-2 h-4 w-4" />
-                    My Auditions
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-events')}>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    My Events
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-organizations')}>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Organizations
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-applications')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Applications
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-review')}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Review Applications
-                  </DropdownMenuItem>
-                  {isRecruiter && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => navigate('/auditions/create')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Post Audition
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/my-auditions')}>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      My Auditions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/my-events')}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      My Events
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/my-organizations')}>
+                      <Building2 className="mr-2 h-4 w-4" />
+                      Organizations
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/my-applications')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Applications
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/my-review')}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Review Applications
+                    </DropdownMenuItem>
+                    {isRecruiter && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/auditions/create')}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Post Audition
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link to="/sign-in">
