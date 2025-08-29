@@ -4,9 +4,9 @@ import { FeaturedArtistRow } from "./types";
 import { mapFeaturedArtistToArtist, mapFallbackArtistToArtist } from "./mappers";
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_RETRIES = 1;
-const TIMEOUT_MS = 30000;
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 2;
+const TIMEOUT_MS = 8000; // Reduced timeout for faster responses
+const RETRY_DELAY = 500; // Reduced retry delay
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

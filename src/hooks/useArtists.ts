@@ -10,9 +10,9 @@ interface UseArtistsOptions {
   retry?: number;
 }
 
-const MAX_RETRIES = 1;
-const RETRY_DELAY = 1000;
-const TIMEOUT_MS = 30000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500;
+const TIMEOUT_MS = 8000;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -54,18 +54,17 @@ export const useArtists = (options: UseArtistsOptions = {}) => {
         console.log('Session invalid, user may need to re-authenticate');
       }
 
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
+      );
+
       // Use clean Supabase client without cache-busting
-      const { data, error: fetchError } = await Promise.race([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(100),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), TIMEOUT_MS)
-        )
-      ]);
+      const { data, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (fetchError) {
         console.error('Error fetching artists:', fetchError);

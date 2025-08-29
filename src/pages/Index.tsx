@@ -46,86 +46,59 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
-          {/* Dynamic Background Elements */}
-          <div className="absolute inset-0">
-            <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute top-40 right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-            <div className="absolute bottom-32 left-1/3 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-            <div className="absolute bottom-20 right-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '6s' }}></div>
-            
-            {/* Floating dots */}
-            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/30 rounded-full animate-ping"></div>
-            <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-purple-400/40 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-1/2 left-3/4 w-2 h-2 bg-blue-400/40 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-16 md:py-24">
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-secondary/5 to-primary/5 rounded-full blur-3xl animate-spin" style={{ animationDuration: '20s' }}></div>
           </div>
           
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="space-y-8 animate-fade-in">
-              {/* Badge */}
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium animate-scale-in" style={{ animationDelay: '0.2s' }}>
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                Join 10,000+ Talented Artists
-              </div>
-              
-              {/* Main Heading */}
-              <div className="space-y-4">
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                  Your Stage
-                  <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 animate-pulse">
-                    Awaits
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center space-y-8">
+              {/* Text Content */}
+              <div className="space-y-8">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+                  Platform for{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
+                    Talents
                   </span>
                 </h1>
                 
-                <p className="text-xl md:text-2xl lg:text-3xl text-white/80 max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.6s' }}>
-                  Where talent meets opportunity. Showcase your skills, connect with industry professionals, and build your entertainment career.
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Showcase your skills, participate in auditions, and connect with the media industry
                 </p>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row justify-center gap-6 pt-8 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 px-10 py-6 text-xl font-semibold rounded-full"
-                  onClick={handleCreateAccount}
-                >
-                  Start Your Journey
-                  <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Button>
                 
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-10 py-6 text-xl font-semibold rounded-full"
-                  onClick={() => document.getElementById('featured-content')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Explore Opportunities
-                </Button>
-              </div>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    onClick={handleCreateAccount}
+                  >
+                    Join Maasta
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-2 border-primary text-primary hover:bg-primary hover:text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-4 text-lg font-semibold"
+                    onClick={() => document.getElementById('featured-content')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    Explore Opportunities
+                  </Button>
+                </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-16 animate-fade-in" style={{ animationDelay: '1s' }}>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">10K+</div>
-                  <div className="text-white/70">Active Artists</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">500+</div>
-                  <div className="text-white/70">Open Auditions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">1000+</div>
-                  <div className="text-white/70">Success Stories</div>
-                </div>
-              </div>
-
-              {/* Scroll Indicator */}
-              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-                <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-                  <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
+                {/* Search Bar (Optional) */}
+                <div className="max-w-md mx-auto">
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Search events, auditions, or artists..."
+                      className="w-full px-4 py-3 rounded-full border border-border bg-background/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder-muted-foreground"
+                    />
+                    <Button size="sm" className="absolute right-2 top-2 rounded-full">
+                      Search
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
