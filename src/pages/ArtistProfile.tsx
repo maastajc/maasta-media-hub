@@ -16,6 +16,7 @@ import { ArtistCategory, ExperienceLevel, CustomLink } from "@/types/artist";
 // Import our components
 import ProfileHero from "@/components/profile/ProfileHero";
 import UnifiedProfileView from "@/components/profile/UnifiedProfileView";
+import { BookArtistButton } from "@/components/booking/BookArtistButton";
 
 const ArtistProfile = () => {
   const { id: username } = useParams();
@@ -310,6 +311,15 @@ const ArtistProfile = () => {
 
         {/* Unified Profile Content */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Book Artist Button */}
+          <div className="mb-6">
+            <BookArtistButton 
+              artistId={artistData.id}
+              artistName={artistData.full_name}
+              artistCategory={artistData.category}
+            />
+          </div>
+          
           <UnifiedProfileView artist={artistData} />
         </div>
       </main>

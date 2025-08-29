@@ -180,6 +180,75 @@ export type Database = {
           },
         ]
       }
+      bookings: {
+        Row: {
+          artist_id: string
+          booker_id: string
+          budget: number | null
+          category: string
+          created_at: string
+          deadline: string | null
+          deliverables: string | null
+          duration: string | null
+          event_date: string
+          id: string
+          location: string
+          notes: string | null
+          num_shows: number | null
+          project_type: string
+          rehearsal_required: boolean | null
+          requirements: string | null
+          script_link: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          technical_requirements: string | null
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          booker_id: string
+          budget?: number | null
+          category: string
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          duration?: string | null
+          event_date: string
+          id?: string
+          location: string
+          notes?: string | null
+          num_shows?: number | null
+          project_type: string
+          rehearsal_required?: boolean | null
+          requirements?: string | null
+          script_link?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          technical_requirements?: string | null
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          booker_id?: string
+          budget?: number | null
+          category?: string
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          duration?: string | null
+          event_date?: string
+          id?: string
+          location?: string
+          notes?: string | null
+          num_shows?: number | null
+          project_type?: string
+          rehearsal_required?: boolean | null
+          requirements?: string | null
+          script_link?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          technical_requirements?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           created_at: string | null
@@ -1162,6 +1231,7 @@ export type Database = {
         | "producer"
         | "writer"
         | "other"
+      booking_status: "pending" | "approved" | "rejected" | "cancelled"
       experience_level:
         | "beginner"
         | "fresher"
@@ -1338,6 +1408,7 @@ export const Constants = {
         "writer",
         "other",
       ],
+      booking_status: ["pending", "approved", "rejected", "cancelled"],
       experience_level: [
         "beginner",
         "fresher",

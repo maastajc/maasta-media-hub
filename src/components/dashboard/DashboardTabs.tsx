@@ -5,6 +5,7 @@ import { ApplicationsTab } from "./ApplicationsTab";
 import { ReviewTab } from "./ReviewTab";
 import { EventsTab } from "./EventsTab";
 import { OrganizationsTab } from "../organizations/OrganizationsTab";
+import { BookingsTab } from "./BookingsTab";
 
 interface DashboardTabsProps {
   isLoading: boolean;
@@ -23,9 +24,10 @@ export const DashboardTabs = ({
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="auditions" className="mt-6">
-      <TabsList className="grid grid-cols-5 mb-6">
+      <TabsList className="grid grid-cols-6 mb-6">
         <TabsTrigger value="auditions">My Auditions</TabsTrigger>
         <TabsTrigger value="events">My Events</TabsTrigger>
+        <TabsTrigger value="bookings">Bookings</TabsTrigger>
         <TabsTrigger value="organizations">Organizations</TabsTrigger>
         <TabsTrigger value="applications">Applications</TabsTrigger>
         <TabsTrigger value="review">Review</TabsTrigger>
@@ -47,6 +49,10 @@ export const DashboardTabs = ({
           formatDate={formatDate}
           onEventDeleted={() => window.location.reload()}
         />
+      </TabsContent>
+
+      <TabsContent value="bookings">
+        <BookingsTab />
       </TabsContent>
 
       <TabsContent value="organizations">
