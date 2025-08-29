@@ -108,9 +108,8 @@ export const SignInForm = () => {
         return; // Don't navigate on error
       }
       
-      // Navigate to profile page instead of home
-      signInRateLimiter.reset(email.trim()); // Reset on successful login
-      navigate('/profile');
+      // Reset rate limiter on successful login - AuthContext will handle navigation
+      signInRateLimiter.reset(email.trim());
     } catch (error: any) {
       // Handle any unexpected errors
       if (error.message.includes('Invalid login credentials') || 

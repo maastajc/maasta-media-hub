@@ -211,7 +211,7 @@ export const SignUpForm = () => {
 
   const handleEmailVerificationClose = () => {
     setShowEmailVerification(false);
-    navigate('/profile');
+    // AuthContext will handle navigation automatically
   };
 
   return (
