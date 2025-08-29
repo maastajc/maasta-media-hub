@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -81,7 +82,7 @@ function App() {
                 } />
                 <Route path="/settings" element={
                   <ProtectedRoute>
-                    <Settings />}
+                    <Settings />
                   </ProtectedRoute>
                 } />
                 <Route path="/my-auditions" element={
