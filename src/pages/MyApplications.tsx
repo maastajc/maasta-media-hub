@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileLayout } from "@/components/layout/ProfileLayout";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import { ApplicationsTab } from "@/components/dashboard/ApplicationsTab";
 
 const MyApplications = () => {
@@ -63,8 +64,9 @@ const MyApplications = () => {
   };
 
   return (
-    <ProfileLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">My Applications</h1>
           <p className="text-gray-600">Track all your audition applications</p>
@@ -76,7 +78,8 @@ const MyApplications = () => {
           formatDate={formatDate}
         />
       </div>
-    </ProfileLayout>
+      <Footer />
+    </div>
   );
 };
 
