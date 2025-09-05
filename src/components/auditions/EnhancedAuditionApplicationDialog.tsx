@@ -49,8 +49,14 @@ export const EnhancedAuditionApplicationDialog = ({
       let uploadedMediaUrls: string[] = [];
       
       // Upload media files if any
-      if (requestUploads && (mediaData.images.length > 0 || mediaData.videos.length > 0)) {
+      if (mediaData.images.length > 0 || mediaData.videos.length > 0) {
         const allFiles = [...mediaData.images, ...mediaData.videos];
+        // Check file sizes (max 5MB each)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        const oversizedFiles = allFiles.filter(file => file.size > maxSize);
+        if (oversizedFiles.length > 0) {
+          throw new Error(`Files exceed 5MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+        }
         const uploadResults = await uploadMultipleFiles(allFiles, 'audition-media');
         uploadedMediaUrls = uploadResults.map(result => result.url);
       }
@@ -65,7 +71,9 @@ export const EnhancedAuditionApplicationDialog = ({
 
       const success = await submitAuditionApplication(
         auditionId, 
-        JSON.stringify(submissionData)
+        applicationNotes,
+        mediaData.portfolioUrls,
+        uploadedMediaUrls
       );
 
       if (success) {
@@ -123,10 +131,9 @@ export const EnhancedAuditionApplicationDialog = ({
             />
           </div>
 
-          {/* Media Upload Section */}
+          {/* Media Upload Section - Always show */}
           <MediaUploadSection
             onMediaChange={setMediaData}
-            requestUploads={requestUploads}
           />
 
           {/* Action Buttons */}

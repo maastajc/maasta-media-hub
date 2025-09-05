@@ -34,7 +34,9 @@ export interface AuditionApplication {
 
 export const submitAuditionApplication = async (
   auditionId: string,
-  notes: string = ""
+  notes: string = "",
+  portfolioLinks?: string[],
+  mediaUrls?: string[]
 ): Promise<boolean> => {
   try {
     console.log('Submitting audition application:', auditionId, notes);
@@ -52,6 +54,8 @@ export const submitAuditionApplication = async (
         artist_id: user.id,
         status: 'pending',
         notes: notes || null,
+        portfolio_links: portfolioLinks || [],
+        media_urls: mediaUrls || [],
         application_date: new Date().toISOString()
       });
 

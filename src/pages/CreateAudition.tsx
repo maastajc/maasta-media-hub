@@ -36,6 +36,7 @@ const formSchema = z.object({
   custom_category: z.string().optional(),
   gender: z.string().optional(),
   experience_level: z.string().optional(),
+  task_requirements: z.string().optional(),
 }).refine((data) => {
   // If offline audition, location is required
   if (data.audition_type === 'offline' && !data.location?.trim()) {
@@ -85,6 +86,7 @@ const CreateAudition = () => {
       custom_category: '',
       gender: '',
       experience_level: '',
+      task_requirements: '',
     },
   });
 
@@ -230,6 +232,7 @@ const CreateAudition = () => {
         age_range: age_range || null,
         gender: values.gender || null,
         experience_level: values.experience_level || null,
+        task_requirements: values.task_requirements || null,
         tags: tags.length > 0 ? tags : null,
         creator_id: user.id,
         status: 'open'
@@ -599,6 +602,27 @@ const CreateAudition = () => {
                       )}
                     />
 
+                    {/* Task Requirements */}
+                    <FormField
+                      control={form.control}
+                      name="task_requirements"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Task Requirements (Optional)</FormLabel>
+                          <FormDescription>
+                            Request specific tasks, photos, videos, or portfolio links from applicants
+                          </FormDescription>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="e.g., Please submit a 2-minute video performing a dialogue, or provide links to your recent work..."
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                    
                     {/* Tags */}
                     <div>

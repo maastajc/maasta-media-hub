@@ -84,7 +84,6 @@ export const AuditionApplicationButton = ({
         onClose={() => setIsDialogOpen(false)}
         auditionId={auditionId}
         auditionTitle={auditionTitle}
-        requestUploads={requestUploads}
         onSuccess={onSuccess}
       />
     </>

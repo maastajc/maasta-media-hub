@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 interface MediaUploadSectionProps {
   onMediaChange: (media: MediaSubmission) => void;
-  requestUploads: boolean;
+  requestUploads?: boolean;
 }
 
 export interface MediaSubmission {
@@ -22,7 +22,7 @@ export interface MediaSubmission {
   notes: string;
 }
 
-export const MediaUploadSection = ({ onMediaChange, requestUploads }: MediaUploadSectionProps) => {
+export const MediaUploadSection = ({ onMediaChange, requestUploads = true }: MediaUploadSectionProps) => {
   const [images, setImages] = useState<File[]>([]);
   const [videos, setVideos] = useState<File[]>([]);
   const [portfolioUrls, setPortfolioUrls] = useState<string[]>([]);
@@ -97,7 +97,7 @@ export const MediaUploadSection = ({ onMediaChange, requestUploads }: MediaUploa
     updateMedia({ notes: value });
   };
 
-  if (!requestUploads) return null;
+  // Always show the section now, but can be controlled by parent if needed
 
   return (
     <Card>
