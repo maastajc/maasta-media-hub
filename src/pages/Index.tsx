@@ -60,7 +60,7 @@ const Index = () => {
               <div className="space-y-8">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
                   Platform for{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
+                  <span className="bg-clip-text bg-gradient-to-r from-secondary to-primary">
                     Talents
                   </span>
                 </h1>
