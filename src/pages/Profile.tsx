@@ -549,8 +549,8 @@ const Profile = () => {
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
+            {/* Sidebar - Hidden on mobile */}
+            <div className="space-y-6 hidden lg:block">
               {/* Profile Strength Meter */}
               <ProfileStrengthMeter 
                 artist={profileData}

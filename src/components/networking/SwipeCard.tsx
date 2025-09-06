@@ -77,9 +77,9 @@ const SwipeCard = ({ user, onSwipeLeft, onSwipeRight }: SwipeCardProps) => {
           )}
         </div>
 
-        <div className="p-6 h-1/3 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-foreground mb-2">{user.full_name}</h3>
+        <div className="p-4 flex flex-col justify-between min-h-[140px]">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-foreground mb-2 line-clamp-1">{user.full_name}</h3>
             
             {user.category && (
               <Badge variant="outline" className="mb-2">
@@ -88,8 +88,8 @@ const SwipeCard = ({ user, onSwipeLeft, onSwipeRight }: SwipeCardProps) => {
             )}
 
             <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-              <MapPin className="w-4 h-4" />
-              <span>{getLocation()}</span>
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <span className="line-clamp-1">{getLocation()}</span>
             </div>
 
             {user.bio && (
@@ -97,18 +97,18 @@ const SwipeCard = ({ user, onSwipeLeft, onSwipeRight }: SwipeCardProps) => {
             )}
           </div>
 
-          <div className="flex gap-4 mt-4">
+          <div className="flex gap-3 mt-4 pt-2">
             <Button
               variant="outline"
               size="lg"
-              className="flex-1 border-destructive/30 hover:bg-destructive/10"
+              className="flex-1 border-destructive/30 hover:bg-destructive/10 min-h-[44px]"
               onClick={() => onSwipeLeft(user.id)}
             >
               <X className="w-5 h-5 text-destructive" />
             </Button>
             <Button
               size="lg"
-              className="flex-1 bg-primary hover:bg-primary/90"
+              className="flex-1 bg-primary hover:bg-primary/90 min-h-[44px]"
               onClick={() => onSwipeRight(user.id)}
             >
               <Heart className="w-5 h-5" />
