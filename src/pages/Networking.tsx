@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import EnhancedSwipeStack from "@/components/networking/EnhancedSwipeStack";
+import SwipeStack from "@/components/networking/SwipeStack";
 import ConnectionsList from "@/components/networking/ConnectionsList";
 import ChatInterface from "@/components/networking/ChatInterface";
-import NetworkingPreferences from "@/components/networking/NetworkingPreferences";
-import NetworkingFilters from "@/components/networking/NetworkingFilters";
 import { useAuth } from "@/contexts/AuthContext";
 import { useArtists } from "@/hooks/useArtists";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,14 +19,8 @@ const Networking = () => {
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [swipedUserIds, setSwipedUserIds] = useState(new Set());
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [experienceFilter, setExperienceFilter] = useState("all");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,7 +32,7 @@ const Networking = () => {
     if (user && artists.length > 0) {
       filterUsersForSwipe();
     }
-  }, [artists, user, refreshTrigger, searchTerm, categoryFilter, locationFilter, experienceFilter]);
+  }, [artists, user, refreshTrigger, searchTerm]);
 
   const filterUsersForSwipe = async () => {
     if (!user || !artists.length) return;
@@ -65,29 +57,7 @@ const Networking = () => {
         availableUsers = availableUsers.filter(artist =>
           artist.full_name?.toLowerCase().includes(searchLower) ||
           artist.bio?.toLowerCase().includes(searchLower) ||
-          artist.category?.toLowerCase().includes(searchLower) ||
-          artist.skills?.some(skill => skill.toLowerCase().includes(searchLower))
-        );
-      }
-
-      if (categoryFilter && categoryFilter !== 'all') {
-        availableUsers = availableUsers.filter(artist => 
-          artist.category === categoryFilter
-        );
-      }
-
-      if (locationFilter) {
-        const locationLower = locationFilter.toLowerCase();
-        availableUsers = availableUsers.filter(artist =>
-          artist.city?.toLowerCase().includes(locationLower) ||
-          artist.state?.toLowerCase().includes(locationLower) ||
-          artist.country?.toLowerCase().includes(locationLower)
-        );
-      }
-
-      if (experienceFilter && experienceFilter !== 'all') {
-        availableUsers = availableUsers.filter(artist =>
-          artist.experience_level === experienceFilter
+          artist.category?.toLowerCase().includes(searchLower)
         );
       }
       
@@ -101,10 +71,6 @@ const Networking = () => {
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
     refetch();
-  };
-
-  const handlePreferencesUpdate = () => {
-    filterUsersForSwipe();
   };
 
   const handleStartChat = async (chatUser: any) => {
@@ -166,7 +132,7 @@ const Networking = () => {
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Sign in to Network</h2>
-            <p className="text-gray-600">You need to be signed in to connect with other professionals.</p>
+            <p className="text-muted-foreground">You need to be signed in to connect with other professionals.</p>
           </div>
         </main>
         {!isMobile && <Footer />}
@@ -197,23 +163,22 @@ const Networking = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pb-20 md:pb-0">
-        <div className="bg-gradient-to-br from-maasta-purple/10 to-purple-50 py-6 md:py-8">
+        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 py-6 md:py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl md:text-4xl font-bold mb-2">
                   Network & Connect
                 </h1>
-                <p className="text-sm md:text-lg text-gray-600">
+                <p className="text-sm md:text-lg text-muted-foreground">
                   Discover and connect with talented professionals
                 </p>
               </div>
-              <NetworkingPreferences onPreferencesUpdate={handlePreferencesUpdate} />
             </div>
 
             {/* Search Bar */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search by name, skill, or role..."
                 value={searchTerm}
@@ -221,18 +186,6 @@ const Networking = () => {
                 className="pl-10"
               />
             </div>
-
-            {/* Collapsible Filters */}
-            <NetworkingFilters
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              categoryFilter={categoryFilter}
-              setCategoryFilter={setCategoryFilter}
-              locationFilter={locationFilter}
-              setLocationFilter={setLocationFilter}
-              experienceFilter={experienceFilter}
-              setExperienceFilter={setExperienceFilter}
-            />
           </div>
         </div>
         
@@ -255,10 +208,10 @@ const Networking = () => {
                   <div className="aspect-[3/4] relative">
                     {isLoading ? (
                       <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin w-8 h-8 border-4 border-maasta-purple border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
                       </div>
                     ) : (
-                      <EnhancedSwipeStack
+                      <SwipeStack
                         users={filteredUsers}
                         onRefresh={handleRefresh}
                       />
@@ -271,15 +224,6 @@ const Networking = () => {
                 <div className="max-w-2xl mx-auto">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold">Your Connections</h2>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedChatUser(null)}
-                      className="gap-2"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Messages
-                    </Button>
                   </div>
                   <ConnectionsList onStartChat={handleStartChat} />
                 </div>
@@ -288,6 +232,7 @@ const Networking = () => {
           </div>
         </section>
       </main>
+      {!isMobile && <Footer />}
     </div>
   );
 };

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,16 +14,13 @@ interface SwipeStackProps {
 const SwipeStack = ({ users, onRefresh }: SwipeStackProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [swipedUsers, setSwipedUsers] = useState(new Set<string>());
   const { user } = useAuth();
 
   const handleSwipeLeft = async (userId: string) => {
     if (!user) return;
     
-    setSwipedUsers(prev => new Set(prev).add(userId));
     setCurrentIndex(prev => prev + 1);
     
-    // Optionally store rejected connections for analytics
     try {
       await supabase
         .from('connections')
@@ -42,10 +38,9 @@ const SwipeStack = ({ users, onRefresh }: SwipeStackProps) => {
     if (!user) return;
     
     setLoading(true);
-    setSwipedUsers(prev => new Set(prev).add(userId));
     
     try {
-      // Create or update connection
+      // Create connection request
       const { error: insertError } = await supabase
         .from('connections')
         .insert({
@@ -56,7 +51,7 @@ const SwipeStack = ({ users, onRefresh }: SwipeStackProps) => {
 
       if (insertError) throw insertError;
 
-      // Check if the other user already sent an invite
+      // Check for mutual connection
       const { data: existingConnection, error: checkError } = await supabase
         .from('connections')
         .select('*')
@@ -101,9 +96,9 @@ const SwipeStack = ({ users, onRefresh }: SwipeStackProps) => {
   if (!hasMoreUsers) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Heart className="w-16 h-16 text-gray-400 mb-4" />
+        <Heart className="w-16 h-16 text-muted-foreground mb-4" />
         <h3 className="text-xl font-semibold mb-2">No more profiles</h3>
-        <p className="text-gray-600 mb-6">You've seen all available profiles. Check back later for new people!</p>
+        <p className="text-muted-foreground mb-6">You've seen all available profiles. Check back later for new people!</p>
         <Button onClick={onRefresh} className="gap-2">
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -133,9 +128,9 @@ const SwipeStack = ({ users, onRefresh }: SwipeStackProps) => {
       />
       
       {loading && (
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            <div className="animate-spin w-6 h-6 border-2 border-maasta-purple border-t-transparent rounded-full mx-auto"></div>
+        <div className="absolute inset-0 bg-background/20 flex items-center justify-center">
+          <div className="bg-card p-4 rounded-lg shadow-lg">
+            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
             <p className="mt-2 text-sm">Processing...</p>
           </div>
         </div>
