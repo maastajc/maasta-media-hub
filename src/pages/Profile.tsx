@@ -612,6 +612,7 @@ const Profile = () => {
             profileData={profileData}
             onUpdate={handleProfileUpdate}
             userId={user?.id || ""}
+            isOwnProfile={true}
           />
         </div>
 
