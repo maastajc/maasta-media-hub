@@ -423,6 +423,16 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Profile Strength Meter */}
+      <div className="bg-white py-6">
+        <div className="max-w-6xl mx-auto px-4">
+          <ProfileStrengthMeter 
+            artist={profileData}
+            showActionButton={true}
+          />
+        </div>
+      </div>
+
       {/* Fixed Navigation Tabs - Updated order */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4">
@@ -551,12 +561,6 @@ const Profile = () => {
 
             {/* Sidebar - Hidden on mobile */}
             <div className="space-y-6 hidden lg:block">
-              {/* Profile Strength Meter */}
-              <ProfileStrengthMeter 
-                artist={profileData}
-                showActionButton={true}
-              />
-              
               {/* Work Preferences with Edit Icon */}
               <Card>
                 <CardContent className="p-6">
